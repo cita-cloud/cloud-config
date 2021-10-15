@@ -1,0 +1,17 @@
+[package]
+name = "cloud-config"
+version = "6.3.0"
+authors = ["Yieazy <yuitta@163.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "3.0.0-beta.2"
+log = "0.4"
+status_code = { git = "https://github.com/cita-cloud/status_code" }
+serde = "1.0"
+serde_derive = "1.0"
+kms_sm = { git = "https://github.com/cita-cloud/kms_sm", package = "kms", branch = "wip-6.3.0"}
+toml = "0.5"
