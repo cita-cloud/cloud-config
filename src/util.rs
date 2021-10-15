@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Clap;
-use status_code::StatusCode;
+use std::{path, fs};
+use toml::Value;
+use std::io::Write;
 
-/// A subcommand for run
-#[derive(Clap)]
-pub struct AppendOpts {}
+pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>, name: String) {
+    let value = Value::try_from(content).unwrap();
+    let mut table = toml::map::Map::new();
+    table.insert(name, value);
+    let toml = toml::Value::Table(table);
 
-pub fn execute_append(opts: AppendOpts) -> StatusCode {
-    StatusCode::Success
+    let mut file = fs::OpenOptions::new().create(true).append(true).open(path.as_ref()).unwrap();
+    file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes()).unwrap();
+    file.write(b"\n").unwrap();
 }
+

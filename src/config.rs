@@ -16,7 +16,7 @@ mod consensus_bft;
 mod consensus_raft;
 mod controller;
 mod executor_evm;
-mod kms_sm;
+pub(crate) mod kms_sm;
 mod network_p2p;
 mod network_tls;
 mod storage_rocksdb;

@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use clap::Clap;
 use status_code::StatusCode;
 
 /// A subcommand for run
-#[derive(Clap)]
+#[derive(Clap, Debug)]
 pub struct DeleteOpts {}
 
 pub fn execute_delete(opts: DeleteOpts) -> StatusCode {

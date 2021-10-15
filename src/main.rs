@@ -15,12 +15,14 @@
 use crate::append::{execute_append, AppendOpts};
 use crate::create::{execute_create, CreateOpts};
 use crate::delete::{execute_delete, DeleteOpts};
+use clap::Clap;
 
 mod append;
 mod config;
 mod create;
 mod delete;
 mod traits;
+mod util;
 
 #[derive(Clap)]
 #[clap(version = "6.3.0", author = "Yieazy")]

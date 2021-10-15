@@ -1,0 +1,14 @@
+[controller]
+consensus_port = 51231
+controller_port = 51234
+executor_port = 51232
+kms_port = 51235
+network_port = 51230
+node_address = '0xe7b14f079c1db897568883f0323af5887c2feebb'
+package_limit = 30000
+storage_port = 51233
+
+[genesis_block]
+prevhash = '0x0000000000000000000000000000000000000000000000000000000000000000'
+timestamp = 1633765324292
+
