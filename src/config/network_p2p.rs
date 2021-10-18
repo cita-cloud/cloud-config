@@ -44,7 +44,7 @@ pub struct PeerConfig {
 }
 
 impl NetConfig {
-    fn new(
+    pub fn new(
         port: u16,
         grpc_port: u16,
         addresses: Vec<String>
@@ -62,7 +62,7 @@ impl NetConfig {
         }
     }
 
-    fn write_to_file(&self, path: impl AsRef<path::Path>) {
+    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
         crate::util::write_to_file(&self, path, "network_p2p".to_string());
     }
 }

@@ -29,13 +29,15 @@ pub struct ControllerConfig {
 
     pub kms_port: u16,
 
+    pub key_id: u64,
+
     pub node_address: String,
 
     pub package_limit: u64,
 }
 
 impl ControllerConfig {
-    fn write_to_file(&self, path: impl AsRef<path::Path>) {
+    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
         crate::util::write_to_file(&self, path, "controller".to_string());
     }
 }
@@ -86,6 +88,7 @@ mod controller_test {
             storage_port: 51233,
             controller_port: 51234,
             kms_port: 51235,
+            key_id: 1,
             node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".to_string(),
             package_limit: 30000
         };

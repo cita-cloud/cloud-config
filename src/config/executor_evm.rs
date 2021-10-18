@@ -21,7 +21,7 @@ pub struct ExecutorConfig {
 }
 
 impl ExecutorConfig {
-    fn write_to_file(&self, path: impl AsRef<path::Path>) {
+    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
         crate::util::write_to_file(&self, path, "executor_evm".to_string());
     }
 }

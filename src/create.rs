@@ -14,8 +14,10 @@
 
 use std::fs;
 use clap::Clap;
-use status_code::StatusCode;
 use crate::traits::Kms;
+use crate::error::{Error, Result};
+use crate::config::admin::AdminConfig;
+use crate::config::controller::ControllerConfig;
 
 /// A subcommand for run
 #[derive(Clap, Debug)]
@@ -58,7 +60,7 @@ pub struct CreateOpts {
     /// set initial node number, default "none" mean not use this must set grpc_ports or p2p_ports,
     /// if set peers_count, grpc_ports and p2p_ports, base on grpc_ports > p2p_ports > peers_count
     #[clap(long = "peers-count")]
-    peers_count: Option<u64>,
+    peers_count: Option<u16>,
     /// kms db password
     #[clap(long = "kms-password", default_value = "123456")]
     kms_password: String,
@@ -76,7 +78,7 @@ impl CreateOpts {
         }
     }
 
-    fn get_dir(&self, index: u64) -> String {
+    fn get_dir(&self, index: u16) -> String {
         if let Some(dir) = &self.config_dir {
             format!("{}/{}-{}", dir, &self.chain_name, index)
         } else {
@@ -85,27 +87,67 @@ impl CreateOpts {
     }
 }
 
-pub fn execute_create(opts: CreateOpts) {
+pub fn execute_create(opts: CreateOpts) -> Result {
     if let Some(dir) = &opts.config_dir {
         fs::create_dir_all(dir).unwrap();
     }
 
+    // admin account dir
+    let admin_dir = opts.admin_dir();
+
     if opts.grpc_ports == "default" {
         if opts.peers_count == "default" {
             if let Some(num) = opts.peers_count {
-                // admin account dir
-                let admin_dir = opts.admin_dir();
+                // network template
+
+
                 // kms
                 let kms = match opts.kms.as_str() {
-                    "kms_sm" => crate::config::kms_sm::Kms::create_kms_db(admin_dir.clone(), opts.kms_password.clone())
-                    other => panic!("error kms name({})", other)
+                    "kms_sm" => crate::config::kms_sm::Kms::create_kms_db(admin_dir.clone(), opts.kms_password.clone()),
+                    other => {
+                        log::warn!("kms server chose error, input: {}", other);
+                        Err(Error::KmsNotDefaultOrKmsSm)
+                    }
                 };
+                let (key_id, address) = kms.generate_key_pair("create by cmd".to_string());
+                let admin_config = AdminConfig {
+                    db_key: opts.kms_password.clone(),
+                    key_id,
+                    db_path: "kms.db".to_string(),
+                    admin_address: format!("0x{}", hex::encode(address)),
+                };
+                admin_config.write_to_file(format!("{}/config.toml", &admin_dir));
                 for i in 0..num {
+                    let network_grpc_port = 50000 + i;
+                    let network_p2p_port = 40000 + i;
 
+                    let node_dir = opts.get_dir(i);
+                    let kms = match opts.kms.as_str() {
+                        "kms_sm" => crate::config::kms_sm::Kms::create_kms_db(node_dir.clone(), opts.kms_password.clone()),
+                        other => {
+                            log::warn!("kms server chose error, input: {}", other);
+                            Err(Error::KmsNotDefaultOrKmsSm)
+                        }
+                    };
+                    let (key_id, address) = kms.generate_key_pair("create by cmd".to_string());
+                    let controller_config = ControllerConfig {
+                        network_port: network_grpc_port,
+                        consensus_port: network_grpc_port + 1,
+                        executor_port: network_grpc_port + 2,
+                        storage_port: network_grpc_port + 3,
+                        controller_port: network_grpc_port + 4,
+                        kms_port: network_grpc_port + 5,
+                        key_id,
+                        node_address: format!("0x{}", hex::encode(address)),
+                        package_limit: 30000
+                    };
+                    controller_config.write_to_file(format!("{}/config.toml", &node_dir));
                 }
             } else {
                 log::warn!("must set one of grpc_ports, peers_count or peers_count");
             }
         }
     }
+
+    Ok(())
 }

@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use clap::Clap;
-use status_code::StatusCode;
+use crate::error::{Error, Result};
 
 /// A subcommand for run
 #[derive(Clap)]
 pub struct AppendOpts {}
 
-pub fn execute_append(opts: AppendOpts) -> StatusCode {
-    StatusCode::Success
+pub fn execute_append(opts: AppendOpts) -> Result {
+    Ok(())
 }

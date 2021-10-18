@@ -12,12 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub(crate) mod consensus_bft;
-pub(crate) mod consensus_raft;
-pub(crate) mod controller;
-pub(crate) mod executor_evm;
-pub(crate) mod kms_sm;
-pub(crate) mod network_p2p;
-pub(crate) mod network_tls;
-pub(crate) mod storage_rocksdb;
-pub(crate) mod admin;
+use serde_derive::Serialize;
+use std::path;
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AdminConfig {
+    pub db_key: String,
+
+    pub key_id: u64,
+
+    pub db_path: String,
+
+    pub admin_address: String,
+}
+
+impl AdminConfig {
+    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
+        crate::util::write_to_file(&self, path, "kms_sm".to_string());
+    }
+}

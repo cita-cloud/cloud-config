@@ -13,12 +13,12 @@
 // limitations under the License.
 
 use clap::Clap;
-use status_code::StatusCode;
+use crate::error::{Error, Result};
 
 /// A subcommand for run
 #[derive(Clap, Debug)]
 pub struct DeleteOpts {}
 
-pub fn execute_delete(opts: DeleteOpts) -> StatusCode {
-    StatusCode::Success
+pub fn execute_delete(opts: DeleteOpts) -> Result {
+    Ok(())
 }

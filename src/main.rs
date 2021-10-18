@@ -23,6 +23,7 @@ mod create;
 mod delete;
 mod traits;
 mod util;
+mod error;
 
 #[derive(Clap)]
 #[clap(version = "6.3.0", author = "Yieazy")]
@@ -50,8 +51,8 @@ fn main() {
     let opts: Opts = Opts::parse();
 
     match opts.sub_cmd {
-        SubCommand::Create(opts) => execute_create(opts).is_success().unwrap(),
-        SubCommand::Append(opts) => execute_append(opts).is_success().unwrap(),
-        SubCommand::Delete(opts) => execute_delete(opts).is_success().unwrap(),
+        SubCommand::Create(opts) => execute_create(opts).unwrap(),
+        SubCommand::Append(opts) => execute_append(opts).unwrap(),
+        SubCommand::Delete(opts) => execute_delete(opts).unwrap(),
     }
 }

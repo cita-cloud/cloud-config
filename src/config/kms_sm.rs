@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use status_code::StatusCode;
 use serde_derive::Serialize;
 use std::path;
 
@@ -22,7 +21,7 @@ pub struct KmsConfig {
 }
 
 impl KmsConfig {
-    fn write_to_file(&self, path: impl AsRef<path::Path>) {
+    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
         crate::util::write_to_file(&self, path, "kms_sm".to_string());
     }
 }
@@ -34,8 +33,8 @@ impl crate::traits::Kms for Kms {
         Kms(kms_sm::kms::Kms::new(db_path, password))
     }
 
-    fn generate_key_pair(&self, description: String) -> Result<(u64, Vec<u8>), StatusCode> {
-        self.0.generate_key_pair(description)
+    fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>) {
+        self.0.generate_key_pair(description).unwrap()
     }
 }
 
