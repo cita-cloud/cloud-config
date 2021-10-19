@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use status_code::StatusCode;
+// use status_code::StatusCode;
+
+// use crate::status_code::StatusCode;
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
-    fn generate_key_pair(&self, description: String) -> Result<(u64, Vec<u8>), StatusCode>;
+    fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>);
 }

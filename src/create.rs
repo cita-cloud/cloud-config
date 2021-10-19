@@ -13,14 +13,14 @@
 // limitations under the License.
 
 use std::fs;
-use clap::Clap;
+use clap::Args;
 use crate::traits::Kms;
 use crate::error::{Error, Result};
 use crate::config::admin::AdminConfig;
 use crate::config::controller::ControllerConfig;
 
 /// A subcommand for run
-#[derive(Clap, Debug)]
+#[derive(Args, Debug)]
 pub struct CreateOpts {
     /// set config file name
     #[clap(long = "config-name", default_value = "config.toml")]
@@ -96,7 +96,7 @@ pub fn execute_create(opts: CreateOpts) -> Result {
     let admin_dir = opts.admin_dir();
 
     if opts.grpc_ports == "default" {
-        if opts.peers_count == "default" {
+        if opts.peers_count.unwrap() == 1 {
             if let Some(num) = opts.peers_count {
                 // network template
 
@@ -106,7 +106,7 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                     "kms_sm" => crate::config::kms_sm::Kms::create_kms_db(admin_dir.clone(), opts.kms_password.clone()),
                     other => {
                         log::warn!("kms server chose error, input: {}", other);
-                        Err(Error::KmsNotDefaultOrKmsSm)
+                        return  Err(Error::KmsNotDefaultOrKmsSm);
                     }
                 };
                 let (key_id, address) = kms.generate_key_pair("create by cmd".to_string());
@@ -126,7 +126,7 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                         "kms_sm" => crate::config::kms_sm::Kms::create_kms_db(node_dir.clone(), opts.kms_password.clone()),
                         other => {
                             log::warn!("kms server chose error, input: {}", other);
-                            Err(Error::KmsNotDefaultOrKmsSm)
+                            return Err(Error::KmsNotDefaultOrKmsSm);
                         }
                     };
                     let (key_id, address) = kms.generate_key_pair("create by cmd".to_string());

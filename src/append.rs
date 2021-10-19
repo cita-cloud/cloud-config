@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Clap;
+use clap::Args;
 use crate::error::{Error, Result};
 
 /// A subcommand for run
-#[derive(Clap)]
+#[derive(Args)]
 pub struct AppendOpts {}
 
 pub fn execute_append(opts: AppendOpts) -> Result {

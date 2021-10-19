@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Clap;
+use clap::Args;
 use crate::error::{Error, Result};
 
 /// A subcommand for run
-#[derive(Clap, Debug)]
+#[derive(Args, Debug)]
 pub struct DeleteOpts {}
 
 pub fn execute_delete(opts: DeleteOpts) -> Result {

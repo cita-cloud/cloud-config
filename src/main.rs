@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::append::{execute_append, AppendOpts};
-use crate::create::{execute_create, CreateOpts};
-use crate::delete::{execute_delete, DeleteOpts};
-use clap::Clap;
+use clap::{AppSettings, Parser};
+
+use crate::append::{AppendOpts, execute_append};
+use crate::create::{CreateOpts, execute_create};
+use crate::delete::{DeleteOpts, execute_delete};
 
 mod append;
 mod config;
@@ -24,15 +25,16 @@ mod delete;
 mod traits;
 mod util;
 mod error;
+mod status_code;
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(version = "6.3.0", author = "Yieazy")]
 struct Opts {
     #[clap(subcommand)]
     sub_cmd: SubCommand,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 enum SubCommand {
     /// create config
     #[clap(name = "create")]
