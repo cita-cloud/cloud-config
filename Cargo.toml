@@ -12,6 +12,6 @@ clap = "3.0.0-beta.2"
 log = "0.4"
 serde = "1.0"
 serde_derive = "1.0"
-kms_sm = { path = "../runner_local/kms", package = "kms" }
+kms_sm = { git = "https://github.com/cita-cloud/kms_sm", branch = "wip-6.3.0", package = "kms" }
 toml = "0.5"
 hex = "0.4"
