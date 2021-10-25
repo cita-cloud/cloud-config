@@ -51,7 +51,7 @@ docs/site
 # localtime for macos users
 localtime
 
-# test data
+# tests data
 **/test-rocksdb
 
 # log files
