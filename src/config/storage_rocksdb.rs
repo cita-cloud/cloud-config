@@ -11,3 +11,30 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+use crate::constant::STORAGE_ROCKSDB;
+use crate::traits::TomlWriter;
+use serde_derive::Serialize;
+
+
+#[derive(Debug, Serialize, Clone)]
+pub struct StorageConfig {
+    pub kms_port: u16,
+    pub storage_port: u16,
+}
+
+impl StorageConfig {
+    pub fn new(kms_port: u16,
+               storage_port: u16) -> Self {
+        Self {
+            kms_port,
+            storage_port
+        }
+    }
+}
+
+impl TomlWriter for StorageConfig {
+    fn section(&self) -> String {
+        STORAGE_ROCKSDB.to_string()
+    }
+}

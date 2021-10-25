@@ -12,11 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// use status_code::StatusCode;
-
-// use crate::status_code::StatusCode;
+use std::path;
+use serde::Serialize;
+use crate::util;
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>);
 }
+
+pub trait TomlWriter {
+    fn write(&self, path: impl AsRef<path::Path>) where Self: Serialize{
+        util::write_to_file(&self, path, self.section())
+    }
+
+    fn section(&self) -> String;
+}
+
+

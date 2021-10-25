@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::constant::{CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, GRPC_PORT_BEGIN, PACKAGE_LIMIT, PRE_HASH, SYSTEM_CONFIG};
 use serde_derive::Serialize;
 use std::path;
+use crate::traits::TomlWriter;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ControllerConfig {
@@ -37,8 +40,27 @@ pub struct ControllerConfig {
 }
 
 impl ControllerConfig {
-    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "controller".to_string());
+    pub fn new(network_port: u16,
+               key_id: u64,
+               address: &str,
+               package_limit: u64) -> Self {
+        Self {
+            network_port,
+            consensus_port: network_port + 1,
+            executor_port: network_port + 2,
+            storage_port: network_port + 3,
+            controller_port: network_port + 4,
+            kms_port: network_port + 5,
+            key_id,
+            node_address: address.into(),
+            package_limit,
+        }
+    }
+}
+
+impl TomlWriter for ControllerConfig {
+    fn section(&self) -> String {
+        CONTROLLER.to_string()
     }
 }
 
@@ -54,8 +76,21 @@ pub struct SystemConfigFile {
 }
 
 impl SystemConfigFile {
-    fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "system_config".to_string());
+    pub fn default(version: u32, chain_id: String, admin: String, validators: Vec<String>) -> Self {
+        Self {
+            version,
+            chain_id,
+            admin,
+            block_interval: DEFAULT_BLOCK_INTERVAL,
+            validators,
+            block_limit: DEFAULT_BLOCK_LIMIT,
+        }
+    }
+}
+
+impl TomlWriter for SystemConfigFile {
+    fn section(&self) -> String {
+        SYSTEM_CONFIG.to_string()
     }
 }
 
@@ -65,9 +100,27 @@ pub struct GenesisBlock {
     pub prevhash: String,
 }
 
+fn timestamp() -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .unwrap();
+    let ms = since_the_epoch.as_secs() as i64 * 1000i64 + (since_the_epoch.subsec_nanos() as i64 / 1_000_000) as i64;
+    ms as u64
+}
+
 impl GenesisBlock {
-    fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "genesis_block".to_string());
+    pub fn default() -> Self {
+        Self {
+            timestamp: timestamp(),
+            prevhash: PRE_HASH.to_string(),
+        }
+    }
+}
+
+impl TomlWriter for GenesisBlock {
+    fn section(&self) -> String {
+        GENESIS_BLOCK.to_string()
     }
 }
 
@@ -89,18 +142,18 @@ mod controller_test {
             controller_port: 51234,
             kms_port: 51235,
             key_id: 1,
-            node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".to_string(),
-            package_limit: 30000
+            node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".into(),
+            package_limit: 30000,
         };
 
-        config.write_to_file("example/config.toml");
+        config.write("example");
 
         let genesis = GenesisBlock {
             timestamp: 1633765324292,
-            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string()
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
         };
 
-        genesis.write_to_file("example/config.toml");
+        genesis.write("example");
     }
 }
 

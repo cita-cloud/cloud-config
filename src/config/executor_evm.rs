@@ -14,6 +14,8 @@
 
 use serde_derive::Serialize;
 use std::path;
+use crate::constant::EXECUTOR_EVM;
+use crate::traits::TomlWriter;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ExecutorConfig {
@@ -21,8 +23,16 @@ pub struct ExecutorConfig {
 }
 
 impl ExecutorConfig {
-    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "executor_evm".to_string());
+    pub fn new(executor_port: u16) -> Self {
+        Self {
+            executor_port
+        }
+    }
+}
+
+impl TomlWriter for ExecutorConfig {
+    fn section(&self) -> String {
+        EXECUTOR_EVM.to_string()
     }
 }
 
@@ -40,6 +50,6 @@ mod executor_test {
             executor_port: 51232,
         };
 
-        config.write_to_file("example/config.toml");
+        config.write("example");
     }
 }

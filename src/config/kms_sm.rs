@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// use status_code::StatusCode;
 use serde_derive::Serialize;
 use std::path;
+use crate::constant::KMS_SM;
+use crate::traits::TomlWriter;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct KmsConfig {
@@ -21,8 +24,16 @@ pub struct KmsConfig {
 }
 
 impl KmsConfig {
-    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "kms_sm".to_string());
+    pub fn new(kms_port: u16) -> Self {
+        Self {
+            kms_port
+        }
+    }
+}
+
+impl TomlWriter for KmsConfig {
+    fn section(&self) -> String {
+        KMS_SM.to_string()
     }
 }
 
@@ -52,6 +63,6 @@ mod kms_test {
             kms_port: 51235,
         };
 
-        config.write_to_file("example/config.toml");
+        config.write("example/config.toml");
     }
 }

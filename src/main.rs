@@ -25,7 +25,7 @@ mod delete;
 mod traits;
 mod util;
 mod error;
-mod status_code;
+mod constant;
 
 #[derive(Parser)]
 #[clap(version = "6.3.0", author = "Yieazy")]

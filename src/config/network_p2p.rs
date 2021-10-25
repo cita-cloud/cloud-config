@@ -28,12 +28,14 @@
 
 use serde_derive::Serialize;
 use std::path;
+use crate::constant::NETWORK_P2P;
+use crate::traits::TomlWriter;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct NetConfig {
-    pub port: u16,
+    pub port: Option<u16>,
 
-    pub grpc_port: u16,
+    pub grpc_port: Option<u16>,
 
     pub peers: Vec<PeerConfig>,
 }
@@ -47,23 +49,42 @@ impl NetConfig {
     pub fn new(
         port: u16,
         grpc_port: u16,
-        addresses: Vec<String>
+        addresses: &Vec<String>
     ) -> Self {
         let mut peers = Vec::with_capacity(addresses.len());
         for address in addresses {
             peers.push(PeerConfig{
-                address,
+                address: address.clone(),
             })
         }
         Self {
-            port,
-            grpc_port,
+            port: Some(port),
+            grpc_port: Some(grpc_port),
             peers
         }
     }
 
-    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "network_p2p".to_string());
+    pub fn default(
+        addresses: &Vec<String>
+    ) -> Self {
+        let mut peers = Vec::with_capacity(addresses.len());
+        for address in addresses {
+            peers.push(PeerConfig{
+                address: address.clone(),
+            })
+        }
+        Self {
+            port: None,
+            grpc_port: None,
+            peers
+        }
+    }
+
+}
+
+impl TomlWriter for NetConfig {
+    fn section(&self) -> String {
+        NETWORK_P2P.to_string()
     }
 }
 
@@ -77,14 +98,14 @@ mod network_p2p_test {
     fn basic_test() {
         let _ = std::fs::remove_file("example/config.toml");
 
-        let peers = vec!["/ip4/127.0.0.1/tcp/40001".to_string(), "/ip4/127.0.0.1/tcp/40002".to_string(), "/ip4/127.0.0.1/tcp/40003".to_string()];
+        let peers: &Vec<String> =  &vec!["/ip4/127.0.0.1/tcp/40001".to_string(), "/ip4/127.0.0.1/tcp/40002".to_string(), "/ip4/127.0.0.1/tcp/40003".to_string()];
         let config = NetConfig::new(
             51230,
             40000,
             peers,
         );
 
-        config.write_to_file("example/config.toml");
+        config.write("example");
     }
 }
 

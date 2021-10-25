@@ -14,6 +14,8 @@
 
 use serde_derive::Serialize;
 use std::path;
+use crate::constant::KMS_SM;
+use crate::traits::TomlWriter;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct AdminConfig {
@@ -27,7 +29,19 @@ pub struct AdminConfig {
 }
 
 impl AdminConfig {
-    pub fn write_to_file(&self, path: impl AsRef<path::Path>) {
-        crate::util::write_to_file(&self, path, "kms_sm".to_string());
+    pub fn new(db_key: String, key_id: u64, db_path: String, admin_address: String) -> Self {
+        Self {
+            db_key,
+            key_id,
+            db_path,
+            admin_address
+        }
     }
 }
+
+impl TomlWriter for AdminConfig{
+    fn section(&self) -> String {
+        KMS_SM.to_string()
+    }
+}
+

@@ -18,5 +18,10 @@ pub type Result = std::result::Result<(), Error>;
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
     KmsNotDefaultOrKmsSm,
-
+    P2pPortsParamNotValid,
+    ControllerNotExist,
+    ConsensusNotExist,
+    ExecutorNotExist,
+    StorageNotExist,
+    NodeCountNotExist,
 }
