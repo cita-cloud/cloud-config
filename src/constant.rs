@@ -7,6 +7,7 @@ pub static NETWORK_P2P: &'static str = "network_p2p";
 pub static NETWORK_TLS: &'static str = "network_tls";
 pub static KMS_SM: &'static str = "kms_sm";
 pub static ADMIN_CONFIG: &'static str = "admin_config";
+pub static CURRENT_CONFIG: &'static str = "current_config";
 pub static STORAGE_ROCKSDB: &'static str = "storage_rocksdb";
 pub static EXECUTOR_EVM: &'static str = "executor_evm";
 pub static DEFAULT_CONFIG_NAME: &'static str = "config.toml";

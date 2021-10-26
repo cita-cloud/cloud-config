@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde_derive::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path;
 use crate::constant::EXECUTOR_EVM;
 use crate::traits::TomlWriter;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ExecutorConfig {
     pub executor_port: u16,
 }

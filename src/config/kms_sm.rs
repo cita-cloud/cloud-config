@@ -13,12 +13,12 @@
 // limitations under the License.
 
 // use status_code::StatusCode;
-use serde_derive::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path;
 use crate::constant::KMS_SM;
 use crate::traits::TomlWriter;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct KmsConfig {
     pub kms_port: u16,
 }

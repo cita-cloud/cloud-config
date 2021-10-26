@@ -13,12 +13,13 @@
 // limitations under the License.
 
 use crate::constant::{CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, GRPC_PORT_BEGIN, PACKAGE_LIMIT, PRE_HASH, SYSTEM_CONFIG};
-use serde_derive::Serialize;
+use serde::{Deserialize, Serialize};
+
 use std::path;
 use crate::traits::TomlWriter;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {
     pub network_port: u16,
 
@@ -64,7 +65,7 @@ impl TomlWriter for ControllerConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemConfigFile {
     pub version: u32,
     pub chain_id: String,
@@ -94,7 +95,7 @@ impl TomlWriter for SystemConfigFile {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenesisBlock {
     pub timestamp: u64,
     pub prevhash: String,

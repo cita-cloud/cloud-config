@@ -24,7 +24,7 @@ use regex::Regex;
 use serde::Serialize;
 use crate::traits::{Kms, TomlWriter};
 use crate::error::{Error, Result};
-use crate::config::admin::AdminConfig;
+use crate::config::admin::{AdminConfig, CurrentConfig};
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorConfig;
 use crate::config::kms_sm::KmsConfig;
@@ -156,7 +156,6 @@ fn parse(
     i: usize,
     rpc_port: u16,
     p2p_port: u16,
-    p2p_ip: &str,
     admin_key: u64,
     admin_address: &str,
     path_prefix: &str,
@@ -166,27 +165,25 @@ fn parse(
     tls_peers: &Vec<PeerConfig>,
     ca_cert: &Certificate,
     ca_cert_pem: &String,
+    genesis: &GenesisBlock,
+    system: &SystemConfigFile,
 ) {
     let chain_name = format!("{}-{}", path_prefix, i);
     let file_name = format!("{}/{}", &chain_name, DEFAULT_CONFIG_NAME);
     ControllerConfig::new(rpc_port, key_ids[i], &addresses[i], opts.package_limit).write(&file_name);
-    GenesisBlock::default().write(&file_name);
-    SystemConfigFile::default(
-        opts.version,
-        hex::encode(&chain_name),
-        hex::encode("admin"),
-        addresses.into()).write(&file_name);
+    genesis.write(&file_name);
+    system.write(&file_name);
+
     let mut uris = uris.clone();
     uris.remove(i);
-
     NetConfig::new(p2p_port, rpc_port, &uris).write(&file_name);
+
     let mut tls_peers = tls_peers.clone();
     tls_peers.remove(i);
     let domain = format!("peer{}", i);
-
     let (_, cert, priv_key) = cert(&domain, &ca_cert);
-
     NetworkConfig::new(p2p_port, rpc_port, ca_cert_pem.clone(), cert, priv_key, tls_peers).write(&file_name);
+
     KmsConfig::new(rpc_port + 5).write(&file_name);
     AdminConfig::new(
         "0".to_string(),
@@ -208,6 +205,8 @@ struct AdminParam {
     tls_peers: Vec<PeerConfig>,
     ca_cert: Certificate,
     ca_cert_pem: String,
+    genesis: GenesisBlock,
+    system: SystemConfigFile,
 }
 
 fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> AdminParam {
@@ -251,11 +250,22 @@ fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> Admin
             domain,
         });
     };
-    NetConfig::default(&uris).write(format!("{}/{}", path.clone(), DEFAULT_CONFIG_NAME));
-    NetworkConfig::default(tls_peers.clone()).write(format!("{}/{}", path.clone(), DEFAULT_CONFIG_NAME));
+    let mut file_name = format!("{}/{}", path.clone(), DEFAULT_CONFIG_NAME);
+    NetConfig::default(&uris).write(&file_name);
+    NetworkConfig::default(tls_peers.clone()).write(&file_name);
+    let genesis = GenesisBlock::default();
+    &genesis.write(&file_name);
+    let system = SystemConfigFile::default(
+        opts.version,
+        hex::encode(&opts.chain_name),
+        hex::encode("admin"),
+        addresses.clone());
+    &system.write(&file_name);
     // admin account dir
     let (admin_key, admin_address) = key_pair(opts.admin_dir(), opts.kms_password.clone());
     let admin_address: String = format!("0x{}", hex::encode(admin_address));
+    AdminConfig::default(admin_key.clone(), admin_address.clone()).write(&file_name);
+    CurrentConfig::new(&uris, tls_peers.clone(), addresses.clone()).write(&file_name);
     AdminParam {
         admin_key,
         admin_address,
@@ -266,6 +276,8 @@ fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> Admin
         tls_peers,
         ca_cert,
         ca_cert_pem,
+        genesis,
+        system,
     }
 }
 
@@ -284,13 +296,12 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                 //以p2p_ports为准
                 opts => {
                     let pair: Vec<String> = opts.p2p_ports.split(",").map(String::from).collect();
-
                     let peers_count = pair.len();
                     let param = init_admin(peers_count, &pair, opts.clone());
                     for i in 0..peers_count {
                         let mut v: Vec<&str> = pair[i].split(":").collect();
                         let rpc_port = GRPC_PORT_BEGIN + i as u16 * 1000;
-                        parse(opts.clone(), i, rpc_port, v[1].parse().unwrap(), v[0],
+                        parse(opts.clone(), i, rpc_port, v[1].parse().unwrap(),
                               param.admin_key,
                               &param.admin_address,
                               &param.chain_path,
@@ -300,6 +311,8 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                               &param.tls_peers,
                               &param.ca_cert,
                               &param.ca_cert_pem,
+                              &param.genesis,
+                              &param.system,
                         )
                     }
                 }
@@ -311,8 +324,7 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                 for i in 0..peers_count {
                     let rpc_port = GRPC_PORT_BEGIN + i as u16 * 1000;
                     let p2p_port = P2P_PORT_BEGIN + i as u16;
-                    let p2p_ip = DEFAULT_ADDRESS;
-                    parse(opts.clone(), i, rpc_port, p2p_port, p2p_ip,
+                    parse(opts.clone(), i, rpc_port, p2p_port,
                           param.admin_key,
                           &param.admin_address,
                           &param.chain_path,
@@ -321,7 +333,10 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                           &param.uris,
                           &param.tls_peers,
                           &param.ca_cert,
-                          &param.ca_cert_pem, )
+                          &param.ca_cert_pem,
+                          &param.genesis,
+                          &param.system,
+                    )
                 }
             }
         }
@@ -334,8 +349,8 @@ pub fn execute_create(opts: CreateOpts) -> Result {
             for i in 0..peers_count {
                 let rpc_ports: Vec<&str> = opts.grpc_ports.split(",").collect();
                 let p2p_port = P2P_PORT_BEGIN + i as u16;
-                let p2p_ip = DEFAULT_ADDRESS;
-                parse(opts.clone(), i, rpc_ports[i].parse().unwrap(), p2p_port, p2p_ip,
+
+                parse(opts.clone(), i, rpc_ports[i].parse().unwrap(), p2p_port,
                       param.admin_key,
                       &param.admin_address,
                       &param.chain_path,
@@ -344,7 +359,10 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                       &param.uris,
                       &param.tls_peers,
                       &param.ca_cert,
-                      &param.ca_cert_pem, )
+                      &param.ca_cert_pem,
+                      &param.genesis,
+                      &param.system,
+                )
             }
         }
     };
@@ -373,7 +391,7 @@ mod create_test {
             kms: KMS_SM.to_string(),
             storage: STORAGE_ROCKSDB.to_string(),
             grpc_ports: "".to_string(),
-            p2p_ports: "192.168.1.1:30000,192.168.1.2:30001".to_string(),
+            p2p_ports: "".to_string(),
             peers_count: Some(4),
             kms_password: "123456".to_string(),
             package_limit: 100,

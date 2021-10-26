@@ -26,12 +26,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde_derive::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path;
 use crate::constant::NETWORK_P2P;
 use crate::traits::TomlWriter;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NetConfig {
     pub port: Option<u16>,
 
@@ -40,7 +40,7 @@ pub struct NetConfig {
     pub peers: Vec<PeerConfig>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct PeerConfig {
     pub address: String,
 }

@@ -24,4 +24,7 @@ pub enum Error {
     ExecutorNotExist,
     StorageNotExist,
     NodeCountNotExist,
+    ConfigDirNotExist,
+    DeleteParamNotValid,
+    DeleteIndexNotValid,
 }

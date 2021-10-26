@@ -14,10 +14,10 @@
 
 use crate::constant::STORAGE_ROCKSDB;
 use crate::traits::TomlWriter;
-use serde_derive::Serialize;
+use serde::{Deserialize, Serialize};
 
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageConfig {
     pub kms_port: u16,
     pub storage_port: u16,
