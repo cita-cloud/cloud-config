@@ -36,22 +36,28 @@ pub struct CurrentConfig {
     pub tls_peers: Vec<crate::config::network_tls::PeerConfig>,
 
     pub addresses: Vec<String>,
+
+    pub rpc_ports: Vec<u16>,
+
+    pub p2p_ports: Vec<u16>,
+
+    pub ips: Vec<String>,
 }
 
 impl CurrentConfig {
-    pub fn new(peers: &Vec<String>,
+    pub fn new(peers: &Vec<PeerConfig>,
                tls_peers: Vec<crate::config::network_tls::PeerConfig>,
-               addresses: Vec<String>,) -> Self {
-        let mut peers_new = Vec::with_capacity(peers.len());
-        for peer in peers {
-            peers_new.push(PeerConfig{
-                address: peer.clone(),
-            })
-        }
+               addresses: Vec<String>,
+               rpc_ports: Vec<u16>,
+               p2p_ports: Vec<u16>,
+               ips: Vec<String>,) -> Self {
         Self {
-            peers: peers_new,
+            peers: peers.clone(),
             tls_peers,
             addresses,
+            rpc_ports,
+            p2p_ports,
+            ips,
         }
     }
 }

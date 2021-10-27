@@ -18,9 +18,10 @@ use std::path::Path;
 use clap::Args;
 use crate::config::admin::CurrentConfig;
 use crate::constant::DEFAULT_CONFIG_NAME;
-use crate::error::{Error, Result};
+use crate::error::{Error};
 use crate::traits::TomlWriter;
 use crate::util::{read_from_file, write_whole_to_file};
+type Result = std::result::Result<(), Error>;
 
 /// A subcommand for run
 #[derive(Args, Debug, Clone)]
@@ -55,7 +56,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
     if opts.index.is_empty() && opts.addresses.is_empty() {
         return Err(Error::DeleteParamNotValid);
     }
-    let mut file_name = format!("./{}/{}", path.clone(), DEFAULT_CONFIG_NAME);
+    let mut file_name = format!("./{}/{}", path.clone(), opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
     fs::remove_file(&file_name);
     let mut index_set = HashSet::new();
@@ -83,16 +84,10 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
             }
         }
     }
-    // let index = if let true = opts.index.is_empty() {
-    //     index as usize
-    // } else {
-    //     let addresses = &config.current_config.as_ref().unwrap().addresses;
-    //     addresses.iter().position(|x| {x == &opts.address.clone().unwrap()}).unwrap()
-    // };
-
     for i in 0..current.addresses.len() {
-        let chain_name = format!("./{}-{}", path, i);
-        let file_name = format!("{}/{}", &chain_name, DEFAULT_CONFIG_NAME);
+
+        let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
+        let file_name = format!("{}/{}", &chain_name, opts.config_name);
         if index_set.contains(&i) {
             fs::remove_dir_all(chain_name);
             continue;
@@ -121,11 +116,12 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
         current_new.peers.remove(index);
         current_new.tls_peers.remove(index);
         current_new.addresses.remove(index);
+        current_new.ips.remove(index);
+        current_new.rpc_ports.remove(index);
+        current_new.p2p_ports.remove(index);
     }
     config.current_config = Some(current_new);
     write_whole_to_file(config, &file_name);
-    // println!("{:?}", config);
-
     Ok(())
 }
 
@@ -152,10 +148,10 @@ mod delete_test {
     #[test]
     fn test_execute() {
         execute_delete(DeleteOpts {
-            config_name: "".to_string(),
+            config_name: "config.toml".to_string(),
             config_dir: Some("".to_string()),
             chain_name: "cita-chain".to_string(),
-            index: "0,1".to_string(),
+            index: "2".to_string(),
             addresses: "".to_string(),
         });
 

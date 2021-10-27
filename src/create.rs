@@ -23,15 +23,16 @@ use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKC
 use regex::Regex;
 use serde::Serialize;
 use crate::traits::{Kms, TomlWriter};
-use crate::error::{Error, Result};
+use crate::error::{Error};
 use crate::config::admin::{AdminConfig, CurrentConfig};
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorConfig;
 use crate::config::kms_sm::KmsConfig;
-use crate::config::network_p2p::NetConfig;
-use crate::config::network_tls::{NetworkConfig, PeerConfig};
+use crate::config::network_p2p::{NetConfig, PeerConfig};
+use crate::config::network_tls::{NetworkConfig};
 use crate::config::storage_rocksdb::StorageConfig;
 use crate::constant::*;
+type Result = std::result::Result<(), Error>;
 
 /// A subcommand for run
 #[derive(Args, Debug, Clone)]
@@ -104,7 +105,7 @@ impl CreateOpts {
     }
 }
 
-fn validate_p2p_ports(s: String) -> bool {
+pub fn validate_p2p_ports(s: String) -> bool {
     match s {
         s if s.is_empty() => false,
         s => {
@@ -119,12 +120,12 @@ fn validate_p2p_ports(s: String) -> bool {
     }
 }
 
-fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
+pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
     let kms = crate::config::kms_sm::Kms::create_kms_db(format!("{}/{}", node_dir.clone(), "kms.db"), kms_password.clone());
     kms.generate_key_pair("create by cmd".to_string())
 }
 
-fn ca_cert() -> (Certificate, String, String) {
+pub fn ca_cert() -> (Certificate, String, String) {
     let mut params = CertificateParams::new(vec![]);
     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
 
@@ -137,7 +138,7 @@ fn ca_cert() -> (Certificate, String, String) {
     (cert, cert_pem, key_pem)
 }
 
-fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {
+pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {
     let subject_alt_names = vec![domain.into()];
     let mut params = CertificateParams::new(subject_alt_names);
 
@@ -154,62 +155,54 @@ fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {
 fn parse(
     opts: CreateOpts,
     i: usize,
-    rpc_port: u16,
-    p2p_port: u16,
-    admin_key: u64,
-    admin_address: &str,
-    path_prefix: &str,
-    key_ids: &Vec<u64>,
-    addresses: &[String],
-    uris: &Vec<String>,
-    tls_peers: &Vec<PeerConfig>,
-    ca_cert: &Certificate,
-    ca_cert_pem: &String,
-    genesis: &GenesisBlock,
-    system: &SystemConfigFile,
+    admin: &AdminParam,
 ) {
-    let chain_name = format!("{}-{}", path_prefix, i);
-    let file_name = format!("{}/{}", &chain_name, DEFAULT_CONFIG_NAME);
-    ControllerConfig::new(rpc_port, key_ids[i], &addresses[i], opts.package_limit).write(&file_name);
-    genesis.write(&file_name);
-    system.write(&file_name);
+    let chain_name = format!("{}-{}", &admin.chain_path, &admin.addresses[i][2..]);
+    let file_name = format!("{}/{}", &chain_name, opts.config_name);
+    let p2p_port = admin.p2p_ports[i];
+    let rpc_port = admin.rpc_ports[i];
+    let ip = admin.ips[i].clone();
+    ControllerConfig::new(rpc_port, admin.key_ids[i], &admin.addresses[i], opts.package_limit).write(&file_name);
+    admin.genesis.write(&file_name);
+    admin.system.write(&file_name);
 
-    let mut uris = uris.clone();
+    let mut uris = admin.uris.clone();
     uris.remove(i);
     NetConfig::new(p2p_port, rpc_port, &uris).write(&file_name);
 
-    let mut tls_peers = tls_peers.clone();
+    let mut tls_peers = admin.tls_peers.clone();
     tls_peers.remove(i);
-    let domain = format!("peer{}", i);
-    let (_, cert, priv_key) = cert(&domain, &ca_cert);
-    NetworkConfig::new(p2p_port, rpc_port, ca_cert_pem.clone(), cert, priv_key, tls_peers).write(&file_name);
+    let (_, cert, priv_key) = cert(&ip, &admin.ca_cert);
+    NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers).write(&file_name);
 
     KmsConfig::new(rpc_port + 5).write(&file_name);
     AdminConfig::new(
         "0".to_string(),
-        admin_key,
+        admin.admin_key,
         format!("{}/{}", chain_name, "kms.db"),
-        format!("0x{}", hex::encode(admin_address))).write(&file_name);
+        format!("0x{}", hex::encode(admin.admin_address.clone()))).write(&file_name);
     StorageConfig::new(rpc_port + 5, rpc_port + 3).write(&file_name);
     ExecutorConfig::new(rpc_port + 2).write(&file_name);
 }
 
-
-struct AdminParam {
-    admin_key: u64,
-    admin_address: String,
-    chain_path: String,
-    key_ids: Vec<u64>,
-    addresses: Vec<String>,
-    uris: Vec<String>,
-    tls_peers: Vec<PeerConfig>,
-    ca_cert: Certificate,
-    ca_cert_pem: String,
-    genesis: GenesisBlock,
-    system: SystemConfigFile,
+pub struct AdminParam {
+    pub admin_key: u64,
+    pub admin_address: String,
+    pub chain_path: String,
+    pub key_ids: Vec<u64>,
+    pub addresses: Vec<String>,
+    pub uris: Vec<PeerConfig>,
+    pub tls_peers: Vec<crate::config::network_tls::PeerConfig>,
+    pub ca_cert: Certificate,
+    pub ca_cert_pem: String,
+    pub genesis: GenesisBlock,
+    pub system: SystemConfigFile,
+    pub rpc_ports: Vec<u16>,
+    pub p2p_ports: Vec<u16>,
+    pub ips: Vec<String>,
 }
 
-fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> AdminParam {
+fn init_admin(peers_count: usize, pair: &Vec<String>, grpc_ports: Vec<u16>, opts: CreateOpts) -> AdminParam {
     let path = if let Some(dir) = &opts.config_dir {
         format!("{}/{}", dir, &opts.chain_name)
     } else {
@@ -219,19 +212,32 @@ fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> Admin
     fs::create_dir_all(&path).unwrap();
     let mut key_ids = Vec::new();
     let mut addresses = Vec::new();
-    let mut uris = Vec::new();
-    let mut tls_peers: Vec<PeerConfig> = Vec::new();
+    let mut uris: Vec<PeerConfig> = Vec::new();
+    let mut tls_peers: Vec<crate::config::network_tls::PeerConfig> = Vec::new();
+    let mut grpc = Vec::new();
+    let mut p2p = Vec::new();
+    let mut ips = Vec::new();
 
     let (ca_cert, ca_cert_pem, ca_key_pem) = ca_cert();
 
     let mut f = File::create("ca_key.pem").unwrap();
     f.write_all(ca_key_pem.as_bytes()).unwrap();
     for i in 0..peers_count {
-        fs::create_dir_all(format!("{}-{}", path, i)).unwrap();
+        let dir = format!("{}-{}", path, i);
+        fs::create_dir_all(&dir).unwrap();
 
         let (key_id, address) = key_pair(opts.get_dir(i as u16), opts.kms_password.clone());
+        let address = hex::encode(address);
+        let dir_new = format!("{}-{}", path, address);
+        fs::rename(&dir, dir_new);
+
         key_ids.push(key_id);
-        addresses.push(format!("0x{}", hex::encode(address)));
+        addresses.push(format!("0x{}", address));
+        if grpc_ports.is_empty() {
+            grpc.push(GRPC_PORT_BEGIN + i as u16 * 1000)
+        } else {
+            grpc.push(grpc_ports[i])
+        }
         let port: u16;
         let ip: &str;
         if !pair.is_empty() {
@@ -242,12 +248,16 @@ fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> Admin
             ip = DEFAULT_ADDRESS;
             port = P2P_PORT_BEGIN + i as u16;
         }
-        uris.push(format!("/{}/{}/{}/{}", IPV4, ip, TCP, port));
-        let domain = format!("peer{}", i);
-        tls_peers.push(PeerConfig {
+        ips.push(ip.to_string());
+        p2p.push(port.clone());
+
+        uris.push(PeerConfig {
+            address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port)
+        });
+        tls_peers.push(crate::config::network_tls::PeerConfig {
             host: ip.into(),
             port,
-            domain,
+            domain: ip.into(),
         });
     };
     let mut file_name = format!("{}/{}", path.clone(), DEFAULT_CONFIG_NAME);
@@ -265,7 +275,7 @@ fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> Admin
     let (admin_key, admin_address) = key_pair(opts.admin_dir(), opts.kms_password.clone());
     let admin_address: String = format!("0x{}", hex::encode(admin_address));
     AdminConfig::default(admin_key.clone(), admin_address.clone()).write(&file_name);
-    CurrentConfig::new(&uris, tls_peers.clone(), addresses.clone()).write(&file_name);
+    CurrentConfig::new(&uris, tls_peers.clone(), addresses.clone(), grpc.clone(), p2p.clone(), ips.clone()).write(&file_name);
     AdminParam {
         admin_key,
         admin_address,
@@ -278,6 +288,9 @@ fn init_admin(peers_count: usize, pair: &Vec<String>, opts: CreateOpts) -> Admin
         ca_cert_pem,
         genesis,
         system,
+        rpc_ports: grpc.clone(),
+        p2p_ports: p2p.clone(),
+        ips: ips.clone(),
     }
 }
 
@@ -297,72 +310,30 @@ pub fn execute_create(opts: CreateOpts) -> Result {
                 opts => {
                     let pair: Vec<String> = opts.p2p_ports.split(",").map(String::from).collect();
                     let peers_count = pair.len();
-                    let param = init_admin(peers_count, &pair, opts.clone());
+                    let param = init_admin(peers_count, &pair, vec![],opts.clone());
                     for i in 0..peers_count {
-                        let mut v: Vec<&str> = pair[i].split(":").collect();
-                        let rpc_port = GRPC_PORT_BEGIN + i as u16 * 1000;
-                        parse(opts.clone(), i, rpc_port, v[1].parse().unwrap(),
-                              param.admin_key,
-                              &param.admin_address,
-                              &param.chain_path,
-                              &param.key_ids,
-                              &param.addresses,
-                              &param.uris,
-                              &param.tls_peers,
-                              &param.ca_cert,
-                              &param.ca_cert_pem,
-                              &param.genesis,
-                              &param.system,
-                        )
+                        parse(opts.clone(), i, &param)
                     }
                 }
             },
             //以peers_count为准
             opts => {
                 let peers_count: usize = opts.peers_count.unwrap() as usize;
-                let param = init_admin(peers_count, &vec![], opts.clone());
+                let param = init_admin(peers_count, &vec![], vec![], opts.clone());
                 for i in 0..peers_count {
-                    let rpc_port = GRPC_PORT_BEGIN + i as u16 * 1000;
-                    let p2p_port = P2P_PORT_BEGIN + i as u16;
-                    parse(opts.clone(), i, rpc_port, p2p_port,
-                          param.admin_key,
-                          &param.admin_address,
-                          &param.chain_path,
-                          &param.key_ids,
-                          &param.addresses,
-                          &param.uris,
-                          &param.tls_peers,
-                          &param.ca_cert,
-                          &param.ca_cert_pem,
-                          &param.genesis,
-                          &param.system,
-                    )
+                    parse(opts.clone(), i, &param)
                 }
             }
         }
         //以grpc_ports为准
         opts if !opts.p2p_ports.is_empty() && opts.p2p_ports.split(",").count() != opts.grpc_ports.split(",").count() => return Err(Error::P2pPortsParamNotValid),
         opts => {
-            let grpc_ports = opts.grpc_ports.split(",");
-            let peers_count = grpc_ports.count();
-            let param = init_admin(peers_count, &vec![], opts.clone());
+            let grpc_ports: Vec<u16> = opts.grpc_ports.split(",").map(|p| {p.parse().unwrap()}).collect();
+            let pair: Vec<String> = opts.p2p_ports.split(",").map(String::from).collect();
+            let peers_count = grpc_ports.len();
+            let param = init_admin(peers_count, &pair, grpc_ports, opts.clone());
             for i in 0..peers_count {
-                let rpc_ports: Vec<&str> = opts.grpc_ports.split(",").collect();
-                let p2p_port = P2P_PORT_BEGIN + i as u16;
-
-                parse(opts.clone(), i, rpc_ports[i].parse().unwrap(), p2p_port,
-                      param.admin_key,
-                      &param.admin_address,
-                      &param.chain_path,
-                      &param.key_ids,
-                      &param.addresses,
-                      &param.uris,
-                      &param.tls_peers,
-                      &param.ca_cert,
-                      &param.ca_cert_pem,
-                      &param.genesis,
-                      &param.system,
-                )
+                parse(opts.clone(), i,&param)
             }
         }
     };
@@ -392,7 +363,7 @@ mod create_test {
             storage: STORAGE_ROCKSDB.to_string(),
             grpc_ports: "".to_string(),
             p2p_ports: "".to_string(),
-            peers_count: Some(4),
+            peers_count: Some(2),
             kms_password: "123456".to_string(),
             package_limit: 100,
         });
