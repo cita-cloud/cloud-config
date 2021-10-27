@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::STORAGE_ROCKSDB;
-use crate::traits::TomlWriter;
+use crate::constant::{STORAGE, STORAGE_ROCKSDB};
+use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct StorageConfig {
+pub struct StorageRocksdbConfig {
     pub kms_port: u16,
     pub storage_port: u16,
 }
 
-impl StorageConfig {
+impl StorageRocksdbConfig {
     pub fn new(kms_port: u16,
                storage_port: u16) -> Self {
         Self {
@@ -33,8 +33,16 @@ impl StorageConfig {
     }
 }
 
-impl TomlWriter for StorageConfig {
+impl TomlWriter for StorageRocksdbConfig {
     fn section(&self) -> String {
         STORAGE_ROCKSDB.to_string()
+    }
+}
+
+
+
+impl YmlWriter for StorageRocksdbConfig {
+    fn service(&self) -> String {
+        STORAGE.to_string()
     }
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{NETWORK_TLS};
-use crate::traits::TomlWriter;
+use crate::constant::{NETWORK, NETWORK_TLS};
+use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 fn default_reconnect_timeout() -> Option<u64> {
     Some(5)
@@ -86,5 +86,11 @@ impl NetworkConfig {
 impl TomlWriter for NetworkConfig {
     fn section(&self) -> String {
         NETWORK_TLS.to_string()
+    }
+}
+
+impl YmlWriter for NetworkConfig {
+    fn service(&self) -> String {
+        NETWORK.to_string()
     }
 }

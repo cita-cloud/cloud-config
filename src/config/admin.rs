@@ -14,6 +14,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::path;
+use rcgen::Certificate;
+use crate::config::controller::{GenesisBlock, SystemConfigFile};
 use crate::config::network_p2p::PeerConfig;
 use crate::constant::{ADMIN_CONFIG, CURRENT_CONFIG};
 use crate::traits::TomlWriter;
@@ -31,9 +33,11 @@ pub struct AdminConfig {
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct CurrentConfig {
-    pub peers: Vec<PeerConfig>,
+    pub count: u16,
 
-    pub tls_peers: Vec<crate::config::network_tls::PeerConfig>,
+    pub peers: Option<Vec<PeerConfig>>,
+
+    pub tls_peers: Option<Vec<crate::config::network_tls::PeerConfig>>,
 
     pub addresses: Vec<String>,
 
@@ -44,16 +48,36 @@ pub struct CurrentConfig {
     pub ips: Vec<String>,
 }
 
+pub struct AdminParam {
+    pub admin_key: u64,
+    pub admin_address: String,
+    pub chain_path: String,
+    pub key_ids: Vec<u64>,
+    pub addresses: Vec<String>,
+    pub uris: Option<Vec<PeerConfig>>,
+    pub tls_peers: Option<Vec<crate::config::network_tls::PeerConfig>>,
+    pub ca_cert: Certificate,
+    pub ca_cert_pem: String,
+    pub genesis: GenesisBlock,
+    pub system: SystemConfigFile,
+    pub rpc_ports: Vec<u16>,
+    pub p2p_ports: Vec<u16>,
+    pub ips: Vec<String>,
+    pub count_old: u16,
+}
+
 impl CurrentConfig {
-    pub fn new(peers: &Vec<PeerConfig>,
+    pub fn new(count: u16,
+                peers: &Vec<PeerConfig>,
                tls_peers: Vec<crate::config::network_tls::PeerConfig>,
                addresses: Vec<String>,
                rpc_ports: Vec<u16>,
                p2p_ports: Vec<u16>,
                ips: Vec<String>,) -> Self {
         Self {
-            peers: peers.clone(),
-            tls_peers,
+            count,
+            peers: Some(peers.clone()),
+            tls_peers: Some(tls_peers),
             addresses,
             rpc_ports,
             p2p_ports,

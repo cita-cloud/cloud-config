@@ -16,8 +16,9 @@ use crate::constant::{CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, G
 use serde::{Deserialize, Serialize};
 
 use std::path;
-use crate::traits::TomlWriter;
+use crate::traits::{TomlWriter, Writer, YmlWriter};
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::util;
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {
@@ -61,6 +62,13 @@ impl ControllerConfig {
 
 impl TomlWriter for ControllerConfig {
     fn section(&self) -> String {
+        CONTROLLER.to_string()
+    }
+}
+
+
+impl YmlWriter for ControllerConfig {
+    fn service(&self) -> String {
         CONTROLLER.to_string()
     }
 }

@@ -1,3 +1,6 @@
+use crate::constant::CONSENSUS;
+use crate::traits::{TomlWriter, YmlWriter};
+
 // Copyright Rivtower Technologies LLC.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,4 +14,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Clone, Deserialize)]
+pub struct Consensus{
+
+}
+
+impl YmlWriter for Consensus {
+    fn service(&self) -> String {
+        CONSENSUS.to_string()
+    }
+}

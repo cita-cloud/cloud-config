@@ -28,8 +28,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::path;
-use crate::constant::NETWORK_P2P;
-use crate::traits::TomlWriter;
+use crate::constant::{NETWORK, NETWORK_P2P};
+use crate::traits::{TomlWriter, YmlWriter};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NetConfig {
@@ -42,6 +42,7 @@ pub struct NetConfig {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub peers: Vec<PeerConfig>,
 }
+
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct PeerConfig {
@@ -84,6 +85,12 @@ impl NetConfig {
 impl TomlWriter for NetConfig {
     fn section(&self) -> String {
         NETWORK_P2P.to_string()
+    }
+}
+
+impl YmlWriter for NetConfig {
+    fn service(&self) -> String {
+        NETWORK.to_string()
     }
 }
 

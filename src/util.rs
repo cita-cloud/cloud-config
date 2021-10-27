@@ -15,31 +15,11 @@
 use std::{path, fs};
 use toml::Value;
 use std::io::Write;
+use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256};
+use regex::Regex;
 use toml::de::Error;
-use crate::config::admin::{AdminConfig, CurrentConfig};
-use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
-use crate::config::network_p2p::{NetConfig};
-use crate::traits::TomlWriter;
-use serde::{Deserialize, Serialize};
-use crate::config::executor_evm::ExecutorConfig;
-use crate::config::kms_sm::KmsConfig;
-use crate::config::network_tls::NetworkConfig;
-use crate::config::storage_rocksdb::StorageConfig;
+use crate::traits::{AggregateConfig, Kms, TomlWriter};
 
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AggregateConfig {
-    pub admin_config: AdminConfig,
-    pub system_config: SystemConfigFile,
-    pub genesis_block: GenesisBlock,
-    pub network_p2p: NetConfig,
-    pub network_tls: NetworkConfig,
-    pub controller: Option<ControllerConfig>,
-    pub kms_sm: Option<KmsConfig>,
-    pub storage_rocksdb: Option<StorageConfig>,
-    pub executor_evm: Option<ExecutorConfig>,
-    pub current_config: Option<CurrentConfig>,
-}
 
 pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>, name: String) {
     let value = Value::try_from(content).unwrap();
@@ -72,14 +52,65 @@ pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path
     content.admin_config.write(&path);
     content.system_config.write(&path);
     content.genesis_block.write(&path);
-    content.network_p2p.write(&path);
-    content.network_tls.write(&path);
+    if let Some(t) = content.network_p2p {
+        t.write(&path);
+    }
+
+    if let Some(t) = content.network_tls {
+        t.write(&path);
+    }
 }
 
 pub fn read_from_file(path: impl AsRef<path::Path>) -> Result<AggregateConfig, Error> {
     let buffer = std::fs::read_to_string(path)
         .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
     toml::from_str::<AggregateConfig>(&buffer)
+}
+
+pub fn validate_p2p_ports(s: String) -> bool {
+    match s {
+        s if s.is_empty() => false,
+        s => {
+            let r = Regex::new(r"(^(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$)").unwrap();
+            for item in s.split(",") {
+                if !r.is_match(item) {
+                    return false;
+                }
+            };
+            true
+        }
+    }
+}
+
+pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
+    let kms = crate::config::kms_sm::Kms::create_kms_db(format!("{}/{}", node_dir.clone(), "kms.db"), kms_password.clone());
+    kms.generate_key_pair("create by cmd".to_string())
+}
+
+pub fn ca_cert() -> (Certificate, String, String) {
+    let mut params = CertificateParams::new(vec![]);
+    params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
+
+    let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
+    params.key_pair.replace(keypair);
+
+    let cert = Certificate::from_params(params).unwrap();
+    let cert_pem = cert.serialize_pem_with_signer(&cert).unwrap();
+    let key_pem = cert.serialize_private_key_pem();
+    (cert, cert_pem, key_pem)
+}
+
+pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {
+    let subject_alt_names = vec![domain.into()];
+    let mut params = CertificateParams::new(subject_alt_names);
+
+    let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
+    params.key_pair.replace(keypair);
+
+    let cert = Certificate::from_params(params).unwrap();
+    let cert_pem = cert.serialize_pem_with_signer(signer).unwrap();
+    let key_pem = cert.serialize_private_key_pem();
+    (cert, cert_pem, key_pem)
 }
 
 #[cfg(test)]

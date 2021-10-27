@@ -14,6 +14,7 @@
 
 use std::collections::HashSet;
 use std::fs;
+use std::iter::FromIterator;
 use std::path::Path;
 use clap::Args;
 use crate::config::admin::CurrentConfig;
@@ -58,7 +59,6 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
     }
     let mut file_name = format!("./{}/{}", path.clone(), opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
-    fs::remove_file(&file_name);
     let mut index_set = HashSet::new();
     let current = config.current_config.as_ref().unwrap();
     if !opts.index.is_empty() {
@@ -71,19 +71,26 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
             }
         }
     } else {
+        if opts.addresses.is_empty() {
+            return Err(Error::DeleteParamNotValid);
+        }
         let a = opts.addresses.split(",");
         for item in a {
             match current.addresses.iter().position(|address| address == item) {
                 None => return Err(Error::DeleteParamNotValid),
-                Some(i) => match i {
-                    i if i >= 2 => return Err(Error::DeleteParamNotValid),
-                    i => {
-                        index_set.insert(i);
-                    }
-                },
+                Some(i) => {
+                    index_set.insert(i);
+                }
             }
         }
     }
+    let index_old = HashSet::from_iter(0..current.count as usize);
+    if !index_old.intersection(&index_set).eq(&index_set) {
+        return Err(Error::DeleteParamNotValid);
+    }
+
+    fs::remove_file(&file_name);
+
     for i in 0..current.addresses.len() {
 
         let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
@@ -94,32 +101,86 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
         }
         let mut peer_config = read_from_file(&file_name).unwrap();
         fs::remove_file(&file_name);
-        let mut peers = Vec::new();
-        for (j, item) in current.peers.iter().enumerate() {
-            if j != i && !index_set.contains(&j) {
-                peers.push(item.clone());
+        if let Some(p) = &current.peers {
+            let mut peers = Vec::new();
+            for (j, item) in p.iter().enumerate() {
+                if j != i && !index_set.contains(&j) {
+                    peers.push(item.clone());
+                }
+            }
+            if let Some(mut net) = peer_config.network_p2p.as_mut() {
+                net.peers = peers;
             }
         }
-        peer_config.network_p2p.peers = peers;
-        let mut tls_peers = Vec::new();
-        for (j, item) in current.tls_peers.iter().enumerate() {
-            if j != i && !index_set.contains(&j) {
-                tls_peers.push(item.clone());
+
+        if let Some(p) = &current.tls_peers {
+            let mut tls_peers = Vec::new();
+            for (j, item) in p.iter().enumerate() {
+                if j != i && !index_set.contains(&j) {
+                    tls_peers.push(item.clone());
+                }
+            }
+            if let Some(mut net) = peer_config.network_tls.as_mut() {
+                net.peers = tls_peers;
             }
         }
-        peer_config.network_tls.peers = tls_peers;
+
         println!("{:?}", peer_config);
         write_whole_to_file(peer_config, &file_name);
     }
     let mut current_new = current.clone();
-    for index in index_set {
-        current_new.peers.remove(index);
-        current_new.tls_peers.remove(index);
-        current_new.addresses.remove(index);
-        current_new.ips.remove(index);
-        current_new.rpc_ports.remove(index);
-        current_new.p2p_ports.remove(index);
+    current_new.count = current_new.count - index_set.len() as u16;
+    if let Some(p) = &current_new.peers {
+        let mut peers_new = Vec::new();
+        for (i, peer) in p.iter().enumerate() {
+            if !index_set.contains(&i) {
+                peers_new.push(peer.clone());
+            }
+        }
+        current_new.peers = Some(peers_new);
     }
+
+    if let Some(p) = &current_new.tls_peers {
+        let mut tls_peers_new = Vec::new();
+        for (i, peer) in p.iter().enumerate() {
+            if !index_set.contains(&i) {
+                tls_peers_new.push(peer.clone());
+            }
+        }
+        current_new.tls_peers = Some(tls_peers_new);
+    }
+
+    let mut addresses_new = Vec::new();
+    for (i, address) in current_new.addresses.iter().enumerate() {
+        if !index_set.contains(&i) {
+            addresses_new.push(address.clone());
+        }
+    }
+    current_new.addresses = addresses_new;
+    let mut ips_new = Vec::new();
+    for (i, ip) in current_new.ips.iter().enumerate() {
+        if !index_set.contains(&i) {
+            ips_new.push(ip.clone());
+        }
+    }
+    current_new.ips = ips_new;
+
+    let mut rpc_ports_new = Vec::new();
+    for (i, rpc_port) in current_new.rpc_ports.iter().enumerate() {
+        if !index_set.contains(&i) {
+            rpc_ports_new.push(rpc_port.clone());
+        }
+    }
+    current_new.rpc_ports = rpc_ports_new;
+
+    let mut p2p_ports_new = Vec::new();
+    for (i, p2p_port) in current_new.p2p_ports.iter().enumerate() {
+        if !index_set.contains(&i) {
+            p2p_ports_new.push(p2p_port.clone());
+        }
+    }
+    current_new.p2p_ports = p2p_ports_new;
+
     config.current_config = Some(current_new);
     write_whole_to_file(config, &file_name);
     Ok(())
@@ -127,11 +188,20 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
 
 #[cfg(test)]
 mod delete_test {
+
     use std::collections::HashMap;
     use std::convert::TryFrom;
+    use std::iter::FromIterator;
     use super::*;
     use toml::Value;
     use crate::util::write_to_file;
+
+    #[test]
+    fn test_set() {
+        let a: HashSet<usize> = HashSet::from_iter([1, 3, 4]);
+        let b: HashSet<usize> = HashSet::from_iter([3, 4]);
+        println!("{:?}", a.intersection(&b).eq(&b));
+    }
 
     #[test]
     fn test_validator() {
@@ -141,8 +211,15 @@ mod delete_test {
             "0xfd638ee4293e3b9fa37526d3ebbd64e1d4e11edf",
             "0x67fd1f568a0369d816a8f6ff0043da97c9d2f781",
         ];
-        let index = a.iter().position(|x| {x == &"0x5df08841c932b361f36aabb4d7945294bea42732"});
-        println!("{}", index.unwrap());
+        let set: HashSet<usize> = HashSet::from_iter([2, 3]);
+        let r: Vec<String> = a.into_iter().enumerate().flat_map(|(i, p)| {
+            if !set.contains(&i) {
+                Some(p.into())
+            } else {
+                None
+            }
+        }).collect();
+        println!("...");
     }
 
     #[test]
@@ -151,7 +228,7 @@ mod delete_test {
             config_name: "config.toml".to_string(),
             config_dir: Some("".to_string()),
             chain_name: "cita-chain".to_string(),
-            index: "2".to_string(),
+            index: "1,3".to_string(),
             addresses: "".to_string(),
         });
 

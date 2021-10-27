@@ -14,15 +14,15 @@
 
 use serde::{Deserialize, Serialize};
 use std::path;
-use crate::constant::EXECUTOR_EVM;
-use crate::traits::TomlWriter;
+use crate::constant::{EXECUTOR, EXECUTOR_EVM};
+use crate::traits::{TomlWriter, YmlWriter};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct ExecutorConfig {
+pub struct ExecutorEvmConfig {
     pub executor_port: u16,
 }
 
-impl ExecutorConfig {
+impl ExecutorEvmConfig {
     pub fn new(executor_port: u16) -> Self {
         Self {
             executor_port
@@ -30,9 +30,15 @@ impl ExecutorConfig {
     }
 }
 
-impl TomlWriter for ExecutorConfig {
+impl TomlWriter for ExecutorEvmConfig {
     fn section(&self) -> String {
         EXECUTOR_EVM.to_string()
+    }
+}
+
+impl YmlWriter for ExecutorEvmConfig {
+    fn service(&self) -> String {
+        EXECUTOR.to_string()
     }
 }
 
@@ -46,7 +52,7 @@ mod executor_test {
     fn basic_test() {
         let _ = std::fs::remove_file("example/config.toml");
 
-        let config = ExecutorConfig {
+        let config = ExecutorEvmConfig {
             executor_port: 51232,
         };
 

@@ -15,23 +15,22 @@
 // use status_code::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::path;
-use crate::constant::KMS_SM;
-use crate::traits::TomlWriter;
+use crate::constant::{KMS, KMS_SM};
+use crate::traits::{TomlWriter, YmlWriter};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct KmsConfig {
+pub struct KmsSmConfig {
     pub kms_port: u16,
 }
 
-impl KmsConfig {
+impl KmsSmConfig {
     pub fn new(kms_port: u16) -> Self {
         Self {
             kms_port
         }
     }
 }
-
-impl TomlWriter for KmsConfig {
+impl TomlWriter for KmsSmConfig {
     fn section(&self) -> String {
         KMS_SM.to_string()
     }
@@ -49,6 +48,12 @@ impl crate::traits::Kms for Kms {
     }
 }
 
+impl YmlWriter for KmsSmConfig{
+    fn service(&self) -> String {
+        KMS.to_string()
+    }
+}
+
 #[cfg(test)]
 mod kms_test {
     use super::*;
@@ -59,7 +64,7 @@ mod kms_test {
     fn basic_test() {
         let _ = std::fs::remove_file("example/config.toml");
 
-        let config = KmsConfig {
+        let config = KmsSmConfig {
             kms_port: 51235,
         };
 
