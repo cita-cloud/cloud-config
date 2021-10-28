@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use serde::{Deserialize, Serialize};
-use std::path;
 use crate::constant::{EXECUTOR, EXECUTOR_EVM};
 use crate::traits::{TomlWriter, YmlWriter};
 

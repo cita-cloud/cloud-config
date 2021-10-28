@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 use std::collections::HashSet;
 use std::fs;
 use std::iter::FromIterator;
 use std::path::Path;
-use clap::Args;
-use crate::config::admin::CurrentConfig;
-use crate::constant::DEFAULT_CONFIG_NAME;
-use crate::error::{Error};
-use crate::traits::TomlWriter;
+use crate::error::Error;
 use crate::util::{read_from_file, write_whole_to_file};
-type Result = std::result::Result<(), Error>;
+use clap::Args;
 
 /// A subcommand for run
 #[derive(Args, Debug, Clone)]
@@ -45,7 +42,7 @@ pub struct DeleteOpts {
 }
 
 
-pub fn execute_delete(opts: DeleteOpts) -> Result {
+pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     let path = if let Some(dir) = &opts.config_dir {
         format!("{}/{}", dir, &opts.chain_name)
     } else {
@@ -57,15 +54,15 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
     if opts.index.is_empty() && opts.addresses.is_empty() {
         return Err(Error::DeleteParamNotValid);
     }
-    let mut file_name = format!("./{}/{}", path.clone(), opts.config_name);
+    let file_name = format!("./{}/{}", path, opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
     let mut index_set = HashSet::new();
     let current = config.current_config.as_ref().unwrap();
     if !opts.index.is_empty() {
-        let a =  opts.index.split(",");
+        let a =  opts.index.split(',');
         for item in a {
             if item.parse::<usize>().is_err() {
-                return Err(Error::DeleteParamNotValid);
+                return Err(Error::DeleteIndexNotValid);
             } else {
                 index_set.insert(item.parse::<usize>().unwrap());
             }
@@ -74,7 +71,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
         if opts.addresses.is_empty() {
             return Err(Error::DeleteParamNotValid);
         }
-        let a = opts.addresses.split(",");
+        let a = opts.addresses.split(',');
         for item in a {
             match current.addresses.iter().position(|address| address == item) {
                 None => return Err(Error::DeleteParamNotValid),
@@ -89,18 +86,18 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
         return Err(Error::DeleteParamNotValid);
     }
 
-    fs::remove_file(&file_name);
+    fs::remove_file(&file_name).unwrap();
 
     for i in 0..current.addresses.len() {
 
         let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
         let file_name = format!("{}/{}", &chain_name, opts.config_name);
         if index_set.contains(&i) {
-            fs::remove_dir_all(chain_name);
+            fs::remove_dir_all(chain_name).unwrap();
             continue;
         }
         let mut peer_config = read_from_file(&file_name).unwrap();
-        fs::remove_file(&file_name);
+        fs::remove_file(&file_name).unwrap();
         if let Some(p) = &current.peers {
             let mut peers = Vec::new();
             for (j, item) in p.iter().enumerate() {
@@ -129,7 +126,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
         write_whole_to_file(peer_config, &file_name);
     }
     let mut current_new = current.clone();
-    current_new.count = current_new.count - index_set.len() as u16;
+    current_new.count -= index_set.len() as u16;
     if let Some(p) = &current_new.peers {
         let mut peers_new = Vec::new();
         for (i, peer) in p.iter().enumerate() {
@@ -168,7 +165,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
     let mut rpc_ports_new = Vec::new();
     for (i, rpc_port) in current_new.rpc_ports.iter().enumerate() {
         if !index_set.contains(&i) {
-            rpc_ports_new.push(rpc_port.clone());
+            rpc_ports_new.push(*rpc_port);
         }
     }
     current_new.rpc_ports = rpc_ports_new;
@@ -176,7 +173,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
     let mut p2p_ports_new = Vec::new();
     for (i, p2p_port) in current_new.p2p_ports.iter().enumerate() {
         if !index_set.contains(&i) {
-            p2p_ports_new.push(p2p_port.clone());
+            p2p_ports_new.push(*p2p_port);
         }
     }
     current_new.p2p_ports = p2p_ports_new;
@@ -189,7 +186,6 @@ pub fn execute_delete(opts: DeleteOpts) -> Result {
 #[cfg(test)]
 mod delete_test {
 
-    use std::collections::HashMap;
     use std::convert::TryFrom;
     use std::iter::FromIterator;
     use super::*;

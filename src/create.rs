@@ -12,30 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::{HashMap, HashSet};
-use std::collections::hash_map::RandomState;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::iter::FromIterator;
-use clap::Args;
-use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256};
-use regex::Regex;
-use serde::Serialize;
-use crate::traits::{Kms, Opts, TomlWriter, YmlWriter};
-use crate::error::{Error};
 use crate::config::admin::{AdminConfig, AdminParam, CurrentConfig};
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
-use crate::config::executor_evm::{ExecutorEvmConfig};
-use crate::config::kms_sm::{KmsSmConfig};
+use crate::config::executor_evm::ExecutorEvmConfig;
+use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
-use crate::config::network_tls::{NetworkConfig};
-use crate::config::storage_rocksdb::{StorageRocksdbConfig};
-use crate::constant::*;
+use crate::config::network_tls::NetworkConfig;
+use crate::config::storage_rocksdb::StorageRocksdbConfig;
+use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, P2P_PORT_BEGIN, STORAGE_ROCKSDB, TCP};
+use crate::error::Error;
+use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
-
-// type Result = std::result::Result<(), Error>;
+use clap::Args;
 
 /// A subcommand for run
 #[derive(Args, Debug, Clone)]
@@ -95,7 +87,7 @@ impl CreateOpts {
         if let Some(dir) = &self.config_dir {
             format!("{}/{}", dir, &self.chain_name)
         } else {
-            format!("{}", &self.chain_name)
+            (&self.chain_name).to_string()
         }
     }
 
@@ -109,7 +101,7 @@ impl CreateOpts {
 }
 
 impl Opts for CreateOpts {
-    fn init_admin(&self, peers_count: usize, pair: &Vec<String>, grpc_ports: Vec<u16>) -> Result<AdminParam, Error> {
+    fn init_admin(&self, peers_count: usize, pair: &[String], grpc_ports: Vec<u16>) -> Result<AdminParam, Error> {
         let path = if let Some(dir) = &self.config_dir {
             format!("{}/{}", dir, &self.chain_name)
         } else {
@@ -136,7 +128,7 @@ impl Opts for CreateOpts {
             let (key_id, address) = key_pair(self.get_dir(i as u16), self.kms_password.clone());
             let address = hex::encode(address);
             let dir_new = format!("{}-{}", path, address);
-            fs::rename(&dir, dir_new);
+            fs::rename(&dir, dir_new).unwrap();
             let address_str = format!("0x{}", address);
             key_ids.push(key_id);
             addresses.push(address_str.clone());
@@ -148,7 +140,7 @@ impl Opts for CreateOpts {
             let port: u16;
             let ip: &str;
             if !pair.is_empty() {
-                let mut v: Vec<&str> = pair[i].split(":").collect();
+                let v: Vec<&str> = pair[i].split(':').collect();
                 ip = v[0];
                 port = v[1].parse().unwrap();
             } else {
@@ -156,7 +148,7 @@ impl Opts for CreateOpts {
                 port = P2P_PORT_BEGIN + i as u16;
             }
             ips.push(ip.to_string());
-            p2p.push(port.clone());
+            p2p.push(port);
 
             uris.push(PeerConfig {
                 address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port)
@@ -164,29 +156,29 @@ impl Opts for CreateOpts {
             tls_peers.push(crate::config::network_tls::PeerConfig {
                 host: ip.into(),
                 port,
-                domain: address_str.into(),
+                domain: address_str,
             });
         };
-        let mut file_name = format!("{}/{}", path.clone(), DEFAULT_CONFIG_NAME);
+        let file_name = format!("{}/{}", path, DEFAULT_CONFIG_NAME);
         NetConfig::default(&uris).write(&file_name);
         NetworkConfig::default(tls_peers.clone()).write(&file_name);
         let genesis = GenesisBlock::default();
-        &genesis.write(&file_name);
+        genesis.write(&file_name);
         let system = SystemConfigFile::default(
             self.version,
             hex::encode(&self.chain_name),
             hex::encode("admin"),
             addresses.clone());
-        &system.write(&file_name);
+        system.write(&file_name);
         // admin account dir
         let (admin_key, admin_address) = key_pair(self.admin_dir(), self.kms_password.clone());
         let admin_address: String = format!("0x{}", hex::encode(admin_address));
-        AdminConfig::default(admin_key.clone(), admin_address.clone()).write(&file_name);
+        AdminConfig::default(admin_key, admin_address.clone()).write(&file_name);
         CurrentConfig::new(peers_count as u16, &uris, tls_peers.clone(), addresses.clone(), grpc.clone(), p2p.clone(), ips.clone()).write(&file_name);
         Ok(AdminParam {
             admin_key,
             admin_address,
-            chain_path: path.to_string(),
+            chain_path: path,
             key_ids,
             addresses,
             uris: Some(uris),
@@ -209,9 +201,9 @@ impl Opts for CreateOpts {
         let rpc_port = admin.rpc_ports[i];
         let ip = admin.ips[i].clone();
         let controller = ControllerConfig::new(rpc_port, admin.key_ids[i], &admin.addresses[i], self.package_limit);
-        &controller.write(&file_name);
-        &controller.write_log4rs(&chain_name);
-        Consensus{}.write_log4rs(&chain_name);
+        controller.write(&file_name);
+        controller.write_log4rs(&chain_name);
+        Consensus {}.write_log4rs(&chain_name);
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
         if NETWORK_P2P == self.network {
@@ -221,15 +213,12 @@ impl Opts for CreateOpts {
                 config.write(&file_name);
                 config.write_log4rs(&chain_name);
             }
-
-        } else {
-            if let Some(mut tls_peers) = admin.tls_peers.clone() {
-                tls_peers.remove(i);
-                let (_, cert, priv_key) = cert(&ip, &admin.ca_cert);
-                let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
-                config.write(&file_name);
-                config.write_log4rs(&chain_name);
-            }
+        } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
+            tls_peers.remove(i);
+            let (_, cert, priv_key) = cert(&ip, &admin.ca_cert);
+            let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
+            config.write(&file_name);
+            config.write_log4rs(&chain_name);
         }
 
         let kms = KmsSmConfig::new(rpc_port + 5);
@@ -257,7 +246,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
         return Err(Error::ConsensusNotExist);
     }
     if opts.executor.as_str() != EXECUTOR_EVM {
-        return Err(Error::ExecutorNotExist)
+        return Err(Error::ExecutorNotExist);
     }
     if opts.kms.as_str() != KMS_SM {
         return Err(Error::KmsNotDefaultOrKmsSm);
@@ -273,7 +262,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
                 return Err(Error::P2pPortsParamNotValid);
             }
-            let pair: Vec<String> = opts.p2p_ports.split(",").map(String::from).collect();
+            let pair: Vec<String> = opts.p2p_ports.split(',').map(String::from).collect();
             let peers_count = pair.len();
             let param = opts.init_admin(peers_count, &pair, vec![]);
             match param {
@@ -281,32 +270,32 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
                     for i in 0..peers_count {
                         opts.parse(i, &p)
                     }
-                },
+                }
                 Err(e) => {
                     return Err(e);
                 }
             }
         } else {
             let peers_count: usize = opts.peers_count.unwrap() as usize;
-            let param = opts.init_admin(peers_count, &vec![], vec![]);
+            let param = opts.init_admin(peers_count, &[], vec![]);
             match param {
                 Ok(p) => {
                     for i in 0..peers_count {
                         opts.parse(i, &p)
                     }
-                },
+                }
                 Err(e) => {
                     return Err(e);
                 }
             }
         }
     } else {
-        if !opts.p2p_ports.is_empty() && opts.p2p_ports.split(",").count() != opts.grpc_ports.split(",").count() {
+        if !opts.p2p_ports.is_empty() && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
             return Err(Error::P2pPortsParamNotValid);
         }
-        let temp_ports: Vec<String> = opts.grpc_ports.split(",").map(String::from).collect();
+        let temp_ports: Vec<String> = opts.grpc_ports.split(',').map(String::from).collect();
         let mut grpc_ports: Vec<u16> = Vec::new();
-        for item in temp_ports  {
+        for item in temp_ports {
             if item.parse::<u16>().is_err() {
                 return Err(Error::GrpcPortsParamNotValid);
             }
@@ -319,7 +308,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
                 return Err(Error::P2pPortsParamNotValid);
             }
-            pair = opts.p2p_ports.split(",").map(String::from).collect();
+            pair = opts.p2p_ports.split(',').map(String::from).collect();
         }
         let peers_count = grpc_ports.len();
         let param = opts.init_admin(peers_count, &pair, grpc_ports);
@@ -328,7 +317,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
                 for i in 0..peers_count {
                     opts.parse(i, &p)
                 }
-            },
+            }
             Err(e) => {
                 return Err(e);
             }

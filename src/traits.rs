@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 use std::{fs, path};
-use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256};
-use regex::Regex;
 use serde::{Serialize, Deserialize};
 use crate::config::admin::{AdminConfig, AdminParam, CurrentConfig};
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
@@ -25,6 +24,7 @@ use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::error::Error;
 use crate::util;
+
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
@@ -42,7 +42,7 @@ pub trait TomlWriter {
 pub trait YmlWriter {
     fn service(&self) -> String;
 
-    fn write_log4rs(&self, path: &String) where Self: Serialize{
+    fn write_log4rs(&self, path: &str) where Self: Serialize{
         let service = self.service();
         fs::write(format!("{}/{}-log4rs.yml", path, service), format!(r#"# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds
@@ -75,7 +75,7 @@ root:
   level: {}
   appenders:
     - {}
-"#, service, service, "info", "journey-service"));
+"#, service, service, "info", "journey-service")).unwrap();
     }
 }
 
@@ -99,7 +99,7 @@ pub struct AggregateConfig {
 
 pub trait Opts {
 
-   fn init_admin(&self, peers_count: usize, pair: &Vec<String>, grpc_ports: Vec<u16>) -> Result<AdminParam, Error>;
+   fn init_admin(&self, peers_count: usize, pair: &[String], grpc_ports: Vec<u16>) -> Result<AdminParam, Error>;
 
     fn parse(
         &self,

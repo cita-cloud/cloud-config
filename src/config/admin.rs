@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::{Deserialize, Serialize};
-use std::path;
 use rcgen::Certificate;
+use serde::{Deserialize, Serialize};
 use crate::config::controller::{GenesisBlock, SystemConfigFile};
 use crate::config::network_p2p::PeerConfig;
+use crate::config::network_tls::PeerConfig as TlsConfig;
 use crate::constant::{ADMIN_CONFIG, CURRENT_CONFIG};
 use crate::traits::TomlWriter;
 
@@ -55,7 +55,7 @@ pub struct AdminParam {
     pub key_ids: Vec<u64>,
     pub addresses: Vec<String>,
     pub uris: Option<Vec<PeerConfig>>,
-    pub tls_peers: Option<Vec<crate::config::network_tls::PeerConfig>>,
+    pub tls_peers: Option<Vec<TlsConfig>>,
     pub ca_cert: Certificate,
     pub ca_cert_pem: String,
     pub genesis: GenesisBlock,
@@ -68,15 +68,15 @@ pub struct AdminParam {
 
 impl CurrentConfig {
     pub fn new(count: u16,
-                peers: &Vec<PeerConfig>,
-               tls_peers: Vec<crate::config::network_tls::PeerConfig>,
+                peers: &[PeerConfig],
+               tls_peers: Vec<TlsConfig>,
                addresses: Vec<String>,
                rpc_ports: Vec<u16>,
                p2p_ports: Vec<u16>,
                ips: Vec<String>,) -> Self {
         Self {
             count,
-            peers: Some(peers.clone()),
+            peers: Some(peers.to_owned()),
             tls_peers: Some(tls_peers),
             addresses,
             rpc_ports,

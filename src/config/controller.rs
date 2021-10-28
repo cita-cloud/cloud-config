@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, GRPC_PORT_BEGIN, PACKAGE_LIMIT, PRE_HASH, SYSTEM_CONFIG};
-use serde::{Deserialize, Serialize};
-
-use std::path;
-use crate::traits::{TomlWriter, Writer, YmlWriter};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::util;
+use serde::{Deserialize, Serialize};
+use crate::constant::{CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, PRE_HASH, SYSTEM_CONFIG};
+use crate::traits::{TomlWriter, YmlWriter};
+
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {

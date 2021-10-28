@@ -1,6 +1,3 @@
-use crate::constant::CONSENSUS;
-use crate::traits::{TomlWriter, YmlWriter};
-
 // Copyright Rivtower Technologies LLC.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +12,8 @@ use crate::traits::{TomlWriter, YmlWriter};
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use serde::{Deserialize, Serialize};
+use crate::constant::CONSENSUS;
+use crate::traits::YmlWriter;
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct Consensus{

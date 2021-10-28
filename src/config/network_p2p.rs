@@ -27,7 +27,6 @@
 // limitations under the License.
 
 use serde::{Deserialize, Serialize};
-use std::path;
 use crate::constant::{NETWORK, NETWORK_P2P};
 use crate::traits::{TomlWriter, YmlWriter};
 
@@ -53,7 +52,7 @@ impl NetConfig {
     pub fn new(
         port: u16,
         grpc_port: u16,
-        addresses: &Vec<PeerConfig>
+        addresses: &[PeerConfig]
     ) -> Self {
         let mut peers = Vec::with_capacity(addresses.len());
         for address in addresses {
@@ -67,7 +66,7 @@ impl NetConfig {
     }
 
     pub fn default(
-        addresses: &Vec<PeerConfig>
+        addresses: &[PeerConfig]
     ) -> Self {
         let mut peers = Vec::with_capacity(addresses.len());
         for address in addresses {

@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{path, fs};
-use toml::Value;
+
+
+
+use std::{fs, path};
 use std::io::Write;
 use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256};
 use regex::Regex;
 use toml::de::Error;
+use toml::Value;
 use crate::traits::{AggregateConfig, Kms, TomlWriter};
-
 
 pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>, name: String) {
     let value = Value::try_from(content).unwrap();
@@ -29,7 +31,7 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
 
     let mut file = fs::OpenOptions::new().create(true).append(true).open(path.as_ref()).unwrap();
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes()).unwrap();
-    file.write(b"\n").unwrap();
+    file.write_all(b"\n").unwrap();
 }
 
 pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path>) {
@@ -72,7 +74,7 @@ pub fn validate_p2p_ports(s: String) -> bool {
         s if s.is_empty() => false,
         s => {
             let r = Regex::new(r"(^(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$)").unwrap();
-            for item in s.split(",") {
+            for item in s.split(',') {
                 if !r.is_match(item) {
                     return false;
                 }
@@ -83,7 +85,7 @@ pub fn validate_p2p_ports(s: String) -> bool {
 }
 
 pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
-    let kms = crate::config::kms_sm::Kms::create_kms_db(format!("{}/{}", node_dir.clone(), "kms.db"), kms_password.clone());
+    let kms = crate::config::kms_sm::Kms::create_kms_db(format!("{}/{}", node_dir, "kms.db"), kms_password);
     kms.generate_key_pair("create by cmd".to_string())
 }
 

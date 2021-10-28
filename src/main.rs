@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::{AppSettings, Parser};
+use clap::Parser;
 
 use crate::append::{AppendOpts, execute_append};
 use crate::create::{CreateOpts, execute_create};

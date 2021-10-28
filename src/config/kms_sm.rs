@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// use status_code::StatusCode;
 use serde::{Deserialize, Serialize};
-use std::path;
 use crate::constant::{KMS, KMS_SM};
 use crate::traits::{TomlWriter, YmlWriter};
 
