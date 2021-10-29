@@ -25,10 +25,10 @@ pub struct StorageRocksdbConfig {
 
 impl StorageRocksdbConfig {
     pub fn new(kms_port: u16,
-               storage_port: u16) -> Self {
+               storage_port: u16, ) -> Self {
         Self {
             kms_port,
-            storage_port
+            storage_port,
         }
     }
 }

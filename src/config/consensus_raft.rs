@@ -13,15 +13,40 @@
 // limitations under the License.
 use serde::{Deserialize, Serialize};
 use crate::constant::CONSENSUS;
-use crate::traits::YmlWriter;
+use crate::traits::{TomlWriter, YmlWriter};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct Consensus{
+    pub network_port: u16,
 
+    pub controller_port: u16,
+
+    pub node_addr: String,
+
+    pub grpc_listen_port: u16,
+
+}
+
+impl Consensus {
+    pub fn new(network_port: u16,
+               node_addr: String,) -> Self {
+        Self {
+            network_port,
+            controller_port: network_port + 4,
+            node_addr,
+            grpc_listen_port: network_port + 1,
+        }
+    }
 }
 
 impl YmlWriter for Consensus {
     fn service(&self) -> String {
+        CONSENSUS.to_string()
+    }
+}
+
+impl TomlWriter for Consensus {
+    fn section(&self) -> String {
         CONSENSUS.to_string()
     }
 }

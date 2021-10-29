@@ -164,20 +164,20 @@ impl Opts for CreateOpts {
         NetworkConfig::default(tls_peers.clone()).write(&file_name);
         let genesis = GenesisBlock::default();
         genesis.write(&file_name);
-        let system = SystemConfigFile::default(
-            self.version,
-            hex::encode(&self.chain_name),
-            hex::encode("admin"),
-            addresses.clone());
-        system.write(&file_name);
         // admin account dir
         let (admin_key, admin_address) = key_pair(self.admin_dir(), self.kms_password.clone());
         let admin_address: String = format!("0x{}", hex::encode(admin_address));
+        let system = SystemConfigFile::default(
+            self.version,
+            hex::encode(format!("{}", genesis.timestamp)),
+            admin_address.clone(),
+            addresses.clone());
+        system.write(&file_name);
         AdminConfig::default(admin_key, admin_address.clone()).write(&file_name);
         CurrentConfig::new(peers_count as u16, &uris, tls_peers.clone(), addresses.clone(), grpc.clone(), p2p.clone(), ips.clone()).write(&file_name);
         Ok(AdminParam {
             admin_key,
-            admin_address,
+            admin_address: admin_address.clone(),
             chain_path: path,
             key_ids,
             addresses,
@@ -195,15 +195,18 @@ impl Opts for CreateOpts {
     }
 
     fn parse(&self, i: usize, admin: &AdminParam) {
-        let chain_name = format!("{}-{}", &admin.chain_path, &admin.addresses[i][2..]);
+        let address = &admin.addresses[i];
+        let rm_0x = &admin.addresses[i][2..];
+        let chain_name = format!("{}-{}", &admin.chain_path, rm_0x);
         let file_name = format!("{}/{}", &chain_name, self.config_name);
         let p2p_port = admin.p2p_ports[i];
         let rpc_port = admin.rpc_ports[i];
-        let ip = admin.ips[i].clone();
         let controller = ControllerConfig::new(rpc_port, admin.key_ids[i], &admin.addresses[i], self.package_limit);
         controller.write(&file_name);
         controller.write_log4rs(&chain_name);
-        Consensus {}.write_log4rs(&chain_name);
+        let consensus = Consensus::new(rpc_port, admin.addresses[i].clone());
+        consensus.write(&file_name);
+        consensus.write_log4rs(&chain_name);
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
         if NETWORK_P2P == self.network {
@@ -215,7 +218,7 @@ impl Opts for CreateOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(i);
-            let (_, cert, priv_key) = cert(&ip, &admin.ca_cert);
+            let (_, cert, priv_key) = cert(address, &admin.ca_cert);
             let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
             config.write(&file_name);
             config.write_log4rs(&chain_name);
@@ -224,11 +227,8 @@ impl Opts for CreateOpts {
         let kms = KmsSmConfig::new(rpc_port + 5);
         kms.write(&file_name);
         kms.write_log4rs(&chain_name);
-        AdminConfig::new(
-            "0".to_string(),
-            admin.admin_key,
-            format!("{}/{}", chain_name, "kms.db"),
-            format!("0x{}", hex::encode(admin.admin_address.clone()))).write(&file_name);
+
+
         let storage = StorageRocksdbConfig::new(rpc_port + 5, rpc_port + 3);
         storage.write(&file_name);
         storage.write_log4rs(&chain_name);
@@ -331,6 +331,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
 mod create_test {
     use super::*;
     use toml::Value;
+    use crate::constant::NETWORK_TLS;
     use crate::util::write_to_file;
 
     #[test]
@@ -348,7 +349,7 @@ mod create_test {
             storage: STORAGE_ROCKSDB.to_string(),
             grpc_ports: "".to_string(),
             p2p_ports: "".to_string(),
-            peers_count: Some(1),
+            peers_count: Some(4),
             kms_password: "123456".to_string(),
             package_limit: 100,
         });

@@ -195,7 +195,7 @@ impl Opts for AppendOpts {
 
         let genesis = config.genesis_block.clone();
         let system = config.system_config.clone();
-        let admin = config.admin_config;
+        let admin = config.admin_config.unwrap();
         // admin account dir
         let (admin_key, admin_address) = (admin.key_id, admin.admin_address);
         Ok(AdminParam {
@@ -218,17 +218,20 @@ impl Opts for AppendOpts {
     }
 
     fn parse(&self, i: usize, admin: &AdminParam) {
-        let chain_name = format!("{}-{}", &admin.chain_path, &admin.addresses[i][2..]);
+        let address = &admin.addresses[i];
+        let rm_0x = &admin.addresses[i][2..];
+        let chain_name = format!("{}-{}", &admin.chain_path, rm_0x);
         let file_name = format!("{}/{}", &chain_name, self.config_name);
         let index = i + admin.count_old as usize - 1;
         let p2p_port = admin.p2p_ports[index];
         let rpc_port = admin.rpc_ports[index];
-        let ip = admin.ips[index].clone();
 
         let controller = ControllerConfig::new(rpc_port, admin.key_ids[i], &admin.addresses[i], self.package_limit);
         controller.write(&file_name);
         controller.write_log4rs(&chain_name);
-        Consensus {}.write_log4rs(&chain_name);
+        let consensus = Consensus::new(rpc_port, admin.addresses[i].clone());
+        consensus.write(&file_name);
+        consensus.write_log4rs(&chain_name);
 
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
@@ -242,7 +245,7 @@ impl Opts for AppendOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(index);
-            let (_, cert, priv_key) = cert(&ip, &admin.ca_cert);
+            let (_, cert, priv_key) = cert(&address, &admin.ca_cert);
             let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
             config.write(&file_name);
             config.write_log4rs(&chain_name);
@@ -251,11 +254,7 @@ impl Opts for AppendOpts {
         let kms = KmsSmConfig::new(rpc_port + 5);
         kms.write(&file_name);
         kms.write_log4rs(&chain_name);
-        AdminConfig::new(
-            "0".to_string(),
-            admin.admin_key,
-            format!("{}/{}", chain_name, "kms.db"),
-            format!("0x{}", hex::encode(admin.admin_address.clone()))).write(&file_name);
+
         let storage = StorageRocksdbConfig::new(rpc_port + 5, rpc_port + 3);
         storage.write(&file_name);
         storage.write_log4rs(&chain_name);

@@ -44,7 +44,7 @@ pub trait YmlWriter {
 
     fn write_log4rs(&self, path: &str) where Self: Serialize{
         let service = self.service();
-        fs::write(format!("{}/{}-log4rs.yml", path, service), format!(r#"# Scan this file for changes every 30 seconds
+        fs::write(format!("{}/{}-log4rs.yaml", path, service), format!(r#"# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds
 
 appenders:
@@ -85,7 +85,7 @@ pub trait Writer: TomlWriter + YmlWriter {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregateConfig {
-    pub admin_config: AdminConfig,
+    pub admin_config: Option<AdminConfig>,
     pub system_config: SystemConfigFile,
     pub genesis_block: GenesisBlock,
     pub network_p2p: Option<NetConfig>,

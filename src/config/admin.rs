@@ -26,8 +26,6 @@ pub struct AdminConfig {
 
     pub key_id: u64,
 
-    pub db_path: Option<String>,
-
     pub admin_address: String,
 }
 
@@ -93,11 +91,10 @@ impl TomlWriter for CurrentConfig{
 
 
 impl AdminConfig {
-    pub fn new(db_key: String, key_id: u64, db_path: String, admin_address: String) -> Self {
+    pub fn new(db_key: String, key_id: u64, admin_address: String) -> Self {
         Self {
             db_key: Some(db_key),
             key_id,
-            db_path: Some(db_path),
             admin_address,
         }
     }
@@ -106,7 +103,6 @@ impl AdminConfig {
         Self {
             db_key: None,
             key_id,
-            db_path: None,
             admin_address,
         }
     }
