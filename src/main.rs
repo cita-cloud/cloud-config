@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Parser;
+use clap::Clap;
 
 use crate::append::{AppendOpts, execute_append};
 use crate::create::{CreateOpts, execute_create};
@@ -27,14 +27,14 @@ mod util;
 mod error;
 mod constant;
 
-#[derive(Parser)]
+#[derive(Clap)]
 #[clap(version = "6.3.0", author = "Yieazy")]
 struct Opts {
     #[clap(subcommand)]
     sub_cmd: SubCommand,
 }
 
-#[derive(Parser)]
+#[derive(Clap)]
 enum SubCommand {
     /// create config
     #[clap(name = "create")]

@@ -27,10 +27,10 @@ use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
-use clap::Args;
+use clap::Clap;
 
 /// A subcommand for run
-#[derive(Args, Debug, Clone)]
+#[derive(Clap, Debug, Clone)]
 pub struct CreateOpts {
     /// set version
     #[clap(long = "version", default_value = "0")]

@@ -19,10 +19,10 @@ use std::iter::FromIterator;
 use std::path::Path;
 use crate::error::Error;
 use crate::util::{read_from_file, write_whole_to_file};
-use clap::Args;
+use clap::Clap;
 
 /// A subcommand for run
-#[derive(Args, Debug, Clone)]
+#[derive(Clap, Debug, Clone)]
 pub struct DeleteOpts {
     /// set config file name
     #[clap(long = "config-name", default_value = "config.toml")]

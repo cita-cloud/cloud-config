@@ -16,7 +16,7 @@
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use crate::config::admin::{AdminConfig, AdminParam};
+use crate::config::admin::{AdminParam};
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::ControllerConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
@@ -28,10 +28,10 @@ use crate::constant::{DEFAULT_ADDRESS, IPV4, NETWORK_P2P, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
-use clap::Args;
+use clap::Clap;
 
 /// A subcommand for run
-#[derive(Args, Debug, Clone)]
+#[derive(Clap, Debug, Clone)]
 pub struct AppendOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir")]
