@@ -23,7 +23,7 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE, EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, P2P_PORT_BEGIN, STORAGE_ROCKSDB, TCP};
+use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE, EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN, STORAGE_ROCKSDB, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
@@ -54,7 +54,7 @@ pub struct CreateOpts {
     #[clap(long = "executor", default_value = "executor_evm")]
     executor: String,
     /// Set network micro-service.
-    #[clap(long = "network", default_value = "network_p2p")]
+    #[clap(long = "network")]
     network: String,
     /// Set kms micro-service.
     #[clap(long = "kms", default_value = "kms_sm")]
@@ -244,6 +244,9 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
     }
     if opts.consensus.as_str() != CONSENSUS_BFT && opts.consensus.as_str() != CONSENSUS_RAFT {
         return Err(Error::ConsensusNotExist);
+    }
+    if opts.network.as_str() != NETWORK_P2P && opts.network.as_str() != NETWORK_TLS {
+        return Err(Error::NetworkNotExist);
     }
     if opts.executor.as_str() != EXECUTOR_EVM {
         return Err(Error::ExecutorNotExist);

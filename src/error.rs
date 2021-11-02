@@ -20,6 +20,7 @@ pub enum Error {
     GrpcPortsParamNotValid,
     ControllerNotExist,
     ConsensusNotExist,
+    NetworkNotExist,
     ExecutorNotExist,
     StorageNotExist,
     NodeCountNotExist,
