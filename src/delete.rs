@@ -120,7 +120,6 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
             }
         }
 
-        println!("{:?}", peer_config);
         write_whole_to_file(peer_config, &file_name);
     }
     let mut current_new = current.clone();
