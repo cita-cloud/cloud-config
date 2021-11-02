@@ -42,7 +42,7 @@ pub struct CreateOpts {
     #[clap(long = "config-dir")]
     config_dir: Option<String>,
     /// set chain name
-    #[clap(long = "chain-name", default_value = "tests-chain")]
+    #[clap(long = "chain-name", default_value = "test-chain")]
     chain_name: String,
     /// Set controller micro-service.
     #[clap(long = "controller", default_value = "controller")]
