@@ -23,7 +23,7 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, P2P_PORT_BEGIN, STORAGE_ROCKSDB, TCP};
+use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE, EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, P2P_PORT_BEGIN, STORAGE_ROCKSDB, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
@@ -173,11 +173,11 @@ impl Opts for CreateOpts {
             admin_address.clone(),
             addresses.clone());
         system.write(&file_name);
-        AdminConfig::default(admin_key, admin_address.clone()).write(&file_name);
+        AdminConfig::new(admin_key, admin_address.clone()).write(&file_name);
         CurrentConfig::new(peers_count as u16, &uris, tls_peers.clone(), addresses.clone(), grpc.clone(), p2p.clone(), ips.clone()).write(&file_name);
         Ok(AdminParam {
             admin_key,
-            admin_address: admin_address.clone(),
+            admin_address,
             chain_path: path,
             key_ids,
             addresses,
@@ -254,11 +254,11 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
     if opts.storage.as_str() != STORAGE_ROCKSDB {
         return Err(Error::StorageNotExist);
     }
-    if opts.grpc_ports.is_empty() {
-        if opts.p2p_ports.is_empty() && opts.peers_count == None {
+    if &opts.grpc_ports == DEFAULT_VALUE {
+        if &opts.p2p_ports== DEFAULT_VALUE && opts.peers_count == None {
             return Err(Error::NodeCountNotExist);
         }
-        if !opts.p2p_ports.is_empty() {
+        if &opts.p2p_ports != DEFAULT_VALUE {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
                 return Err(Error::P2pPortsParamNotValid);
             }
@@ -290,7 +290,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             }
         }
     } else {
-        if !opts.p2p_ports.is_empty() && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
+        if &opts.p2p_ports != DEFAULT_VALUE && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
             return Err(Error::P2pPortsParamNotValid);
         }
         let temp_ports: Vec<String> = opts.grpc_ports.split(',').map(String::from).collect();
@@ -302,7 +302,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             grpc_ports.push(item.parse().unwrap());
         }
         let pair;
-        if opts.p2p_ports.is_empty() {
+        if &opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
@@ -347,8 +347,8 @@ mod create_test {
             network: NETWORK_P2P.to_string(),
             kms: KMS_SM.to_string(),
             storage: STORAGE_ROCKSDB.to_string(),
-            grpc_ports: "".to_string(),
-            p2p_ports: "".to_string(),
+            grpc_ports: "default".to_string(),
+            p2p_ports: "default".to_string(),
             peers_count: Some(4),
             kms_password: "123456".to_string(),
             package_limit: 100,

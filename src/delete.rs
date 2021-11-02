@@ -20,6 +20,7 @@ use std::path::Path;
 use crate::error::Error;
 use crate::util::{read_from_file, write_whole_to_file};
 use clap::Clap;
+use crate::constant::DEFAULT_VALUE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -34,10 +35,10 @@ pub struct DeleteOpts {
     #[clap(long = "chain-name", default_value = "tests-chain")]
     chain_name: String,
     /// delete index. Such as 1,2 will delete first and second node
-    #[clap(long = "index")]
+    #[clap(long = "index", default_value = "default")]
     index: String,
     /// delete node address. Such as 0x16e80b488f6e423b9faff014d1883493c5043d29,0x5bc21f512f877f18840abe13de5816c1226c4710 will node with the address
-    #[clap(long = "addresses")]
+    #[clap(long = "addresses", default_value = "default")]
     addresses: String,
 }
 
@@ -51,14 +52,14 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     if !Path::new(format!("./{}", path).as_str()).exists() {
         return Err(Error::ConfigDirNotExist);
     }
-    if opts.index.is_empty() && opts.addresses.is_empty() {
-        return Err(Error::DeleteParamNotValid);
+    if &opts.index == DEFAULT_VALUE && &opts.addresses == DEFAULT_VALUE {
+        return Ok(());
     }
     let file_name = format!("./{}/{}", path, opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
     let mut index_set = HashSet::new();
     let current = config.current_config.as_ref().unwrap();
-    if !opts.index.is_empty() {
+    if &opts.index != DEFAULT_VALUE {
         let a =  opts.index.split(',');
         for item in a {
             if item.parse::<usize>().is_err() {
@@ -68,9 +69,6 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
             }
         }
     } else {
-        if opts.addresses.is_empty() {
-            return Err(Error::DeleteParamNotValid);
-        }
         let a = opts.addresses.split(',');
         for item in a {
             match current.addresses.iter().position(|address| address == item) {

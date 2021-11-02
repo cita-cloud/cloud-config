@@ -24,7 +24,7 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{DEFAULT_ADDRESS, IPV4, NETWORK_P2P, TCP};
+use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, IPV4, NETWORK_P2P, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
@@ -245,7 +245,7 @@ impl Opts for AppendOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(index);
-            let (_, cert, priv_key) = cert(&address, &admin.ca_cert);
+            let (_, cert, priv_key) = cert(address, &admin.ca_cert);
             let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
             config.write(&file_name);
             config.write_log4rs(&chain_name);
@@ -266,11 +266,11 @@ impl Opts for AppendOpts {
 
 
 pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
-    if opts.grpc_ports.is_empty() {
-        if opts.p2p_ports.is_empty() && opts.peers_count == None {
+    if &opts.grpc_ports == DEFAULT_VALUE {
+        if &opts.p2p_ports == DEFAULT_VALUE && opts.peers_count == None {
             return Err(Error::NodeCountNotExist);
         }
-        if !opts.p2p_ports.is_empty() {
+        if &opts.p2p_ports != DEFAULT_VALUE {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
                 return Err(Error::P2pPortsParamNotValid);
             }
@@ -302,7 +302,7 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
             }
         }
     } else {
-        if !opts.p2p_ports.is_empty() && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
+        if opts.p2p_ports != DEFAULT_VALUE && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
             return Err(Error::P2pPortsParamNotValid);
         }
         let temp_ports: Vec<String> = opts.grpc_ports.split(',').map(String::from).collect();
@@ -314,7 +314,7 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
             grpc_ports.push(item.parse().unwrap());
         }
         let pair;
-        if opts.p2p_ports.is_empty() {
+        if &opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {

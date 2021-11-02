@@ -91,15 +91,8 @@ impl TomlWriter for CurrentConfig{
 
 
 impl AdminConfig {
-    pub fn new(db_key: String, key_id: u64, admin_address: String) -> Self {
-        Self {
-            db_key: Some(db_key),
-            key_id,
-            admin_address,
-        }
-    }
 
-    pub fn default(key_id: u64, admin_address: String) -> Self {
+    pub fn new(key_id: u64, admin_address: String) -> Self {
         Self {
             db_key: None,
             key_id,

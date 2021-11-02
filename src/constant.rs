@@ -24,3 +24,4 @@ pub static DEFAULT_ADDRESS: &str = "127.0.0.1";
 pub static TCP: &str = "tcp";
 pub static DEFAULT_BLOCK_INTERVAL: u32 = 3;
 pub static DEFAULT_BLOCK_LIMIT: u64 = 100;
+pub static DEFAULT_VALUE: &str = "default";
