@@ -50,7 +50,7 @@ FLAGS:
 
 OPTIONS:
         --chain-name <CHAIN_NAME>
-            set chain name [default: tests-chain]
+            set chain name [default: test-chain]
 
         --config-dir <CONFIG_DIR>
             set config file directory, default means current directory
@@ -111,15 +111,15 @@ $ cloud-config create --peers-count 4 --consensus consensus_raft --config-dir /t
 ```
 $ cd /tmp/test 
 $ ls
-tests-chain                                           tests-chain-57b98686b6636877a04710dc57127526feac76e7  tests-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-tests-chain-3e3acf2feb25ac611db9348244de132d01327dab  tests-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
+test-chain                                           test-chain-57b98686b6636877a04710dc57127526feac76e7  test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
+test-chain-3e3acf2feb25ac611db9348244de132d01327dab  test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
 
 $ tree .
 .
-├── tests-chain
+├── test-chain
 │   ├── config.toml
 │   └── kms.db
-├── tests-chain-3e3acf2feb25ac611db9348244de132d01327dab
+├── test-chain-3e3acf2feb25ac611db9348244de132d01327dab
 │   ├── config.toml
 │   ├── consensus-log4rs.yaml
 │   ├── controller-log4rs.yaml
@@ -128,7 +128,7 @@ $ tree .
 │   ├── kms-log4rs.yaml
 │   ├── network-log4rs.yaml
 │   └── storage-log4rs.yaml
-├── tests-chain-57b98686b6636877a04710dc57127526feac76e7
+├── test-chain-57b98686b6636877a04710dc57127526feac76e7
 │   ├── config.toml
 │   ├── consensus-log4rs.yaml
 │   ├── controller-log4rs.yaml
@@ -137,7 +137,7 @@ $ tree .
 │   ├── kms-log4rs.yaml
 │   ├── network-log4rs.yaml
 │   └── storage-log4rs.yaml
-├── tests-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
+├── test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
 │   ├── config.toml
 │   ├── consensus-log4rs.yaml
 │   ├── controller-log4rs.yaml
@@ -146,7 +146,7 @@ $ tree .
 │   ├── kms-log4rs.yaml
 │   ├── network-log4rs.yaml
 │   └── storage-log4rs.yaml
-└── tests-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
+└── test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
     ├── config.toml
     ├── consensus-log4rs.yaml
     ├── controller-log4rs.yaml
@@ -159,7 +159,7 @@ $ tree .
 5 directories, 34 files
 ```
 
-`tests-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e`：节点名称的构造为 `<chain-name>-<node-address>`
+`test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e`：节点名称的构造为 `<chain-name>-<node-address>`
 
 ### 增加节点
 
@@ -178,7 +178,7 @@ FLAGS:
 
 OPTIONS:
         --chain-name <CHAIN_NAME>
-            set chain name [default: tests-chain]
+            set chain name [default: test-chain]
 
         --config-dir <CONFIG_DIR>
             set config file directory, default means current directory
@@ -216,11 +216,11 @@ OPTIONS:
 $ cloud-config append --peers-count 2 --config-dir /tmp/test
 
 $ ls /tmp/test
-tests-chain-3e3acf2feb25ac611db9348244de132d01327dab  tests-chain-57b98686b6636877a04710dc57127526feac76e7  tests-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-tests-chain  tests-chain-4f9cec049857a119b51472dac520f4bde0bca4d0  tests-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8  tests-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2
+test-chain-3e3acf2feb25ac611db9348244de132d01327dab  test-chain-57b98686b6636877a04710dc57127526feac76e7  test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
+test-chain  test-chain-4f9cec049857a119b51472dac520f4bde0bca4d0  test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8  test-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2
 ```
 
-增加了2个新节点 `tests-chain-4f9cec049857a119b51472dac520f4bde0bca4d0`，`tests-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2`
+增加了2个新节点 `test-chain-4f9cec049857a119b51472dac520f4bde0bca4d0`，`test-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2`
 
 ### 减少节点
 
@@ -241,7 +241,7 @@ OPTIONS:
         --addresses <ADDRESSES>        delete node address. Such as
                                        0x16e80b488f6e423b9faff014d1883493c5043d29,0x5bc21f512f877f18840abe13de5816c1226c4710
                                        will node with the address [default: default]
-        --chain-name <CHAIN_NAME>      set chain name [default: tests-chain]
+        --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>      set config file directory, default means current directory
         --config-name <CONFIG_NAME>    set config file name [default: config.toml]
         --index <INDEX>                delete index. Such as 1,2 will delete first and second node
@@ -254,10 +254,10 @@ OPTIONS:
 $ cloud-config delete --addresses 0x4f9cec049857a119b51472dac520f4bde0bca4d0,0xe51ab390ec569bb5e9b0c96a84df40b9f6923af2 --config-dir /tmp/test
 
 $ ls /tmp/test
-tests-chain                                           tests-chain-57b98686b6636877a04710dc57127526feac76e7  tests-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-tests-chain-3e3acf2feb25ac611db9348244de132d01327dab  tests-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
+test-chain                                           test-chain-57b98686b6636877a04710dc57127526feac76e7  test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
+test-chain-3e3acf2feb25ac611db9348244de132d01327dab  test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
 ```
 
-节点`tests-chain-4f9cec049857a119b51472dac520f4bde0bca4d0`，`tests-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2`被删除
+节点`test-chain-4f9cec049857a119b51472dac520f4bde0bca4d0`，`test-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2`被删除
 
 ### 
