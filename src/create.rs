@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fs;
-use std::fs::File;
-use std::io::Write;
 use crate::config::admin::{AdminConfig, AdminParam, CurrentConfig};
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
@@ -23,11 +20,18 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE, EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN, STORAGE_ROCKSDB, TCP};
+use crate::constant::{
+    CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE,
+    EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN,
+    STORAGE_ROCKSDB, TCP,
+};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
 use clap::Clap;
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -101,7 +105,12 @@ impl CreateOpts {
 }
 
 impl Opts for CreateOpts {
-    fn init_admin(&self, peers_count: usize, pair: &[String], grpc_ports: Vec<u16>) -> Result<AdminParam, Error> {
+    fn init_admin(
+        &self,
+        peers_count: usize,
+        pair: &[String],
+        grpc_ports: Vec<u16>,
+    ) -> Result<AdminParam, Error> {
         let path = if let Some(dir) = &self.config_dir {
             format!("{}/{}", dir, &self.chain_name)
         } else {
@@ -151,14 +160,14 @@ impl Opts for CreateOpts {
             p2p.push(port);
 
             uris.push(PeerConfig {
-                address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port)
+                address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
             });
             tls_peers.push(crate::config::network_tls::PeerConfig {
                 host: ip.into(),
                 port,
                 domain: address_str,
             });
-        };
+        }
         let file_name = format!("{}/{}", path, DEFAULT_CONFIG_NAME);
         NetConfig::default(&uris).write(&file_name);
         NetworkConfig::default(tls_peers.clone()).write(&file_name);
@@ -171,10 +180,20 @@ impl Opts for CreateOpts {
             self.version,
             hex::encode(format!("{}", genesis.timestamp)),
             admin_address.clone(),
-            addresses.clone());
+            addresses.clone(),
+        );
         system.write(&file_name);
         AdminConfig::new(admin_key, admin_address.clone()).write(&file_name);
-        CurrentConfig::new(peers_count as u16, &uris, tls_peers.clone(), addresses.clone(), grpc.clone(), p2p.clone(), ips.clone()).write(&file_name);
+        CurrentConfig::new(
+            peers_count as u16,
+            &uris,
+            tls_peers.clone(),
+            addresses.clone(),
+            grpc.clone(),
+            p2p.clone(),
+            ips.clone(),
+        )
+        .write(&file_name);
         Ok(AdminParam {
             admin_key,
             admin_address,
@@ -187,9 +206,9 @@ impl Opts for CreateOpts {
             ca_cert_pem,
             genesis,
             system,
-            rpc_ports: grpc.clone(),
-            p2p_ports: p2p.clone(),
-            ips: ips.clone(),
+            rpc_ports: grpc,
+            p2p_ports: p2p,
+            ips,
             count_old: 0,
         })
     }
@@ -201,7 +220,12 @@ impl Opts for CreateOpts {
         let file_name = format!("{}/{}", &chain_name, self.config_name);
         let p2p_port = admin.p2p_ports[i];
         let rpc_port = admin.rpc_ports[i];
-        let controller = ControllerConfig::new(rpc_port, admin.key_ids[i], &admin.addresses[i], self.package_limit);
+        let controller = ControllerConfig::new(
+            rpc_port,
+            admin.key_ids[i],
+            &admin.addresses[i],
+            self.package_limit,
+        );
         controller.write(&file_name);
         controller.write_log4rs(&chain_name);
         let consensus = Consensus::new(rpc_port, admin.addresses[i].clone());
@@ -219,7 +243,14 @@ impl Opts for CreateOpts {
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(i);
             let (_, cert, priv_key) = cert(address, &admin.ca_cert);
-            let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
+            let config = NetworkConfig::new(
+                p2p_port,
+                rpc_port,
+                admin.ca_cert_pem.clone(),
+                cert,
+                priv_key,
+                tls_peers,
+            );
             config.write(&file_name);
             config.write_log4rs(&chain_name);
         }
@@ -227,7 +258,6 @@ impl Opts for CreateOpts {
         let kms = KmsSmConfig::new(rpc_port + 5);
         kms.write(&file_name);
         kms.write_log4rs(&chain_name);
-
 
         let storage = StorageRocksdbConfig::new(rpc_port + 5, rpc_port + 3);
         storage.write(&file_name);
@@ -257,11 +287,11 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
     if opts.storage.as_str() != STORAGE_ROCKSDB {
         return Err(Error::StorageNotExist);
     }
-    if &opts.grpc_ports == DEFAULT_VALUE {
-        if &opts.p2p_ports== DEFAULT_VALUE && opts.peers_count == None {
+    if opts.grpc_ports == DEFAULT_VALUE {
+        if opts.p2p_ports == DEFAULT_VALUE && opts.peers_count == None {
             return Err(Error::NodeCountNotExist);
         }
-        if &opts.p2p_ports != DEFAULT_VALUE {
+        if opts.p2p_ports != DEFAULT_VALUE {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
                 return Err(Error::P2pPortsParamNotValid);
             }
@@ -293,7 +323,9 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             }
         }
     } else {
-        if &opts.p2p_ports != DEFAULT_VALUE && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
+        if opts.p2p_ports != DEFAULT_VALUE
+            && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count()
+        {
             return Err(Error::P2pPortsParamNotValid);
         }
         let temp_ports: Vec<String> = opts.grpc_ports.split(',').map(String::from).collect();
@@ -305,7 +337,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             grpc_ports.push(item.parse().unwrap());
         }
         let pair;
-        if &opts.p2p_ports == DEFAULT_VALUE {
+        if opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
@@ -333,9 +365,9 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
 #[cfg(test)]
 mod create_test {
     use super::*;
-    use toml::Value;
     use crate::constant::NETWORK_TLS;
     use crate::util::write_to_file;
+    use toml::Value;
 
     #[test]
     fn create_test() {
@@ -358,5 +390,3 @@ mod create_test {
         });
     }
 }
-
-

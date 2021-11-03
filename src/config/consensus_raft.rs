@@ -11,12 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use serde::{Deserialize, Serialize};
 use crate::constant::CONSENSUS;
 use crate::traits::{TomlWriter, YmlWriter};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct Consensus{
+pub struct Consensus {
     pub network_port: u16,
 
     pub controller_port: u16,
@@ -24,12 +24,10 @@ pub struct Consensus{
     pub node_addr: String,
 
     pub grpc_listen_port: u16,
-
 }
 
 impl Consensus {
-    pub fn new(network_port: u16,
-               node_addr: String,) -> Self {
+    pub fn new(network_port: u16, node_addr: String) -> Self {
         Self {
             network_port,
             controller_port: network_port + 4,

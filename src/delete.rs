@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-use std::collections::HashSet;
-use std::fs;
-use std::iter::FromIterator;
-use std::path::Path;
+use crate::constant::DEFAULT_VALUE;
 use crate::error::Error;
 use crate::util::{read_from_file, write_whole_to_file};
 use clap::Clap;
-use crate::constant::DEFAULT_VALUE;
+use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -42,7 +40,6 @@ pub struct DeleteOpts {
     addresses: String,
 }
 
-
 pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     let path = if let Some(dir) = &opts.config_dir {
         format!("{}/{}", dir, &opts.chain_name)
@@ -52,15 +49,15 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     if !Path::new(format!("./{}", path).as_str()).exists() {
         return Err(Error::ConfigDirNotExist);
     }
-    if &opts.index == DEFAULT_VALUE && &opts.addresses == DEFAULT_VALUE {
+    if opts.index == DEFAULT_VALUE && opts.addresses == DEFAULT_VALUE {
         return Ok(());
     }
     let file_name = format!("./{}/{}", path, opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
     let mut index_set = HashSet::new();
     let current = config.current_config.as_ref().unwrap();
-    if &opts.index != DEFAULT_VALUE {
-        let a =  opts.index.split(',');
+    if opts.index != DEFAULT_VALUE {
+        let a = opts.index.split(',');
         for item in a {
             if item.parse::<usize>().is_err() {
                 return Err(Error::DeleteIndexNotValid);
@@ -79,7 +76,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
             }
         }
     }
-    let index_old = HashSet::from_iter(0..current.count as usize);
+    let index_old = (0..current.count as usize).collect::<HashSet<_>>();
     if !index_old.intersection(&index_set).eq(&index_set) {
         return Err(Error::DeleteParamNotValid);
     }
@@ -87,7 +84,6 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     fs::remove_file(&file_name).unwrap();
 
     for i in 0..current.addresses.len() {
-
         let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
         let file_name = format!("{}/{}", &chain_name, opts.config_name);
         if index_set.contains(&i) {
@@ -183,11 +179,11 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
 #[cfg(test)]
 mod delete_test {
 
+    use super::*;
+    use crate::util::write_to_file;
     use std::convert::TryFrom;
     use std::iter::FromIterator;
-    use super::*;
     use toml::Value;
-    use crate::util::write_to_file;
 
     #[test]
     fn test_set() {
@@ -205,13 +201,17 @@ mod delete_test {
             "0x67fd1f568a0369d816a8f6ff0043da97c9d2f781",
         ];
         let set: HashSet<usize> = HashSet::from_iter([2, 3]);
-        let r: Vec<String> = a.into_iter().enumerate().flat_map(|(i, p)| {
-            if !set.contains(&i) {
-                Some(p.into())
-            } else {
-                None
-            }
-        }).collect();
+        let r: Vec<String> = a
+            .into_iter()
+            .enumerate()
+            .flat_map(|(i, p)| {
+                if !set.contains(&i) {
+                    Some(p.into())
+                } else {
+                    None
+                }
+            })
+            .collect();
         println!("...");
     }
 
@@ -224,8 +224,5 @@ mod delete_test {
             index: "1,3".to_string(),
             addresses: "".to_string(),
         });
-
     }
 }
-
-

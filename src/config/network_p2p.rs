@@ -26,9 +26,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::{Deserialize, Serialize};
 use crate::constant::{NETWORK, NETWORK_P2P};
 use crate::traits::{TomlWriter, YmlWriter};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NetConfig {
@@ -42,18 +42,13 @@ pub struct NetConfig {
     pub peers: Vec<PeerConfig>,
 }
 
-
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct PeerConfig {
     pub address: String,
 }
 
 impl NetConfig {
-    pub fn new(
-        port: u16,
-        grpc_port: u16,
-        addresses: &[PeerConfig]
-    ) -> Self {
+    pub fn new(port: u16, grpc_port: u16, addresses: &[PeerConfig]) -> Self {
         let mut peers = Vec::with_capacity(addresses.len());
         for address in addresses {
             peers.push(address.clone());
@@ -61,13 +56,11 @@ impl NetConfig {
         Self {
             port: Some(port),
             grpc_port: Some(grpc_port),
-            peers
+            peers,
         }
     }
 
-    pub fn default(
-        addresses: &[PeerConfig]
-    ) -> Self {
+    pub fn default(addresses: &[PeerConfig]) -> Self {
         let mut peers = Vec::with_capacity(addresses.len());
         for address in addresses {
             peers.push(address.clone())
@@ -75,10 +68,9 @@ impl NetConfig {
         Self {
             port: None,
             grpc_port: None,
-            peers
+            peers,
         }
     }
-
 }
 
 impl TomlWriter for NetConfig {
@@ -96,8 +88,8 @@ impl YmlWriter for NetConfig {
 #[cfg(test)]
 mod network_p2p_test {
     use super::*;
-    use toml::Value;
     use crate::util::write_to_file;
+    use toml::Value;
 
     #[test]
     fn basic_test() {
@@ -113,4 +105,3 @@ mod network_p2p_test {
         // config.write("example");
     }
 }
-

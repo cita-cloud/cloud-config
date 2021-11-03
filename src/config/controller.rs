@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use crate::constant::{CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, PRE_HASH, SYSTEM_CONFIG};
+use crate::constant::{
+    CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, PRE_HASH, SYSTEM_CONFIG,
+};
 use crate::traits::{TomlWriter, YmlWriter};
-
+use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {
@@ -40,10 +41,7 @@ pub struct ControllerConfig {
 }
 
 impl ControllerConfig {
-    pub fn new(network_port: u16,
-               key_id: u64,
-               address: &str,
-               package_limit: u64) -> Self {
+    pub fn new(network_port: u16, key_id: u64, address: &str, package_limit: u64) -> Self {
         Self {
             network_port,
             consensus_port: network_port + 1,
@@ -63,7 +61,6 @@ impl TomlWriter for ControllerConfig {
         CONTROLLER.to_string()
     }
 }
-
 
 impl YmlWriter for ControllerConfig {
     fn service(&self) -> String {
@@ -109,10 +106,9 @@ pub struct GenesisBlock {
 
 fn timestamp() -> u64 {
     let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .unwrap();
-    let ms = since_the_epoch.as_secs() as i64 * 1000i64 + (since_the_epoch.subsec_nanos() as i64 / 1_000_000) as i64;
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
+    let ms = since_the_epoch.as_secs() as i64 * 1000i64
+        + (since_the_epoch.subsec_nanos() as i64 / 1_000_000) as i64;
     ms as u64
 }
 
@@ -134,8 +130,8 @@ impl TomlWriter for GenesisBlock {
 #[cfg(test)]
 mod controller_test {
     use super::*;
-    use toml::Value;
     use crate::util::write_to_file;
+    use toml::Value;
 
     #[test]
     fn basic_test() {
@@ -157,10 +153,10 @@ mod controller_test {
 
         let genesis = GenesisBlock {
             timestamp: 1633765324292,
-            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
         };
 
         genesis.write("example");
     }
 }
-

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use rcgen::Certificate;
-use serde::{Deserialize, Serialize};
 use crate::config::controller::{GenesisBlock, SystemConfigFile};
 use crate::config::network_p2p::PeerConfig;
 use crate::config::network_tls::PeerConfig as TlsConfig;
 use crate::constant::{ADMIN_CONFIG, CURRENT_CONFIG};
 use crate::traits::TomlWriter;
+use rcgen::Certificate;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct AdminConfig {
@@ -65,13 +65,15 @@ pub struct AdminParam {
 }
 
 impl CurrentConfig {
-    pub fn new(count: u16,
-                peers: &[PeerConfig],
-               tls_peers: Vec<TlsConfig>,
-               addresses: Vec<String>,
-               rpc_ports: Vec<u16>,
-               p2p_ports: Vec<u16>,
-               ips: Vec<String>,) -> Self {
+    pub fn new(
+        count: u16,
+        peers: &[PeerConfig],
+        tls_peers: Vec<TlsConfig>,
+        addresses: Vec<String>,
+        rpc_ports: Vec<u16>,
+        p2p_ports: Vec<u16>,
+        ips: Vec<String>,
+    ) -> Self {
         Self {
             count,
             peers: Some(peers.to_owned()),
@@ -83,15 +85,13 @@ impl CurrentConfig {
         }
     }
 }
-impl TomlWriter for CurrentConfig{
+impl TomlWriter for CurrentConfig {
     fn section(&self) -> String {
         CURRENT_CONFIG.to_string()
     }
 }
 
-
 impl AdminConfig {
-
     pub fn new(key_id: u64, admin_address: String) -> Self {
         Self {
             db_key: None,
@@ -101,9 +101,8 @@ impl AdminConfig {
     }
 }
 
-impl TomlWriter for AdminConfig{
+impl TomlWriter for AdminConfig {
     fn section(&self) -> String {
         ADMIN_CONFIG.to_string()
     }
 }
-

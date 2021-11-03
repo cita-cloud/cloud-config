@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::{Deserialize, Serialize};
 use crate::constant::{EXECUTOR, EXECUTOR_EVM};
 use crate::traits::{TomlWriter, YmlWriter};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ExecutorEvmConfig {
@@ -23,9 +23,7 @@ pub struct ExecutorEvmConfig {
 
 impl ExecutorEvmConfig {
     pub fn new(executor_port: u16) -> Self {
-        Self {
-            executor_port
-        }
+        Self { executor_port }
     }
 }
 
@@ -44,8 +42,8 @@ impl YmlWriter for ExecutorEvmConfig {
 #[cfg(test)]
 mod executor_test {
     use super::*;
-    use toml::Value;
     use crate::util::write_to_file;
+    use toml::Value;
 
     #[test]
     fn basic_test() {

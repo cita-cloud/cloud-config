@@ -28,4 +28,3 @@ pub enum Error {
     DeleteParamNotValid,
     DeleteIndexNotValid,
 }
-

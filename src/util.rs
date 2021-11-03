@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-
-
-use std::{fs, path};
-use std::io::Write;
-use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256};
+use crate::traits::{AggregateConfig, Kms, TomlWriter};
+use rcgen::{
+    BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
+};
 use regex::Regex;
+use std::io::Write;
+use std::{fs, path};
 use toml::de::Error;
 use toml::Value;
-use crate::traits::{AggregateConfig, Kms, TomlWriter};
 
 pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>, name: String) {
     let value = Value::try_from(content).unwrap();
@@ -29,8 +28,13 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
     table.insert(name, value);
     let toml = toml::Value::Table(table);
 
-    let mut file = fs::OpenOptions::new().create(true).append(true).open(path.as_ref()).unwrap();
-    file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes()).unwrap();
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path.as_ref())
+        .unwrap();
+    file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
+        .unwrap();
     file.write_all(b"\n").unwrap();
 }
 
@@ -79,14 +83,17 @@ pub fn validate_p2p_ports(s: String) -> bool {
                 if !r.is_match(item) {
                     return false;
                 }
-            };
+            }
             true
         }
     }
 }
 
 pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
-    let kms = crate::config::kms_sm::Kms::create_kms_db(format!("{}/{}", node_dir, "kms.db"), kms_password);
+    let kms = crate::config::kms_sm::Kms::create_kms_db(
+        format!("{}/{}", node_dir, "kms.db"),
+        kms_password,
+    );
     kms.generate_key_pair("create by cmd".to_string())
 }
 
@@ -126,5 +133,3 @@ mod util_test {
         println!("{:?}", config)
     }
 }
-
-

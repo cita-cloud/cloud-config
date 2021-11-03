@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-use std::fs;
-use std::fs::File;
-use std::io::Write;
-use crate::config::admin::{AdminParam};
+use crate::config::admin::AdminParam;
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::ControllerConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
@@ -27,8 +23,13 @@ use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, IPV4, NETWORK_P2P, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
-use crate::util::{ca_cert, cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
+use crate::util::{
+    ca_cert, cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file,
+};
 use clap::Clap;
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -76,7 +77,12 @@ impl AppendOpts {
 }
 
 impl Opts for AppendOpts {
-    fn init_admin(&self, peers_count: usize, pair: &[String], grpc_ports: Vec<u16>) -> Result<AdminParam, Error> {
+    fn init_admin(
+        &self,
+        peers_count: usize,
+        pair: &[String],
+        grpc_ports: Vec<u16>,
+    ) -> Result<AdminParam, Error> {
         let path = if let Some(dir) = &self.config_dir {
             format!("{}/{}", dir, &self.chain_name)
         } else {
@@ -147,11 +153,9 @@ impl Opts for AppendOpts {
             addresses_inner.push(address_str.clone());
 
             if !uris.is_empty() {
-                uris.push(
-                    PeerConfig {
-                        address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port)
-                    }
-                );
+                uris.push(PeerConfig {
+                    address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
+                });
             }
 
             if !tls_peers.is_empty() {
@@ -161,7 +165,7 @@ impl Opts for AppendOpts {
                     domain: address_str,
                 });
             }
-        };
+        }
         //the old
         for i in 0..current.addresses.len() {
             let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
@@ -210,9 +214,9 @@ impl Opts for AppendOpts {
             ca_cert_pem,
             genesis,
             system,
-            rpc_ports: grpc.clone(),
-            p2p_ports: p2p.clone(),
-            ips: ips.clone(),
+            rpc_ports: grpc,
+            p2p_ports: p2p,
+            ips,
             count_old,
         })
     }
@@ -226,7 +230,12 @@ impl Opts for AppendOpts {
         let p2p_port = admin.p2p_ports[index];
         let rpc_port = admin.rpc_ports[index];
 
-        let controller = ControllerConfig::new(rpc_port, admin.key_ids[i], &admin.addresses[i], self.package_limit);
+        let controller = ControllerConfig::new(
+            rpc_port,
+            admin.key_ids[i],
+            &admin.addresses[i],
+            self.package_limit,
+        );
         controller.write(&file_name);
         controller.write_log4rs(&chain_name);
         let consensus = Consensus::new(rpc_port, admin.addresses[i].clone());
@@ -246,7 +255,14 @@ impl Opts for AppendOpts {
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(index);
             let (_, cert, priv_key) = cert(address, &admin.ca_cert);
-            let config = NetworkConfig::new(p2p_port, rpc_port, admin.ca_cert_pem.clone(), cert, priv_key, tls_peers);
+            let config = NetworkConfig::new(
+                p2p_port,
+                rpc_port,
+                admin.ca_cert_pem.clone(),
+                cert,
+                priv_key,
+                tls_peers,
+            );
             config.write(&file_name);
             config.write_log4rs(&chain_name);
         }
@@ -264,13 +280,12 @@ impl Opts for AppendOpts {
     }
 }
 
-
 pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
-    if &opts.grpc_ports == DEFAULT_VALUE {
-        if &opts.p2p_ports == DEFAULT_VALUE && opts.peers_count == None {
+    if opts.grpc_ports == DEFAULT_VALUE {
+        if opts.p2p_ports == DEFAULT_VALUE && opts.peers_count == None {
             return Err(Error::NodeCountNotExist);
         }
-        if &opts.p2p_ports != DEFAULT_VALUE {
+        if opts.p2p_ports != DEFAULT_VALUE {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
                 return Err(Error::P2pPortsParamNotValid);
             }
@@ -302,7 +317,9 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
             }
         }
     } else {
-        if opts.p2p_ports != DEFAULT_VALUE && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count() {
+        if opts.p2p_ports != DEFAULT_VALUE
+            && opts.p2p_ports.split(',').count() != opts.grpc_ports.split(',').count()
+        {
             return Err(Error::P2pPortsParamNotValid);
         }
         let temp_ports: Vec<String> = opts.grpc_ports.split(',').map(String::from).collect();
@@ -314,7 +331,7 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
             grpc_ports.push(item.parse().unwrap());
         }
         let pair;
-        if &opts.p2p_ports == DEFAULT_VALUE {
+        if opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
             if !validate_p2p_ports(opts.p2p_ports.clone()) {
@@ -340,11 +357,10 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
 
 #[cfg(test)]
 mod append_test {
-    use std::convert::TryFrom;
     use super::*;
-    use toml::Value;
     use crate::util::write_to_file;
-
+    use std::convert::TryFrom;
+    use toml::Value;
 
     #[test]
     fn test_execute() {

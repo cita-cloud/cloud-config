@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde::{Deserialize, Serialize};
 use crate::constant::{KMS, KMS_SM};
 use crate::traits::{TomlWriter, YmlWriter};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct KmsSmConfig {
@@ -23,9 +23,7 @@ pub struct KmsSmConfig {
 
 impl KmsSmConfig {
     pub fn new(kms_port: u16) -> Self {
-        Self {
-            kms_port
-        }
+        Self { kms_port }
     }
 }
 impl TomlWriter for KmsSmConfig {
@@ -46,7 +44,7 @@ impl crate::traits::Kms for Kms {
     }
 }
 
-impl YmlWriter for KmsSmConfig{
+impl YmlWriter for KmsSmConfig {
     fn service(&self) -> String {
         KMS.to_string()
     }
@@ -55,16 +53,14 @@ impl YmlWriter for KmsSmConfig{
 #[cfg(test)]
 mod kms_test {
     use super::*;
-    use toml::Value;
     use crate::util::write_to_file;
+    use toml::Value;
 
     #[test]
     fn basic_test() {
         let _ = std::fs::remove_file("example/config.toml");
 
-        let config = KmsSmConfig {
-            kms_port: 51235,
-        };
+        let config = KmsSmConfig { kms_port: 51235 };
 
         config.write("example/config.toml");
     }

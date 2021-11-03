@@ -14,18 +14,18 @@
 
 use clap::Clap;
 
-use crate::append::{AppendOpts, execute_append};
-use crate::create::{CreateOpts, execute_create};
-use crate::delete::{DeleteOpts, execute_delete};
+use crate::append::{execute_append, AppendOpts};
+use crate::create::{execute_create, CreateOpts};
+use crate::delete::{execute_delete, DeleteOpts};
 
 mod append;
 mod config;
+mod constant;
 mod create;
 mod delete;
+mod error;
 mod traits;
 mod util;
-mod error;
-mod constant;
 
 #[derive(Clap)]
 #[clap(version = "6.3.0", author = "Yieazy")]

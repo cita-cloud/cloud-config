@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-use std::{fs, path};
-use serde::{Serialize, Deserialize};
 use crate::config::admin::{AdminConfig, AdminParam, CurrentConfig};
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorEvmConfig;
@@ -24,7 +21,8 @@ use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::error::Error;
 use crate::util;
-
+use serde::{Deserialize, Serialize};
+use std::{fs, path};
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
@@ -32,7 +30,10 @@ pub trait Kms {
 }
 
 pub trait TomlWriter {
-    fn write(&self, path: impl AsRef<path::Path>) where Self: Serialize{
+    fn write(&self, path: impl AsRef<path::Path>)
+    where
+        Self: Serialize,
+    {
         util::write_to_file(&self, path, self.section())
     }
 
@@ -42,9 +43,15 @@ pub trait TomlWriter {
 pub trait YmlWriter {
     fn service(&self) -> String;
 
-    fn write_log4rs(&self, path: &str) where Self: Serialize{
+    fn write_log4rs(&self, path: &str)
+    where
+        Self: Serialize,
+    {
         let service = self.service();
-        fs::write(format!("{}/{}-log4rs.yaml", path, service), format!(r#"# Scan this file for changes every 30 seconds
+        fs::write(
+            format!("{}/{}-log4rs.yaml", path, service),
+            format!(
+                r#"# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds
 
 appenders:
@@ -75,13 +82,15 @@ root:
   level: {}
   appenders:
     - {}
-"#, service, service, "info", "journey-service")).unwrap();
+"#,
+                service, service, "info", "journey-service"
+            ),
+        )
+        .unwrap();
     }
 }
 
-pub trait Writer: TomlWriter + YmlWriter {
-
-}
+pub trait Writer: TomlWriter + YmlWriter {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregateConfig {
@@ -98,15 +107,12 @@ pub struct AggregateConfig {
 }
 
 pub trait Opts {
-
-   fn init_admin(&self, peers_count: usize, pair: &[String], grpc_ports: Vec<u16>) -> Result<AdminParam, Error>;
-
-    fn parse(
+    fn init_admin(
         &self,
-        i: usize,
-        admin: &AdminParam,
-    );
+        peers_count: usize,
+        pair: &[String],
+        grpc_ports: Vec<u16>,
+    ) -> Result<AdminParam, Error>;
+
+    fn parse(&self, i: usize, admin: &AdminParam);
 }
-
-
-

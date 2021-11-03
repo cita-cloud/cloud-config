@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub(crate) mod admin;
 pub(crate) mod consensus_bft;
 pub(crate) mod consensus_raft;
 pub(crate) mod controller;
@@ -20,4 +21,3 @@ pub(crate) mod kms_sm;
 pub(crate) mod network_p2p;
 pub(crate) mod network_tls;
 pub(crate) mod storage_rocksdb;
-pub(crate) mod admin;

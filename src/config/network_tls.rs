@@ -19,7 +19,6 @@ fn default_reconnect_timeout() -> Option<u64> {
     Some(5)
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PeerConfig {
     pub host: String,
@@ -68,9 +67,7 @@ impl NetworkConfig {
         }
     }
 
-    pub fn default(
-        peers: Vec<PeerConfig>,
-    ) -> Self {
+    pub fn default(peers: Vec<PeerConfig>) -> Self {
         Self {
             listen_port: None,
             grpc_port: None,

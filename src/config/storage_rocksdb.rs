@@ -16,7 +16,6 @@ use crate::constant::{STORAGE, STORAGE_ROCKSDB};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageRocksdbConfig {
     pub kms_port: u16,
@@ -24,8 +23,7 @@ pub struct StorageRocksdbConfig {
 }
 
 impl StorageRocksdbConfig {
-    pub fn new(kms_port: u16,
-               storage_port: u16, ) -> Self {
+    pub fn new(kms_port: u16, storage_port: u16) -> Self {
         Self {
             kms_port,
             storage_port,
@@ -38,8 +36,6 @@ impl TomlWriter for StorageRocksdbConfig {
         STORAGE_ROCKSDB.to_string()
     }
 }
-
-
 
 impl YmlWriter for StorageRocksdbConfig {
     fn service(&self) -> String {
