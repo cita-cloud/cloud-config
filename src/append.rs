@@ -168,14 +168,19 @@ impl Opts for AppendOpts {
             let mut peer_config = read_from_file(&file_name).unwrap();
             fs::remove_file(&file_name).unwrap();
             let mut net = uris.clone();
-            net.remove(i);
-            if let Some(mut p2p) = peer_config.network_p2p.as_mut() {
-                p2p.peers = net;
+            if !net.is_empty() {
+                net.remove(i);
+                if let Some(mut p2p) = peer_config.network_p2p.as_mut() {
+                    p2p.peers = net;
+                }
             }
+
             let mut tls_net = tls_peers.clone();
-            tls_net.remove(i);
-            if let Some(mut tls) = peer_config.network_tls.as_mut() {
-                tls.peers = tls_net;
+            if !tls_net.is_empty() {
+                tls_net.remove(i);
+                if let Some(mut tls) = peer_config.network_tls.as_mut() {
+                    tls.peers = tls_net;
+                }
             }
             write_whole_to_file(peer_config, &file_name);
         }
@@ -240,32 +245,33 @@ impl Opts for AppendOpts {
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
 
-        if admin.uris.is_some() {
+        if !admin.uris.as_ref().unwrap().is_empty() {
             if let Some(mut uris) = admin.uris.clone() {
                 uris.remove(index);
                 let config = NetConfig::new(p2p_port, rpc_port, &uris);
                 config.write(&file_name);
                 config.write_log4rs(&chain_name);
             }
-        } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
-            tls_peers.remove(index);
-            let ca_key_pair = KeyPair::from_pem(&admin.ca_key_pem).unwrap();
-            let ca_param =
-                CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
+        } else if !admin.tls_peers.as_ref().unwrap().is_empty() {
+            if let Some(mut tls_peers) = admin.tls_peers.clone() {
+                tls_peers.remove(index);
+                let ca_key_pair = KeyPair::from_pem(&admin.ca_key_pem).unwrap();
+                let ca_param =
+                    CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
 
-            let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
-            let config = NetworkConfig::new(
-                p2p_port,
-                rpc_port,
-                admin.ca_cert_pem.clone(),
-                cert,
-                priv_key,
-                tls_peers,
-            );
-            config.write(&file_name);
-            config.write_log4rs(&chain_name);
+                let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
+                let config = NetworkConfig::new(
+                    p2p_port,
+                    rpc_port,
+                    admin.ca_cert_pem.clone(),
+                    cert,
+                    priv_key,
+                    tls_peers,
+                );
+                config.write(&file_name);
+                config.write_log4rs(&chain_name);
+            }
         }
-
         let kms = KmsSmConfig::new(rpc_port + 5);
         kms.write(&file_name);
         kms.write_log4rs(&chain_name);

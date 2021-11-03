@@ -130,11 +130,21 @@ pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String)
 
 #[cfg(test)]
 mod util_test {
+    use rcgen::{KeyPair, PKCS_ECDSA_P256_SHA256};
     use crate::util::read_from_file;
+    use rand::prelude::*;
+
+    // type Type = [u8, 32]
 
     #[test]
     fn util_test() {
         let config = read_from_file("cita-chain/config.toml");
         println!("{:?}", config)
+    }
+
+    #[test]
+    fn random_address() {
+        let rand: [u8; 16] =  thread_rng().gen();
+        println!("{}", hex::encode(rand));
     }
 }

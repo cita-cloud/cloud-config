@@ -31,6 +31,7 @@ use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
 use clap::Clap;
 use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
+use rand::{Rng, thread_rng};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -125,14 +126,17 @@ impl Opts for CreateOpts {
         let mut p2p = Vec::new();
         let mut ips = Vec::new();
 
-        let (ca_cert_pem, ca_key_pem) = if self.network == NETWORK_TLS {
+        let is_tls = self.network == NETWORK_TLS;
+        let is_p2p = self.network == NETWORK_P2P;
+        let (ca_cert_pem, ca_key_pem) = if is_tls {
             let tuple = ca_cert();
             (tuple.1, tuple.2)
-        } else if self.network == NETWORK_P2P {
+        } else if is_p2p {
             (String::from(""), String::from(""))
         } else {
             panic!("network only can choice network_p2p or network_tls")
         };
+
 
         for i in 0..peers_count {
             let dir = format!("{}-{}", path, i);
@@ -162,27 +166,34 @@ impl Opts for CreateOpts {
             }
             ips.push(ip.to_string());
             p2p.push(port);
-
-            uris.push(PeerConfig {
-                address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
-            });
-            tls_peers.push(crate::config::network_tls::PeerConfig {
-                host: ip.into(),
-                port,
-                domain: address_str,
-            });
+            if is_tls {
+                tls_peers.push(crate::config::network_tls::PeerConfig {
+                    host: ip.into(),
+                    port,
+                    domain: address_str,
+                });
+            } else if is_p2p {
+                uris.push(PeerConfig {
+                    address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
+                });
+            }
         }
         let file_name = format!("{}/{}", path, DEFAULT_CONFIG_NAME);
-        NetConfig::default(&uris).write(&file_name);
-        NetworkConfig::default(tls_peers.clone()).write(&file_name);
+        if is_tls {
+            NetworkConfig::default(tls_peers.clone()).write(&file_name);
+        }
+        if is_p2p {
+            NetConfig::default(&uris).write(&file_name);
+        }
         let genesis = GenesisBlock::default();
         genesis.write(&file_name);
         // admin account dir
         let (admin_key, admin_address) = key_pair(self.admin_dir(), self.kms_password.clone());
+        let rand: [u8; 16] =  thread_rng().gen();
         let admin_address: String = format!("0x{}", hex::encode(admin_address));
         let system = SystemConfigFile::default(
             self.version,
-            hex::encode(format!("{}", genesis.timestamp)),
+            hex::encode(rand),
             admin_address.clone(),
             addresses.clone(),
         );
@@ -199,7 +210,7 @@ impl Opts for CreateOpts {
             ca_cert_pem.clone(),
             ca_key_pem.clone(),
         )
-        .write(&file_name);
+            .write(&file_name);
         Ok(AdminParam {
             admin_key,
             admin_address,
@@ -239,31 +250,36 @@ impl Opts for CreateOpts {
         consensus.write_log4rs(&chain_name);
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
-        if NETWORK_P2P == self.network {
+        let is_tls = self.network == NETWORK_TLS;
+        let is_p2p = self.network == NETWORK_P2P;
+        if is_p2p {
             if let Some(mut uris) = admin.uris.clone() {
                 uris.remove(i);
                 let config = NetConfig::new(p2p_port, rpc_port, &uris);
                 config.write(&file_name);
                 config.write_log4rs(&chain_name);
             }
-        } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
-            tls_peers.remove(i);
+        } else if is_tls {
+            if let Some(mut tls_peers) = admin.tls_peers.clone() {
+                tls_peers.remove(i);
 
-            let ca_key_pair = KeyPair::from_pem(&admin.ca_key_pem).unwrap();
-            let ca_param =
-                CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
+                let ca_key_pair = KeyPair::from_pem(&admin.ca_key_pem).unwrap();
+                let ca_param =
+                    CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
 
-            let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
-            let config = NetworkConfig::new(
-                p2p_port,
-                rpc_port,
-                admin.ca_cert_pem.clone(),
-                cert,
-                priv_key,
-                tls_peers,
-            );
-            config.write(&file_name);
-            config.write_log4rs(&chain_name);
+                let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
+                let config = NetworkConfig::new(
+                    p2p_port,
+                    rpc_port,
+                    admin.ca_cert_pem.clone(),
+                    cert,
+                    priv_key,
+                    tls_peers,
+                );
+                config.write(&file_name);
+                config.write_log4rs(&chain_name);
+            }
+
         }
 
         let kms = KmsSmConfig::new(rpc_port + 5);
@@ -390,7 +406,7 @@ mod create_test {
             controller: CONTROLLER.to_string(),
             consensus: CONSENSUS_BFT.to_string(),
             executor: EXECUTOR_EVM.to_string(),
-            network: NETWORK_P2P.to_string(),
+            network: NETWORK_TLS.to_string(),
             kms: KMS_SM.to_string(),
             storage: STORAGE_ROCKSDB.to_string(),
             grpc_ports: "default".to_string(),
