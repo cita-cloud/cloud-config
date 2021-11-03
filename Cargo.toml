@@ -19,3 +19,4 @@ hex = "0.4"
 regex = "1"
 rcgen = { version = "0.8", features = ["pem", "x509-parser"] }
 x509-parser = "0.12"
+rand = "0.8.4"
