@@ -189,11 +189,11 @@ impl Opts for CreateOpts {
         genesis.write(&file_name);
         // admin account dir
         let (admin_key, admin_address) = key_pair(self.admin_dir(), self.kms_password.clone());
-        let rand: [u8; 16] =  thread_rng().gen();
+        let rand: [u8; 32] =  thread_rng().gen();
         let admin_address: String = format!("0x{}", hex::encode(admin_address));
         let system = SystemConfigFile::default(
             self.version,
-            hex::encode(rand),
+            format!("0x{}", hex::encode(rand)),
             admin_address.clone(),
             addresses.clone(),
         );
