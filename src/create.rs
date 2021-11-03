@@ -32,6 +32,7 @@ use clap::Clap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use rcgen::{Certificate, CertificateParams};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -126,10 +127,17 @@ impl Opts for CreateOpts {
         let mut p2p = Vec::new();
         let mut ips = Vec::new();
 
-        let (ca_cert, ca_cert_pem, ca_key_pem) = ca_cert();
+        let mut ca_cert_pem;
+        if self.network == NETWORK_TLS {
+            let tuple = ca_cert();
+            ca_cert_pem = tuple.1;
+            let ca_key_pem = tuple.2;
+            let mut f = File::create("ca_key.pem").unwrap();
+            f.write_all(ca_key_pem.as_bytes()).unwrap();
+        } else {
+            ca_cert_pem = String::from("");
+        }
 
-        let mut f = File::create("ca_key.pem").unwrap();
-        f.write_all(ca_key_pem.as_bytes()).unwrap();
         for i in 0..peers_count {
             let dir = format!("{}-{}", path, i);
             fs::create_dir_all(&dir).unwrap();
@@ -192,6 +200,7 @@ impl Opts for CreateOpts {
             grpc.clone(),
             p2p.clone(),
             ips.clone(),
+            ca_cert_pem.to_string()
         )
         .write(&file_name);
         Ok(AdminParam {
@@ -202,8 +211,7 @@ impl Opts for CreateOpts {
             addresses,
             uris: Some(uris),
             tls_peers: Some(tls_peers),
-            ca_cert,
-            ca_cert_pem,
+            ca_cert_pem: ca_cert_pem.to_string(),
             genesis,
             system,
             rpc_ports: grpc,
@@ -242,7 +250,9 @@ impl Opts for CreateOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(i);
-            let (_, cert, priv_key) = cert(address, &admin.ca_cert);
+            //todo get ca_cert
+
+            let (_, cert, priv_key) = cert(address, &Certificate::from_params(CertificateParams::default()).unwrap());
             let config = NetworkConfig::new(
                 p2p_port,
                 rpc_port,

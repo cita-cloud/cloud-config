@@ -30,6 +30,7 @@ use clap::Clap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use rcgen::{Certificate, CertificateParams};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -104,11 +105,8 @@ impl Opts for AppendOpts {
         let mut grpc = current.rpc_ports.clone();
         let mut p2p = current.p2p_ports.clone();
         let mut ips = current.ips.clone();
+        let ca_cert_pem = current.ca_cert_pem.clone();
 
-        let (ca_cert, ca_cert_pem, ca_key_pem) = ca_cert();
-
-        let mut f = File::create("ca_key.pem").unwrap();
-        f.write_all(ca_key_pem.as_bytes()).unwrap();
         for i in 0..peers_count {
             let rpc_port;
             if grpc_ports.is_empty() {
@@ -184,7 +182,7 @@ impl Opts for AppendOpts {
             }
             write_whole_to_file(peer_config, &file_name);
         }
-        let mut current_new = current;
+        let mut current_new = current.clone();
         let count_old = current_new.count;
 
         current_new.count += peers_count as u16;
@@ -210,7 +208,6 @@ impl Opts for AppendOpts {
             addresses,
             uris: Some(uris),
             tls_peers: Some(tls_peers),
-            ca_cert,
             ca_cert_pem,
             genesis,
             system,
@@ -245,7 +242,8 @@ impl Opts for AppendOpts {
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
 
-        if NETWORK_P2P == self.network {
+
+        if admin.uris.is_some() {
             if let Some(mut uris) = admin.uris.clone() {
                 uris.remove(index);
                 let config = NetConfig::new(p2p_port, rpc_port, &uris);
@@ -254,7 +252,9 @@ impl Opts for AppendOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(index);
-            let (_, cert, priv_key) = cert(address, &admin.ca_cert);
+            //todo get ca_cert
+
+            let (_, cert, priv_key) = cert(address, &Certificate::from_params(CertificateParams::default()).unwrap());
             let config = NetworkConfig::new(
                 p2p_port,
                 rpc_port,
@@ -369,8 +369,8 @@ mod append_test {
             config_name: String::from("config.toml"),
             chain_name: String::from("cita-chain"),
             network: String::from("network_p2p"),
-            grpc_ports: String::from(""),
-            p2p_ports: String::from(""),
+            grpc_ports: String::from("default"),
+            p2p_ports: String::from("default"),
             peers_count: Some(2),
             kms_password: String::from("123456"),
             package_limit: 30000,

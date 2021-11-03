@@ -44,6 +44,9 @@ pub struct CurrentConfig {
     pub p2p_ports: Vec<u16>,
 
     pub ips: Vec<String>,
+
+    pub ca_cert_pem: String,
+
 }
 
 pub struct AdminParam {
@@ -54,7 +57,6 @@ pub struct AdminParam {
     pub addresses: Vec<String>,
     pub uris: Option<Vec<PeerConfig>>,
     pub tls_peers: Option<Vec<TlsConfig>>,
-    pub ca_cert: Certificate,
     pub ca_cert_pem: String,
     pub genesis: GenesisBlock,
     pub system: SystemConfigFile,
@@ -73,6 +75,7 @@ impl CurrentConfig {
         rpc_ports: Vec<u16>,
         p2p_ports: Vec<u16>,
         ips: Vec<String>,
+        ca_cert_pem: String,
     ) -> Self {
         Self {
             count,
@@ -82,6 +85,7 @@ impl CurrentConfig {
             rpc_ports,
             p2p_ports,
             ips,
+            ca_cert_pem,
         }
     }
 }
