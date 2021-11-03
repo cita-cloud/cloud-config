@@ -57,6 +57,9 @@ pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path
     if let Some(t) = content.admin_config {
         t.write(&path);
     }
+    if let Some(t) = content.consensus {
+        t.write(&path);
+    }
     content.system_config.write(&path);
     content.genesis_block.write(&path);
     if let Some(t) = content.network_p2p {

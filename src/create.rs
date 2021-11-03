@@ -394,7 +394,7 @@ mod create_test {
             storage: STORAGE_ROCKSDB.to_string(),
             grpc_ports: "default".to_string(),
             p2p_ports: "default".to_string(),
-            peers_count: Some(4),
+            peers_count: Some(2),
             kms_password: "123456".to_string(),
             package_limit: 100,
         });

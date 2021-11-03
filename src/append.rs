@@ -223,7 +223,7 @@ impl Opts for AppendOpts {
         let rm_0x = &admin.addresses[i][2..];
         let chain_name = format!("{}-{}", &admin.chain_path, rm_0x);
         let file_name = format!("{}/{}", &chain_name, self.config_name);
-        let index = i + admin.count_old as usize - 1;
+        let index = i + admin.count_old as usize;
         let p2p_port = admin.p2p_ports[index];
         let rpc_port = admin.rpc_ports[index];
 
@@ -277,6 +277,7 @@ impl Opts for AppendOpts {
         let executor = ExecutorEvmConfig::new(rpc_port + 2);
         executor.write(&file_name);
         executor.write_log4rs(&chain_name);
+
     }
 }
 
