@@ -20,17 +20,13 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, IPV4, NETWORK_P2P, TCP};
+use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, IPV4, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
-use crate::util::{
-    ca_cert, cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file,
-};
+use crate::util::{cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
 use clap::Clap;
+use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
-use std::fs::File;
-use std::io::Write;
-use rcgen::{Certificate, CertificateParams};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -42,7 +38,7 @@ pub struct AppendOpts {
     #[clap(long = "config-name", default_value = "config.toml")]
     config_name: String,
     /// set chain name
-    #[clap(long = "chain-name", default_value = "tests-chain")]
+    #[clap(long = "chain-name", default_value = "test-chain")]
     chain_name: String,
     /// Set network micro-service.
     #[clap(long = "network", default_value = "network_p2p")]
@@ -106,6 +102,7 @@ impl Opts for AppendOpts {
         let mut p2p = current.p2p_ports.clone();
         let mut ips = current.ips.clone();
         let ca_cert_pem = current.ca_cert_pem.clone();
+        let ca_key_pem = current.ca_key_pem.clone();
 
         for i in 0..peers_count {
             let rpc_port;
@@ -209,6 +206,7 @@ impl Opts for AppendOpts {
             uris: Some(uris),
             tls_peers: Some(tls_peers),
             ca_cert_pem,
+            ca_key_pem,
             genesis,
             system,
             rpc_ports: grpc,
@@ -242,7 +240,6 @@ impl Opts for AppendOpts {
         admin.genesis.write(&file_name);
         admin.system.write(&file_name);
 
-
         if admin.uris.is_some() {
             if let Some(mut uris) = admin.uris.clone() {
                 uris.remove(index);
@@ -252,9 +249,11 @@ impl Opts for AppendOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(index);
-            //todo get ca_cert
+            let ca_key_pair = KeyPair::from_pem(&admin.ca_key_pem).unwrap();
+            let ca_param =
+                CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
 
-            let (_, cert, priv_key) = cert(address, &Certificate::from_params(CertificateParams::default()).unwrap());
+            let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
             let config = NetworkConfig::new(
                 p2p_port,
                 rpc_port,

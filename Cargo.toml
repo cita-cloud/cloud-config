@@ -13,9 +13,9 @@ clap_derive = "=3.0.0-beta.4"
 log = "0.4"
 serde = "1.0"
 serde_derive = "1.0"
-kms_sm = { git = "https://github.com/cita-cloud/kms_sm", branch = "wip-6.3.0", package = "kms" }
+kms_sm = { git = "https://github.com/cita-cloud/kms_sm", branch = "v6.3.0", package = "kms" }
 toml = "0.5"
 hex = "0.4"
 regex = "1"
-rcgen = "0.8"
+rcgen = { version = "0.8", features = ["pem", "x509-parser"] }
 x509-parser = "0.12"

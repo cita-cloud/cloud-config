@@ -30,7 +30,7 @@ pub struct DeleteOpts {
     #[clap(long = "config-dir")]
     config_dir: Option<String>,
     /// set chain name
-    #[clap(long = "chain-name", default_value = "tests-chain")]
+    #[clap(long = "chain-name", default_value = "test-chain")]
     chain_name: String,
     /// delete index. Such as 1,2 will delete first and second node
     #[clap(long = "index", default_value = "default")]

@@ -29,10 +29,8 @@ use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
 use clap::Clap;
+use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
-use std::fs::File;
-use std::io::Write;
-use rcgen::{Certificate, CertificateParams};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -58,7 +56,7 @@ pub struct CreateOpts {
     /// Set executor micro-service.
     #[clap(long = "executor", default_value = "executor_evm")]
     executor: String,
-    /// Set network micro-service.
+    /// Set network micro-service. network_tls or network_p2p.
     #[clap(long = "network")]
     network: String,
     /// Set kms micro-service.
@@ -127,16 +125,14 @@ impl Opts for CreateOpts {
         let mut p2p = Vec::new();
         let mut ips = Vec::new();
 
-        let mut ca_cert_pem;
-        if self.network == NETWORK_TLS {
+        let (ca_cert_pem, ca_key_pem) = if self.network == NETWORK_TLS {
             let tuple = ca_cert();
-            ca_cert_pem = tuple.1;
-            let ca_key_pem = tuple.2;
-            let mut f = File::create("ca_key.pem").unwrap();
-            f.write_all(ca_key_pem.as_bytes()).unwrap();
+            (tuple.1, tuple.2)
+        } else if self.network == NETWORK_P2P {
+            (String::from(""), String::from(""))
         } else {
-            ca_cert_pem = String::from("");
-        }
+            panic!("network only can choice network_p2p or network_tls")
+        };
 
         for i in 0..peers_count {
             let dir = format!("{}-{}", path, i);
@@ -200,7 +196,8 @@ impl Opts for CreateOpts {
             grpc.clone(),
             p2p.clone(),
             ips.clone(),
-            ca_cert_pem.to_string()
+            ca_cert_pem.clone(),
+            ca_key_pem.clone(),
         )
         .write(&file_name);
         Ok(AdminParam {
@@ -211,7 +208,8 @@ impl Opts for CreateOpts {
             addresses,
             uris: Some(uris),
             tls_peers: Some(tls_peers),
-            ca_cert_pem: ca_cert_pem.to_string(),
+            ca_cert_pem,
+            ca_key_pem,
             genesis,
             system,
             rpc_ports: grpc,
@@ -250,9 +248,12 @@ impl Opts for CreateOpts {
             }
         } else if let Some(mut tls_peers) = admin.tls_peers.clone() {
             tls_peers.remove(i);
-            //todo get ca_cert
 
-            let (_, cert, priv_key) = cert(address, &Certificate::from_params(CertificateParams::default()).unwrap());
+            let ca_key_pair = KeyPair::from_pem(&admin.ca_key_pem).unwrap();
+            let ca_param =
+                CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
+
+            let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
             let config = NetworkConfig::new(
                 p2p_port,
                 rpc_port,

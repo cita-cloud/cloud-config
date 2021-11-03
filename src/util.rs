@@ -73,7 +73,9 @@ pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path
 
 pub fn read_from_file(path: impl AsRef<path::Path>) -> Result<AggregateConfig, Error> {
     let buffer = std::fs::read_to_string(path)
-        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+        .unwrap_or_else(
+            |err| panic!("Error while loading config: [{}]", err)
+        );
     toml::from_str::<AggregateConfig>(&buffer)
 }
 

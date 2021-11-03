@@ -17,7 +17,6 @@ use crate::config::network_p2p::PeerConfig;
 use crate::config::network_tls::PeerConfig as TlsConfig;
 use crate::constant::{ADMIN_CONFIG, CURRENT_CONFIG};
 use crate::traits::TomlWriter;
-use rcgen::Certificate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
@@ -47,6 +46,7 @@ pub struct CurrentConfig {
 
     pub ca_cert_pem: String,
 
+    pub ca_key_pem: String,
 }
 
 pub struct AdminParam {
@@ -58,6 +58,7 @@ pub struct AdminParam {
     pub uris: Option<Vec<PeerConfig>>,
     pub tls_peers: Option<Vec<TlsConfig>>,
     pub ca_cert_pem: String,
+    pub ca_key_pem: String,
     pub genesis: GenesisBlock,
     pub system: SystemConfigFile,
     pub rpc_ports: Vec<u16>,
@@ -76,6 +77,7 @@ impl CurrentConfig {
         p2p_ports: Vec<u16>,
         ips: Vec<String>,
         ca_cert_pem: String,
+        ca_key_pem: String,
     ) -> Self {
         Self {
             count,
@@ -86,6 +88,7 @@ impl CurrentConfig {
             p2p_ports,
             ips,
             ca_cert_pem,
+            ca_key_pem,
         }
     }
 }
