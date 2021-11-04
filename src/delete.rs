@@ -46,13 +46,13 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     } else {
         opts.chain_name.clone()
     };
-    if !Path::new(format!("./{}", path).as_str()).exists() {
+    if !Path::new(&path).exists() {
         return Err(Error::ConfigDirNotExist);
     }
     if opts.index == DEFAULT_VALUE && opts.addresses == DEFAULT_VALUE {
         return Ok(());
     }
-    let file_name = format!("./{}/{}", path, opts.config_name);
+    let file_name = format!("{}/{}", path, opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
     let mut index_set = HashSet::new();
     let current = config.current_config.as_ref().unwrap();
@@ -84,8 +84,20 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     fs::remove_file(&file_name).unwrap();
 
     for i in 0..current.addresses.len() {
-        let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
-        let file_name = format!("{}/{}", &chain_name, opts.config_name);
+        let (chain_name, file_name) = if current.use_num {
+            let node_dir = format!("{}-{}", &path, i);
+            (
+                node_dir.clone(),
+                format!("{}/{}", &node_dir, &opts.config_name),
+            )
+        } else {
+            let node_dir = format!("{}-{}", &path, &current.addresses[i][2..]);
+            (
+                node_dir.clone(),
+                format!("{}/{}", &node_dir, &opts.config_name),
+            )
+        };
+
         if index_set.contains(&i) {
             fs::remove_dir_all(chain_name).unwrap();
             continue;
