@@ -47,6 +47,8 @@ pub struct CurrentConfig {
     pub ca_cert_pem: String,
 
     pub ca_key_pem: String,
+
+    pub use_num: bool,
 }
 
 pub struct AdminParam {
@@ -65,6 +67,7 @@ pub struct AdminParam {
     pub p2p_ports: Vec<u16>,
     pub ips: Vec<String>,
     pub count_old: u16,
+    pub use_num: bool,
 }
 
 impl CurrentConfig {
@@ -78,6 +81,7 @@ impl CurrentConfig {
         ips: Vec<String>,
         ca_cert_pem: String,
         ca_key_pem: String,
+        use_num: bool,
     ) -> Self {
         Self {
             count,
@@ -89,6 +93,7 @@ impl CurrentConfig {
             ips,
             ca_cert_pem,
             ca_key_pem,
+            use_num,
         }
     }
 }

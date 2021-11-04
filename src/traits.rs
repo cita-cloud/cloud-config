@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::config::admin::{AdminConfig, AdminParam, CurrentConfig};
+use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::kms_sm::KmsSmConfig;
@@ -23,7 +24,6 @@ use crate::error::Error;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
-use crate::config::consensus_raft::Consensus;
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
@@ -105,7 +105,7 @@ pub struct AggregateConfig {
     pub storage_rocksdb: Option<StorageRocksdbConfig>,
     pub executor_evm: Option<ExecutorEvmConfig>,
     pub current_config: Option<CurrentConfig>,
-    pub consensus: Option<Consensus>,
+    pub consensus_raft: Option<Consensus>,
 }
 
 pub trait Opts {
