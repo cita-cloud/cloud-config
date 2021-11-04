@@ -431,6 +431,7 @@ mod create_test {
             peers_count: Some(2),
             kms_password: "123456".to_string(),
             package_limit: 100,
+            use_num: true
         });
     }
 }

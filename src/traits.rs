@@ -105,7 +105,7 @@ pub struct AggregateConfig {
     pub storage_rocksdb: Option<StorageRocksdbConfig>,
     pub executor_evm: Option<ExecutorEvmConfig>,
     pub current_config: Option<CurrentConfig>,
-    pub consensus: Option<Consensus>,
+    pub consensus_raft: Option<Consensus>,
 }
 
 pub trait Opts {

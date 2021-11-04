@@ -57,7 +57,7 @@ pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path
     if let Some(t) = content.admin_config {
         t.write(&path);
     }
-    if let Some(t) = content.consensus {
+    if let Some(t) = content.consensus_raft {
         t.write(&path);
     }
     content.system_config.write(&path);
