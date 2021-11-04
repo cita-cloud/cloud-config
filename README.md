@@ -47,6 +47,7 @@ USAGE:
 
 FLAGS:
     -h, --help    Print help information
+        --use_num    use serial number instead of node address
 
 OPTIONS:
         --chain-name <CHAIN_NAME>
