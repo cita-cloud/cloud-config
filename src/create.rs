@@ -29,9 +29,9 @@ use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
 use clap::Clap;
+use rand::{thread_rng, Rng};
 use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
-use rand::{Rng, thread_rng};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -84,6 +84,9 @@ pub struct CreateOpts {
     /// set one block contains tx limit, default 30000
     #[clap(long = "package-limit", default_value = "30000")]
     package_limit: u64,
+    /// use serial number instead of node address
+    #[clap(long = "use_num")]
+    use_num: bool,
 }
 
 impl CreateOpts {
@@ -137,15 +140,16 @@ impl Opts for CreateOpts {
             panic!("network only can choice network_p2p or network_tls")
         };
 
-
         for i in 0..peers_count {
             let dir = format!("{}-{}", path, i);
             fs::create_dir_all(&dir).unwrap();
 
             let (key_id, address) = key_pair(self.get_dir(i as u16), self.kms_password.clone());
             let address = hex::encode(address);
-            let dir_new = format!("{}-{}", path, address);
-            fs::rename(&dir, dir_new).unwrap();
+            if !self.use_num {
+                let dir_new = format!("{}-{}", path, address);
+                fs::rename(&dir, dir_new).unwrap();
+            }
             let address_str = format!("0x{}", address);
             key_ids.push(key_id);
             addresses.push(address_str.clone());
@@ -189,7 +193,7 @@ impl Opts for CreateOpts {
         genesis.write(&file_name);
         // admin account dir
         let (admin_key, admin_address) = key_pair(self.admin_dir(), self.kms_password.clone());
-        let rand: [u8; 32] =  thread_rng().gen();
+        let rand: [u8; 32] = thread_rng().gen();
         let admin_address: String = format!("0x{}", hex::encode(admin_address));
         let system = SystemConfigFile::default(
             self.version,
@@ -209,8 +213,9 @@ impl Opts for CreateOpts {
             ips.clone(),
             ca_cert_pem.clone(),
             ca_key_pem.clone(),
+            self.use_num,
         )
-            .write(&file_name);
+        .write(&file_name);
         Ok(AdminParam {
             admin_key,
             admin_address,
@@ -227,14 +232,26 @@ impl Opts for CreateOpts {
             p2p_ports: p2p,
             ips,
             count_old: 0,
+            use_num: self.use_num,
         })
     }
 
     fn parse(&self, i: usize, admin: &AdminParam) {
         let address = &admin.addresses[i];
-        let rm_0x = &admin.addresses[i][2..];
-        let chain_name = format!("{}-{}", &admin.chain_path, rm_0x);
-        let file_name = format!("{}/{}", &chain_name, self.config_name);
+        let (chain_name, file_name) = if self.use_num {
+            let node_dir = self.get_dir(i as u16);
+            (
+                node_dir.clone(),
+                format!("{}/{}", &node_dir, self.config_name),
+            )
+        } else {
+            let rm_0x = &admin.addresses[i][2..];
+            let node_dir = format!("{}-{}", &admin.chain_path, rm_0x);
+            (
+                node_dir.clone(),
+                format!("{}/{}", &node_dir, self.config_name),
+            )
+        };
         let p2p_port = admin.p2p_ports[i];
         let rpc_port = admin.rpc_ports[i];
         let controller = ControllerConfig::new(
@@ -267,7 +284,8 @@ impl Opts for CreateOpts {
                 let ca_param =
                     CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
 
-                let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
+                let (_, cert, priv_key) =
+                    cert(address, &Certificate::from_params(ca_param).unwrap());
                 let config = NetworkConfig::new(
                     p2p_port,
                     rpc_port,
@@ -279,7 +297,6 @@ impl Opts for CreateOpts {
                 config.write(&file_name);
                 config.write_log4rs(&chain_name);
             }
-
         }
 
         let kms = KmsSmConfig::new(rpc_port + 5);
@@ -414,6 +431,7 @@ mod create_test {
             peers_count: Some(2),
             kms_password: "123456".to_string(),
             package_limit: 100,
+            use_num: true
         });
     }
 }

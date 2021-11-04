@@ -57,7 +57,7 @@ pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path
     if let Some(t) = content.admin_config {
         t.write(&path);
     }
-    if let Some(t) = content.consensus {
+    if let Some(t) = content.consensus_raft {
         t.write(&path);
     }
     content.system_config.write(&path);
@@ -73,9 +73,7 @@ pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path
 
 pub fn read_from_file(path: impl AsRef<path::Path>) -> Result<AggregateConfig, Error> {
     let buffer = std::fs::read_to_string(path)
-        .unwrap_or_else(
-            |err| panic!("Error while loading config: [{}]", err)
-        );
+        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
     toml::from_str::<AggregateConfig>(&buffer)
 }
 
@@ -130,9 +128,9 @@ pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String)
 
 #[cfg(test)]
 mod util_test {
-    use rcgen::{KeyPair, PKCS_ECDSA_P256_SHA256};
     use crate::util::read_from_file;
     use rand::prelude::*;
+    use rcgen::{KeyPair, PKCS_ECDSA_P256_SHA256};
 
     // type Type = [u8, 32]
 
@@ -144,7 +142,7 @@ mod util_test {
 
     #[test]
     fn random_address() {
-        let rand: [u8; 16] =  thread_rng().gen();
+        let rand: [u8; 16] = thread_rng().gen();
         println!("{}", hex::encode(rand));
     }
 }

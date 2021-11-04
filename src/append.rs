@@ -85,7 +85,7 @@ impl Opts for AppendOpts {
         } else {
             self.chain_name.clone()
         };
-        let file_name = format!("./{}/{}", path, self.config_name);
+        let file_name = format!("{}/{}", path, self.config_name);
         let mut config = read_from_file(&file_name).unwrap();
         fs::remove_file(&file_name).unwrap();
 
@@ -135,14 +135,20 @@ impl Opts for AppendOpts {
             ips.push(ip.to_string());
             p2p.push(port);
 
-            let dir = format!("{}-{}", path, i);
+            let dir = format!("{}-{}", path, i + current.count as usize);
             fs::create_dir_all(&dir).unwrap();
 
-            let (key_id, address) = key_pair(self.get_dir(i as u16), self.kms_password.clone());
+            let (key_id, address) = key_pair(
+                self.get_dir(i as u16 + current.count),
+                self.kms_password.clone(),
+            );
             let address = hex::encode(address);
-            let dir_new = format!("{}-{}", path, address);
+            if !current.use_num {
+                let dir_new = format!("{}-{}", path, &address);
+                fs::rename(&dir, dir_new).unwrap();
+            }
+
             let address_str = format!("0x{}", address);
-            fs::rename(&dir, dir_new).unwrap();
             key_ids.push(key_id);
             addresses.push(address_str.clone());
             addresses_inner.push(address_str.clone());
@@ -163,8 +169,20 @@ impl Opts for AppendOpts {
         }
         //the old
         for i in 0..current.addresses.len() {
-            let chain_name = format!("./{}-{}", path, &current.addresses[i][2..]);
-            let file_name = format!("{}/{}", &chain_name, self.config_name);
+            let (_chain_name, file_name) = if current.use_num {
+                let node_dir = self.get_dir(i as u16);
+                (
+                    node_dir.clone(),
+                    format!("{}/{}", &node_dir, self.config_name),
+                )
+            } else {
+                let node_dir = format!("{}-{}", &path, &current.addresses[i][2..]);
+                (
+                    node_dir.clone(),
+                    format!("{}/{}", &node_dir, self.config_name),
+                )
+            };
+
             let mut peer_config = read_from_file(&file_name).unwrap();
             fs::remove_file(&file_name).unwrap();
             let mut net = uris.clone();
@@ -218,14 +236,27 @@ impl Opts for AppendOpts {
             p2p_ports: p2p,
             ips,
             count_old,
+            use_num: current.use_num,
         })
     }
 
     fn parse(&self, i: usize, admin: &AdminParam) {
         let address = &admin.addresses[i];
-        let rm_0x = &admin.addresses[i][2..];
-        let chain_name = format!("{}-{}", &admin.chain_path, rm_0x);
-        let file_name = format!("{}/{}", &chain_name, self.config_name);
+        let (chain_name, file_name) = if admin.use_num {
+            let node_dir = format!("{}-{}", &admin.chain_path, i + admin.count_old as usize);
+            (
+                node_dir.clone(),
+                format!("{}/{}", &node_dir, self.config_name),
+            )
+        } else {
+            let rm_0x = &admin.addresses[i][2..];
+            let node_dir = format!("{}-{}", &admin.chain_path, rm_0x);
+            (
+                node_dir.clone(),
+                format!("{}/{}", &node_dir, self.config_name),
+            )
+        };
+
         let index = i + admin.count_old as usize;
         let p2p_port = admin.p2p_ports[index];
         let rpc_port = admin.rpc_ports[index];
@@ -259,7 +290,8 @@ impl Opts for AppendOpts {
                 let ca_param =
                     CertificateParams::from_ca_cert_pem(&admin.ca_cert_pem, ca_key_pair).unwrap();
 
-                let (_, cert, priv_key) = cert(address, &Certificate::from_params(ca_param).unwrap());
+                let (_, cert, priv_key) =
+                    cert(address, &Certificate::from_params(ca_param).unwrap());
                 let config = NetworkConfig::new(
                     p2p_port,
                     rpc_port,
@@ -282,7 +314,6 @@ impl Opts for AppendOpts {
         let executor = ExecutorEvmConfig::new(rpc_port + 2);
         executor.write(&file_name);
         executor.write_log4rs(&chain_name);
-
     }
 }
 
