@@ -22,7 +22,7 @@ use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE,
-    EXECUTOR_EVM, GRPC_PORT_BEGIN, IPV4, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN,
+    EXECUTOR_EVM, GRPC_PORT_BEGIN, DNS4, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN,
     STORAGE_ROCKSDB, TCP,
 };
 use crate::error::Error;
@@ -178,7 +178,7 @@ impl Opts for CreateOpts {
                 });
             } else if is_p2p {
                 uris.push(PeerConfig {
-                    address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
+                    address: format!("/{}/{}/{}/{}", DNS4, ip, TCP, port),
                 });
             }
         }

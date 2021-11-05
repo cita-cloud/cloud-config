@@ -20,7 +20,7 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, IPV4, TCP};
+use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, DNS4, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
 use crate::util::{cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
@@ -155,7 +155,7 @@ impl Opts for AppendOpts {
 
             if !uris.is_empty() {
                 uris.push(PeerConfig {
-                    address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
+                    address: format!("/{}/{}/{}/{}", DNS4, ip, TCP, port),
                 });
             }
 
