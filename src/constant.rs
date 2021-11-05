@@ -1,4 +1,5 @@
 pub static CONTROLLER: &str = "controller";
+#[allow(dead_code)]
 pub static CONSENSUS: &str = "consensus";
 pub static CONSENSUS_BFT: &str = "consensus_bft";
 pub static CONSENSUS_RAFT: &str = "consensus_raft";

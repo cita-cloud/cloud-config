@@ -23,7 +23,7 @@ use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, DNS4, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
-use crate::util::{cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
+use crate::util::{cert, key_pair, read_from_file, write_whole_to_file};
 use clap::Clap;
 use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
@@ -323,9 +323,9 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
             return Err(Error::NodeCountNotExist);
         }
         if opts.p2p_ports != DEFAULT_VALUE {
-            if !validate_p2p_ports(opts.p2p_ports.clone()) {
-                return Err(Error::P2pPortsParamNotValid);
-            }
+            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
+            //     return Err(Error::P2pPortsParamNotValid);
+            // }
             let pair: Vec<String> = opts.p2p_ports.split(',').map(String::from).collect();
             let peers_count = pair.len();
             let param = opts.init_admin(peers_count, &pair, vec![]);
@@ -371,9 +371,9 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
         if opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
-            if !validate_p2p_ports(opts.p2p_ports.clone()) {
-                return Err(Error::P2pPortsParamNotValid);
-            }
+            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
+            //     return Err(Error::P2pPortsParamNotValid);
+            // }
             pair = opts.p2p_ports.split(',').map(String::from).collect();
         }
         let peers_count = grpc_ports.len();

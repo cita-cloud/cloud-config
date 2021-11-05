@@ -22,12 +22,12 @@ use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DEFAULT_ADDRESS, DEFAULT_CONFIG_NAME, DEFAULT_VALUE,
-    EXECUTOR_EVM, GRPC_PORT_BEGIN, DNS4, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN,
+    DNS4, EXECUTOR_EVM, GRPC_PORT_BEGIN, KMS_SM, NETWORK_P2P, NETWORK_TLS, P2P_PORT_BEGIN,
     STORAGE_ROCKSDB, TCP,
 };
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
-use crate::util::{ca_cert, cert, key_pair, validate_p2p_ports};
+use crate::util::{ca_cert, cert, key_pair};
 use clap::Clap;
 use rand::{thread_rng, Rng};
 use rcgen::{Certificate, CertificateParams, KeyPair};
@@ -336,9 +336,9 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             return Err(Error::NodeCountNotExist);
         }
         if opts.p2p_ports != DEFAULT_VALUE {
-            if !validate_p2p_ports(opts.p2p_ports.clone()) {
-                return Err(Error::P2pPortsParamNotValid);
-            }
+            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
+            //     return Err(Error::P2pPortsParamNotValid);
+            // }
             let pair: Vec<String> = opts.p2p_ports.split(',').map(String::from).collect();
             let peers_count = pair.len();
             let param = opts.init_admin(peers_count, &pair, vec![]);
@@ -384,9 +384,9 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
         if opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
-            if !validate_p2p_ports(opts.p2p_ports.clone()) {
-                return Err(Error::P2pPortsParamNotValid);
-            }
+            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
+            //     return Err(Error::P2pPortsParamNotValid);
+            // }
             pair = opts.p2p_ports.split(',').map(String::from).collect();
         }
         let peers_count = grpc_ports.len();
@@ -431,7 +431,7 @@ mod create_test {
             peers_count: Some(2),
             kms_password: "123456".to_string(),
             package_limit: 100,
-            use_num: true
+            use_num: true,
         });
     }
 }

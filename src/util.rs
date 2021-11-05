@@ -77,6 +77,7 @@ pub fn read_from_file(path: impl AsRef<path::Path>) -> Result<AggregateConfig, E
     toml::from_str::<AggregateConfig>(&buffer)
 }
 
+#[allow(dead_code)]
 pub fn validate_p2p_ports(s: String) -> bool {
     match s {
         s if s.is_empty() => false,
