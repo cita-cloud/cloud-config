@@ -1,4 +1,5 @@
 pub static CONTROLLER: &str = "controller";
+#[allow(dead_code)]
 pub static CONSENSUS: &str = "consensus";
 pub static CONSENSUS_BFT: &str = "consensus_bft";
 pub static CONSENSUS_RAFT: &str = "consensus_raft";
@@ -19,7 +20,7 @@ pub static DEFAULT_CONFIG_NAME: &str = "config.toml";
 pub static GRPC_PORT_BEGIN: u16 = 50000;
 pub static P2P_PORT_BEGIN: u16 = 40000;
 pub static PRE_HASH: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
-pub static IPV4: &str = "ip4";
+pub static DNS4: &str = "dns4";
 pub static DEFAULT_ADDRESS: &str = "127.0.0.1";
 pub static TCP: &str = "tcp";
 pub static DEFAULT_BLOCK_INTERVAL: u32 = 3;

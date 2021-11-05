@@ -20,10 +20,10 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig};
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, IPV4, TCP};
+use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, DNS4, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
-use crate::util::{cert, key_pair, read_from_file, validate_p2p_ports, write_whole_to_file};
+use crate::util::{cert, key_pair, read_from_file, write_whole_to_file};
 use clap::Clap;
 use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
@@ -155,7 +155,7 @@ impl Opts for AppendOpts {
 
             if !uris.is_empty() {
                 uris.push(PeerConfig {
-                    address: format!("/{}/{}/{}/{}", IPV4, ip, TCP, port),
+                    address: format!("/{}/{}/{}/{}", DNS4, ip, TCP, port),
                 });
             }
 
@@ -323,9 +323,9 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
             return Err(Error::NodeCountNotExist);
         }
         if opts.p2p_ports != DEFAULT_VALUE {
-            if !validate_p2p_ports(opts.p2p_ports.clone()) {
-                return Err(Error::P2pPortsParamNotValid);
-            }
+            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
+            //     return Err(Error::P2pPortsParamNotValid);
+            // }
             let pair: Vec<String> = opts.p2p_ports.split(',').map(String::from).collect();
             let peers_count = pair.len();
             let param = opts.init_admin(peers_count, &pair, vec![]);
@@ -371,9 +371,9 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
         if opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
-            if !validate_p2p_ports(opts.p2p_ports.clone()) {
-                return Err(Error::P2pPortsParamNotValid);
-            }
+            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
+            //     return Err(Error::P2pPortsParamNotValid);
+            // }
             pair = opts.p2p_ports.split(',').map(String::from).collect();
         }
         let peers_count = grpc_ports.len();

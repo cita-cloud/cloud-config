@@ -71,6 +71,7 @@ pub struct AdminParam {
 }
 
 impl CurrentConfig {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         count: u16,
         peers: &[PeerConfig],
