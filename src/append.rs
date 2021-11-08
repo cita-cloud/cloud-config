@@ -111,11 +111,11 @@ impl Opts for AppendOpts {
             } else {
                 rpc_port = grpc_ports[i];
             }
-            for item in &current.rpc_ports {
-                if item == &rpc_port {
-                    return Err(Error::GrpcPortsParamNotValid);
-                }
-            }
+            // for item in &current.rpc_ports {
+            //     if item == &rpc_port {
+            //         return Err(Error::GrpcPortsParamNotValid);
+            //     }
+            // }
             grpc.push(rpc_port);
             let port: u16;
             let ip: &str;
@@ -127,11 +127,11 @@ impl Opts for AppendOpts {
                 ip = DEFAULT_ADDRESS;
                 port = p2p_old + (i + 1) as u16;
             }
-            for item in &current.p2p_ports {
-                if item == &port {
-                    return Err(Error::P2pPortsParamNotValid);
-                }
-            }
+            // for item in &current.p2p_ports {
+            //     if item == &port {
+            //         return Err(Error::P2pPortsParamNotValid);
+            //     }
+            // }
             ips.push(ip.to_string());
             p2p.push(port);
 

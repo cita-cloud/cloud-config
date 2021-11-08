@@ -79,7 +79,7 @@ OPTIONS:
             kms db password [default: 123456]
 
         --network <NETWORK>
-            Set network micro-service [default: network_p2p]
+            Set network micro-service
 
         --p2p-ports <P2P_PORTS>
             p2p port list, input "ip1:port1,ip2:port2,ip3:port3,ip4:port4", use default port count
@@ -104,7 +104,7 @@ OPTIONS:
 #### 例子
 
 ```
-$ cloud-config create --peers-count 4 --consensus consensus_raft --config-dir /tmp/test
+$ cloud-config create --peers-count 4 --network network_p2p --consensus consensus_raft --config-dir /tmp/test
 ```
 
 #### 生成的文件
@@ -195,7 +195,7 @@ OPTIONS:
             kms db password [default: 123456]
 
         --network <NETWORK>
-            Set network micro-service [default: network_p2p]
+            Set network micro-service
 
         --p2p-ports <P2P_PORTS>
             p2p port list, input "ip1:port1,ip2:port2,ip3:port3,ip4:port4", use default port count
