@@ -74,13 +74,21 @@ pub struct CreateOpts {
     /// 127.0.0.1:40000 + 1 * i, use default must set peer_count or grpc_ports
     #[clap(long = "p2p-ports", default_value = "default")]
     p2p_ports: String,
+    /// p2p listen port list, use default port count from 40000 + 1 * i, use default must set
+    /// peer_count or grpc_ports or p2p_ports
+    #[clap(long = "p2p-listen-ports", default_value = "default")]
+    p2p_listen_ports: String,
     /// set initial node number, default "none" mean not use this must set grpc_ports or p2p_ports,
     /// if set peers_count, grpc_ports and p2p_ports, base on grpc_ports > p2p_ports > peers_count
     #[clap(long = "peers-count")]
     peers_count: Option<u16>,
-    /// kms db password
-    #[clap(long = "kms-password", default_value = "123456")]
+    /// kms db password list, use default every node use "123456", use default must set peer_count
+    /// or grpc_ports
+    #[clap(long = "kms-password", default_value = "default")]
     kms_password: String,
+    /// admin kms db password
+    #[clap(long = "admin-password", default_value = "123456")]
+    admin_password: String,
     /// set one block contains tx limit, default 30000
     #[clap(long = "package-limit", default_value = "30000")]
     package_limit: u64,
@@ -128,6 +136,19 @@ impl Opts for CreateOpts {
         let mut grpc = Vec::new();
         let mut p2p = Vec::new();
         let mut ips = Vec::new();
+        let mut history_address = Vec::new();
+
+        let set_p2p_port = self.p2p_listen_ports != DEFAULT_VALUE;
+        if set_p2p_port {
+            let p2p_listen_list: Vec<String> =
+                self.p2p_listen_ports.split(',').map(String::from).collect();
+            if p2p_listen_list.len() != peers_count {
+                panic!("p2p-listen-ports' length and node num not equal");
+            }
+            for p2p_listen_port in p2p_listen_list {
+                p2p.push(p2p_listen_port.parse().unwrap());
+            }
+        }
 
         let is_tls = self.network == NETWORK_TLS;
         let is_p2p = self.network == NETWORK_P2P;
@@ -147,12 +168,17 @@ impl Opts for CreateOpts {
             let (key_id, address) = key_pair(self.get_dir(i as u16), self.kms_password.clone());
             let address = hex::encode(address);
             if !self.use_num {
-                let dir_new = format!("{}-{}", path, address);
+                let dir_new = format!("{}-{:04}{}", path, i as u16, &address[..8]);
                 fs::rename(&dir, dir_new).unwrap();
             }
-            let address_str = format!("0x{}", address);
+
+            let address_str = format!("0x{}", &address);
             key_ids.push(key_id);
             addresses.push(address_str.clone());
+
+            let history_address_str = format!("0x{}:{:04}", &address, i);
+            history_address.push(history_address_str);
+
             if grpc_ports.is_empty() {
                 grpc.push(GRPC_PORT_BEGIN + i as u16 * 1000)
             } else {
@@ -169,7 +195,9 @@ impl Opts for CreateOpts {
                 port = P2P_PORT_BEGIN + i as u16;
             }
             ips.push(ip.to_string());
-            p2p.push(port);
+            if !set_p2p_port {
+                p2p.push(port);
+            }
             if is_tls {
                 tls_peers.push(crate::config::network_tls::PeerConfig {
                     host: ip.into(),
@@ -202,7 +230,12 @@ impl Opts for CreateOpts {
             addresses.clone(),
         );
         system.write(&file_name);
-        AdminConfig::new(admin_key, admin_address.clone()).write(&file_name);
+        let admin_password = if self.admin_password == DEFAULT_VALUE {
+            "123456".to_string()
+        } else {
+            self.admin_password.clone()
+        };
+        AdminConfig::new(admin_key, admin_address.clone(), admin_password).write(&file_name);
         CurrentConfig::new(
             peers_count as u16,
             &uris,
@@ -214,6 +247,7 @@ impl Opts for CreateOpts {
             ca_cert_pem.clone(),
             ca_key_pem.clone(),
             self.use_num,
+            history_address,
         )
         .write(&file_name);
         Ok(AdminParam {
@@ -221,7 +255,7 @@ impl Opts for CreateOpts {
             admin_address,
             chain_path: path,
             key_ids,
-            addresses,
+            addresses: addresses.clone(),
             uris: Some(uris),
             tls_peers: Some(tls_peers),
             ca_cert_pem,
@@ -231,8 +265,9 @@ impl Opts for CreateOpts {
             rpc_ports: grpc,
             p2p_ports: p2p,
             ips,
-            count_old: 0,
+            count: 0,
             use_num: self.use_num,
+            exist_addressses: addresses.clone(),
         })
     }
 
@@ -246,7 +281,7 @@ impl Opts for CreateOpts {
             )
         } else {
             let rm_0x = &admin.addresses[i][2..];
-            let node_dir = format!("{}-{}", &admin.chain_path, rm_0x);
+            let node_dir = format!("{}-{:04}{}", &admin.chain_path, i as u16, &rm_0x[..8]);
             (
                 node_dir.clone(),
                 format!("{}/{}", &node_dir, self.config_name),
@@ -336,9 +371,6 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             return Err(Error::NodeCountNotExist);
         }
         if opts.p2p_ports != DEFAULT_VALUE {
-            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
-            //     return Err(Error::P2pPortsParamNotValid);
-            // }
             let pair: Vec<String> = opts.p2p_ports.split(',').map(String::from).collect();
             let peers_count = pair.len();
             let param = opts.init_admin(peers_count, &pair, vec![]);
@@ -384,9 +416,6 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
         if opts.p2p_ports == DEFAULT_VALUE {
             pair = vec![];
         } else {
-            // if !validate_p2p_ports(opts.p2p_ports.clone()) {
-            //     return Err(Error::P2pPortsParamNotValid);
-            // }
             pair = opts.p2p_ports.split(',').map(String::from).collect();
         }
         let peers_count = grpc_ports.len();
@@ -428,6 +457,7 @@ mod create_test {
             storage: STORAGE_ROCKSDB.to_string(),
             grpc_ports: "default".to_string(),
             p2p_ports: "default".to_string(),
+            p2p_listen_ports: "default".to_string(),
             peers_count: Some(2),
             kms_password: "123456".to_string(),
             package_limit: 100,

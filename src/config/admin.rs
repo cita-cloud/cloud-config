@@ -26,6 +26,8 @@ pub struct AdminConfig {
     pub key_id: u64,
 
     pub admin_address: String,
+
+    pub admin_password: String,
 }
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
@@ -49,6 +51,8 @@ pub struct CurrentConfig {
     pub ca_key_pem: String,
 
     pub use_num: bool,
+
+    pub history_addresses: Vec<String>,
 }
 
 pub struct AdminParam {
@@ -66,8 +70,9 @@ pub struct AdminParam {
     pub rpc_ports: Vec<u16>,
     pub p2p_ports: Vec<u16>,
     pub ips: Vec<String>,
-    pub count_old: u16,
+    pub count: u16,
     pub use_num: bool,
+    pub exist_addressses: Vec<String>,
 }
 
 impl CurrentConfig {
@@ -83,6 +88,7 @@ impl CurrentConfig {
         ca_cert_pem: String,
         ca_key_pem: String,
         use_num: bool,
+        history_addresses: Vec<String>,
     ) -> Self {
         Self {
             count,
@@ -95,6 +101,7 @@ impl CurrentConfig {
             ca_cert_pem,
             ca_key_pem,
             use_num,
+            history_addresses,
         }
     }
 }
@@ -105,11 +112,12 @@ impl TomlWriter for CurrentConfig {
 }
 
 impl AdminConfig {
-    pub fn new(key_id: u64, admin_address: String) -> Self {
+    pub fn new(key_id: u64, admin_address: String, admin_password: String) -> Self {
         Self {
             db_key: None,
             key_id,
             admin_address,
+            admin_password,
         }
     }
 }

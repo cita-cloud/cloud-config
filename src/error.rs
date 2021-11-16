@@ -26,5 +26,4 @@ pub enum Error {
     NodeCountNotExist,
     ConfigDirNotExist,
     DeleteParamNotValid,
-    DeleteIndexNotValid,
 }

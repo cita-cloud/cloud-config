@@ -32,7 +32,7 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
         .create(true)
         .append(true)
         .open(path.as_ref())
-        .unwrap();
+        .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
         .unwrap();
     file.write_all(b"\n").unwrap();
@@ -125,6 +125,14 @@ pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String)
     let cert_pem = cert.serialize_pem_with_signer(signer).unwrap();
     let key_pem = cert.serialize_private_key_pem();
     (cert, cert_pem, key_pem)
+}
+
+pub fn clean_0x(s: &str) -> &str {
+    if s.starts_with("0x") {
+        &s[2..]
+    } else {
+        s
+    }
 }
 
 #[cfg(test)]

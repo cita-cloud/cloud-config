@@ -14,7 +14,7 @@
 
 use crate::constant::DEFAULT_VALUE;
 use crate::error::Error;
-use crate::util::{read_from_file, write_whole_to_file};
+use crate::util::{clean_0x, read_from_file, write_whole_to_file};
 use clap::Clap;
 use std::collections::HashSet;
 use std::fs;
@@ -32,9 +32,6 @@ pub struct DeleteOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
     chain_name: String,
-    /// delete index. Such as 1,2 will delete first and second node
-    #[clap(long = "index", default_value = "default")]
-    index: String,
     /// delete node address. Such as 0x16e80b488f6e423b9faff014d1883493c5043d29,0x5bc21f512f877f18840abe13de5816c1226c4710 will node with the address
     #[clap(long = "addresses", default_value = "default")]
     addresses: String,
@@ -49,49 +46,51 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     if !Path::new(&path).exists() {
         return Err(Error::ConfigDirNotExist);
     }
-    if opts.index == DEFAULT_VALUE && opts.addresses == DEFAULT_VALUE {
-        return Ok(());
+    if opts.addresses == DEFAULT_VALUE {
+        panic!("please input address to delete");
     }
     let file_name = format!("{}/{}", path, opts.config_name);
     let mut config = read_from_file(&file_name).unwrap();
     let mut index_set = HashSet::new();
     let current = config.current_config.as_ref().unwrap();
-    if opts.index != DEFAULT_VALUE {
-        let a = opts.index.split(',');
-        for item in a {
-            if item.parse::<usize>().is_err() {
-                return Err(Error::DeleteIndexNotValid);
-            } else {
-                index_set.insert(item.parse::<usize>().unwrap());
-            }
-        }
-    } else {
-        let a = opts.addresses.split(',');
-        for item in a {
-            match current.addresses.iter().position(|address| address == item) {
-                None => return Err(Error::DeleteParamNotValid),
-                Some(i) => {
-                    index_set.insert(i);
-                }
+
+    let a = opts.addresses.split(',');
+    for item in a {
+        match current.addresses.iter().position(|address| address == item) {
+            None => return Err(Error::DeleteParamNotValid),
+            Some(i) => {
+                index_set.insert(i);
             }
         }
     }
+
     let index_old = (0..current.count as usize).collect::<HashSet<_>>();
     if !index_old.intersection(&index_set).eq(&index_set) {
         return Err(Error::DeleteParamNotValid);
     }
 
-    fs::remove_file(&file_name).unwrap();
-
     for i in 0..current.addresses.len() {
+        let mut real_index = u16::MAX;
+        for history_address in &current.history_addresses {
+            let address_port: Vec<&str> = history_address.split(':').collect();
+            if clean_0x(address_port[0]) == clean_0x(&current.addresses[i]) {
+                real_index = u16::from_str_radix(&address_port[1], 10).unwrap();
+            }
+        }
+
         let (chain_name, file_name) = if current.use_num {
-            let node_dir = format!("{}-{}", &path, i);
+            let node_dir = format!("{}-{}", &path, real_index);
             (
                 node_dir.clone(),
                 format!("{}/{}", &node_dir, &opts.config_name),
             )
         } else {
-            let node_dir = format!("{}-{}", &path, &current.addresses[i][2..]);
+            let node_dir = format!(
+                "{}-{:04}{}",
+                &path,
+                real_index,
+                &current.addresses[i][2..10]
+            );
             (
                 node_dir.clone(),
                 format!("{}/{}", &node_dir, &opts.config_name),
@@ -131,7 +130,6 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
         write_whole_to_file(peer_config, &file_name);
     }
     let mut current_new = current.clone();
-    current_new.count -= index_set.len() as u16;
     if let Some(p) = &current_new.peers {
         let mut peers_new = Vec::new();
         for (i, peer) in p.iter().enumerate() {
@@ -184,6 +182,7 @@ pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     current_new.p2p_ports = p2p_ports_new;
 
     config.current_config = Some(current_new);
+    fs::remove_file(&file_name).unwrap();
     write_whole_to_file(config, &file_name);
     Ok(())
 }
@@ -233,7 +232,6 @@ mod delete_test {
             config_name: "config.toml".to_string(),
             config_dir: Some("".to_string()),
             chain_name: "cita-chain".to_string(),
-            index: "1,3".to_string(),
             addresses: "".to_string(),
         });
     }

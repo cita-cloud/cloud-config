@@ -23,7 +23,7 @@ use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{DEFAULT_ADDRESS, DEFAULT_VALUE, DNS4, TCP};
 use crate::error::Error;
 use crate::traits::{Opts, TomlWriter, YmlWriter};
-use crate::util::{cert, key_pair, read_from_file, write_whole_to_file};
+use crate::util::{cert, clean_0x, key_pair, read_from_file, write_whole_to_file};
 use clap::Clap;
 use rcgen::{Certificate, CertificateParams, KeyPair};
 use std::fs;
@@ -51,6 +51,10 @@ pub struct AppendOpts {
     /// 127.0.0.1:40000 + 1 * i, use default must set peer_count or grpc_ports
     #[clap(long = "p2p-ports", default_value = "default")]
     p2p_ports: String,
+    /// p2p listen port list, use default port count from 40000 + 1 * i ,use default must set
+    /// peer_count or grpc_ports or p2p_ports
+    #[clap(long = "p2p-listen-ports", default_value = "default")]
+    p2p_listen_ports: String,
     /// set initial node number, default "none" mean not use this must set grpc_ports or p2p_ports,
     /// if set peers_count, grpc_ports and p2p_ports, base on grpc_ports > p2p_ports > peers_count
     #[clap(long = "peers-count")]
@@ -87,13 +91,13 @@ impl Opts for AppendOpts {
         };
         let file_name = format!("{}/{}", path, self.config_name);
         let mut config = read_from_file(&file_name).unwrap();
-        fs::remove_file(&file_name).unwrap();
 
         let current = config.current_config.unwrap();
 
         let mut key_ids = Vec::new();
         let mut addresses = Vec::new();
         let mut addresses_inner = current.addresses.clone();
+        let mut history_address_inner = current.history_addresses.clone();
         let mut uris = current.peers.clone().unwrap_or_default();
         let mut tls_peers = current.tls_peers.clone().unwrap_or_default();
         let grpc_old = current.rpc_ports[current.rpc_ports.len() - 1];
@@ -104,6 +108,18 @@ impl Opts for AppendOpts {
         let ca_cert_pem = current.ca_cert_pem.clone();
         let ca_key_pem = current.ca_key_pem.clone();
 
+        let set_p2p_port = self.p2p_listen_ports != DEFAULT_VALUE;
+        if set_p2p_port {
+            let p2p_listen_list: Vec<String> =
+                self.p2p_listen_ports.split(',').map(String::from).collect();
+            if p2p_listen_list.len() != peers_count {
+                panic!("p2p-listen-ports' length and node num not equal");
+            }
+            for p2p_listen_port in p2p_listen_list {
+                p2p.push(p2p_listen_port.parse().unwrap());
+            }
+        }
+
         for i in 0..peers_count {
             let rpc_port;
             if grpc_ports.is_empty() {
@@ -111,11 +127,7 @@ impl Opts for AppendOpts {
             } else {
                 rpc_port = grpc_ports[i];
             }
-            // for item in &current.rpc_ports {
-            //     if item == &rpc_port {
-            //         return Err(Error::GrpcPortsParamNotValid);
-            //     }
-            // }
+
             grpc.push(rpc_port);
             let port: u16;
             let ip: &str;
@@ -127,15 +139,13 @@ impl Opts for AppendOpts {
                 ip = DEFAULT_ADDRESS;
                 port = p2p_old + (i + 1) as u16;
             }
-            // for item in &current.p2p_ports {
-            //     if item == &port {
-            //         return Err(Error::P2pPortsParamNotValid);
-            //     }
-            // }
-            ips.push(ip.to_string());
-            p2p.push(port);
 
-            let dir = format!("{}-{}", path, i + current.count as usize);
+            ips.push(ip.to_string());
+            if !set_p2p_port {
+                p2p.push(port);
+            }
+
+            let dir = format!("{}-{}", path, i as u16 + current.count);
             fs::create_dir_all(&dir).unwrap();
 
             let (key_id, address) = key_pair(
@@ -144,7 +154,7 @@ impl Opts for AppendOpts {
             );
             let address = hex::encode(address);
             if !current.use_num {
-                let dir_new = format!("{}-{}", path, &address);
+                let dir_new = format!("{}-{:04}{}", path, i as u16 + current.count, &address[..8]);
                 fs::rename(&dir, dir_new).unwrap();
             }
 
@@ -152,6 +162,9 @@ impl Opts for AppendOpts {
             key_ids.push(key_id);
             addresses.push(address_str.clone());
             addresses_inner.push(address_str.clone());
+
+            let history_address_str = format!("0x{}:{:04}", &address, i as u16 + current.count);
+            history_address_inner.push(history_address_str);
 
             if !uris.is_empty() {
                 uris.push(PeerConfig {
@@ -169,17 +182,30 @@ impl Opts for AppendOpts {
         }
         //the old
         for i in 0..current.addresses.len() {
+            let mut real_index = u16::MAX;
+            for history_address in &current.history_addresses {
+                let address_port: Vec<&str> = history_address.split(':').collect();
+                if clean_0x(address_port[0]) == clean_0x(&current.addresses[i]) {
+                    real_index = u16::from_str_radix(&address_port[1], 10).unwrap();
+                }
+            }
+
             let (_chain_name, file_name) = if current.use_num {
-                let node_dir = self.get_dir(i as u16);
+                let node_dir = format!("{}-{}", &path, real_index);
                 (
                     node_dir.clone(),
-                    format!("{}/{}", &node_dir, self.config_name),
+                    format!("{}/{}", &node_dir, &self.config_name),
                 )
             } else {
-                let node_dir = format!("{}-{}", &path, &current.addresses[i][2..]);
+                let node_dir = format!(
+                    "{}-{:04}{}",
+                    &path,
+                    real_index,
+                    &current.addresses[i][2..10]
+                );
                 (
                     node_dir.clone(),
-                    format!("{}/{}", &node_dir, self.config_name),
+                    format!("{}/{}", &node_dir, &self.config_name),
                 )
             };
 
@@ -208,11 +234,13 @@ impl Opts for AppendOpts {
         current_new.count += peers_count as u16;
         current_new.peers = Some(uris.clone());
         current_new.tls_peers = Some(tls_peers.clone());
-        current_new.addresses = addresses_inner;
+        current_new.addresses = addresses_inner.clone();
         current_new.ips = ips.clone();
         current_new.rpc_ports = grpc.clone();
         current_new.p2p_ports = p2p.clone();
+        current_new.history_addresses = history_address_inner;
         config.current_config = Some(current_new);
+        fs::remove_file(&file_name).unwrap();
         write_whole_to_file(config.clone(), &file_name);
 
         let genesis = config.genesis_block.clone();
@@ -235,29 +263,35 @@ impl Opts for AppendOpts {
             rpc_ports: grpc,
             p2p_ports: p2p,
             ips,
-            count_old,
+            count: count_old,
             use_num: current.use_num,
+            exist_addressses: addresses_inner,
         })
     }
 
     fn parse(&self, i: usize, admin: &AdminParam) {
         let address = &admin.addresses[i];
         let (chain_name, file_name) = if admin.use_num {
-            let node_dir = format!("{}-{}", &admin.chain_path, i + admin.count_old as usize);
+            let node_dir = format!("{}-{}", &admin.chain_path, i as u16 + admin.count);
             (
                 node_dir.clone(),
                 format!("{}/{}", &node_dir, self.config_name),
             )
         } else {
             let rm_0x = &admin.addresses[i][2..];
-            let node_dir = format!("{}-{}", &admin.chain_path, rm_0x);
+            let node_dir = format!(
+                "{}-{:04}{}",
+                &admin.chain_path,
+                i as u16 + admin.count,
+                &rm_0x[..8]
+            );
             (
                 node_dir.clone(),
                 format!("{}/{}", &node_dir, self.config_name),
             )
         };
 
-        let index = i + admin.count_old as usize;
+        let index = i + admin.exist_addressses.len() - admin.addresses.len();
         let p2p_port = admin.p2p_ports[index];
         let rpc_port = admin.rpc_ports[index];
 
@@ -408,6 +442,7 @@ mod append_test {
             network: String::from("network_p2p"),
             grpc_ports: String::from("default"),
             p2p_ports: String::from("default"),
+            p2p_listen_ports: String::from("default"),
             peers_count: Some(2),
             kms_password: String::from("123456"),
             package_limit: 30000,
