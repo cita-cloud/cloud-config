@@ -163,7 +163,7 @@ impl SystemConfigBuilder {
         SystemConfigFile {
             version: self.version,
             chain_id: self.chain_id.clone(),
-            admin: self.chain_id.clone(),
+            admin: self.admin.clone(),
             block_interval: self.block_interval,
             validators: self.validators.clone(),
             block_limit: self.block_limit,

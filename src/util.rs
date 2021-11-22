@@ -20,6 +20,7 @@ use rcgen::{
 };
 use regex::Regex;
 use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, path};
 use toml::de::Error;
 use toml::Value;
@@ -102,6 +103,22 @@ pub fn write_toml<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>)
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
         .unwrap();
     file.write_all(b"\n").unwrap();
+}
+
+pub fn unix_now() -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
+    let ms = since_the_epoch.as_secs() as i64 * 1000i64
+        + (since_the_epoch.subsec_nanos() as i64 / 1_000_000) as i64;
+    ms as u64
+}
+
+const HASH_BYTES_LEN: usize = 32;
+
+pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
+    let mut result = [0u8; HASH_BYTES_LEN];
+    result.copy_from_slice(libsm::sm3::hash::Sm3Hash::new(input).get_hash().as_ref());
+    result
 }
 
 #[allow(dead_code)]

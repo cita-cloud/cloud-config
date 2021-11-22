@@ -13,41 +13,36 @@
 // limitations under the License.
 
 use crate::error::Error;
-use crate::util::read_chain_config;
+use crate::util::{read_chain_config, write_toml};
 use clap::Clap;
-use std::fs;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
-pub struct NewAccountOpts {
+pub struct SetCAOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
     chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     config_dir: String,
+    /// set ca_cert_pem
+    #[clap(long = "ca")]
+    ca_cert_pem: String,
 }
 
-/// execute new account
-pub fn execute_new_account(opts: NewAccountOpts) -> Result<(), Error> {
+/// execute set admin
+pub fn execute_set_ca(opts: SetCAOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, "chain_config.toml"
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let mut chain_config = read_chain_config(&file_name).unwrap();
 
-    // TODO : check kms micro service name and gen account
+    chain_config.set_ca_cert_pem(opts.ca_cert_pem);
 
-    // gen a folder to store account info
-    let path = format!(
-        "{}/{}/accounts/{}",
-        &opts.config_dir, &opts.chain_name, "0x014328c8df26a088c621e2f8ac034ff0aa21cffd"
-    );
-    fs::create_dir_all(&path).unwrap();
-
-    // output address of new account
-    println!("0x014328c8df26a088c621e2f8ac034ff0aa21cffd");
+    // store chain_config
+    write_toml(&chain_config, file_name);
 
     Ok(())
 }

@@ -89,59 +89,10 @@ impl GrpcPortsBuilder {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Cert {
-    pub ca_cert_pem: String,
-    pub cert_pem: String,
-    pub priv_key: String,
-}
-
-impl Cert {
-    pub fn new() -> CertBuilder {
-        CertBuilder {
-            ca_cert_pem: "".to_string(),
-            cert_pem: "".to_string(),
-            priv_key: "".to_string(),
-        }
-    }
-}
-
-pub struct CertBuilder {
-    pub ca_cert_pem: String,
-    pub cert_pem: String,
-    pub priv_key: String,
-}
-
-impl CertBuilder {
-    pub fn ca_cert_pem(&mut self, ca_cert_pem: String) -> &mut CertBuilder {
-        self.ca_cert_pem = ca_cert_pem;
-        self
-    }
-
-    pub fn cert_pem(&mut self, cert_pem: String) -> &mut CertBuilder {
-        self.cert_pem = cert_pem;
-        self
-    }
-
-    pub fn priv_key(&mut self, priv_key: String) -> &mut CertBuilder {
-        self.priv_key = priv_key;
-        self
-    }
-
-    pub fn build(&self) -> Cert {
-        Cert {
-            ca_cert_pem: self.ca_cert_pem.clone(),
-            cert_pem: self.cert_pem.clone(),
-            priv_key: self.priv_key.clone(),
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
-    pub cert: Option<Cert>,
     pub db_key: String,
     pub log_level: String,
 }
@@ -151,7 +102,6 @@ impl NodeConfig {
         NodeConfigBuilder {
             grpc_ports: GrpcPorts::new().build(),
             network_listen_port: 40000,
-            cert: None,
             db_key: "123456".to_string(),
             log_level: "info".to_string(),
         }
@@ -161,7 +111,6 @@ impl NodeConfig {
 pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
-    pub cert: Option<Cert>,
     pub db_key: String,
     pub log_level: String,
 }
@@ -174,11 +123,6 @@ impl NodeConfigBuilder {
 
     pub fn network_listen_port(&mut self, network_listen_port: u16) -> &mut NodeConfigBuilder {
         self.network_listen_port = network_listen_port;
-        self
-    }
-
-    pub fn cert(&mut self, cert: Cert) -> &mut NodeConfigBuilder {
-        self.cert = Some(cert);
         self
     }
 
@@ -196,7 +140,6 @@ impl NodeConfigBuilder {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
             network_listen_port: self.network_listen_port,
-            cert: self.cert.clone(),
             db_key: self.db_key.clone(),
             log_level: self.log_level.clone(),
         }
