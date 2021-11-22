@@ -94,6 +94,7 @@ pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
     pub db_key: String,
+    pub key_id: u64,
     pub log_level: String,
 }
 
@@ -103,6 +104,7 @@ impl NodeConfig {
             grpc_ports: GrpcPorts::new().build(),
             network_listen_port: 40000,
             db_key: "123456".to_string(),
+            key_id: 1,
             log_level: "info".to_string(),
         }
     }
@@ -112,6 +114,7 @@ pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
     pub db_key: String,
+    pub key_id: u64,
     pub log_level: String,
 }
 
@@ -131,6 +134,11 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn key_id(&mut self, key_id: u64) -> &mut NodeConfigBuilder {
+        self.key_id = key_id;
+        self
+    }
+
     pub fn log_level(&mut self, log_level: String) -> &mut NodeConfigBuilder {
         self.log_level = log_level;
         self
@@ -141,6 +149,7 @@ impl NodeConfigBuilder {
             grpc_ports: self.grpc_ports.clone(),
             network_listen_port: self.network_listen_port,
             db_key: self.db_key.clone(),
+            key_id: self.key_id,
             log_level: self.log_level.clone(),
         }
     }

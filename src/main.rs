@@ -125,7 +125,7 @@ fn main() {
         SubCommand::InitNode(opts) => execute_init_node(opts).unwrap(),
         SubCommand::UpdateNode(opts) => execute_update_node(opts).unwrap(),
         SubCommand::DeleteChain(opts) => execute_delete_chain(opts).unwrap(),
-        SubCommand::NewAccount(opts) => execute_new_account(opts).unwrap(),
+        SubCommand::NewAccount(opts) => execute_new_account(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCA(opts) => execute_create_ca(opts).unwrap(),
         SubCommand::CreateCert(opts) => execute_create_cert(opts).unwrap(),
     }

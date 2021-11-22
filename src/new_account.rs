@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::Error;
-use crate::util::read_chain_config;
+use crate::util::{key_pair, read_chain_config, write_file};
 use clap::Clap;
 use std::fs;
 
@@ -26,28 +26,51 @@ pub struct NewAccountOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     config_dir: String,
+    /// kms db password
+    #[clap(long = "kms-password", default_value = "123456")]
+    kms_password: String,
 }
 
 /// execute new account
-pub fn execute_new_account(opts: NewAccountOpts) -> Result<(), Error> {
+pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, "chain_config.toml"
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let _chain_config = read_chain_config(&file_name).unwrap();
 
     // TODO : check kms micro service name and gen account
+    // Now only support kms_sm
+
+    // new account in base folder
+    let base_path = format!("{}/{}/accounts", &opts.config_dir, &opts.chain_name);
+    let (key_id, address) = key_pair(base_path, opts.kms_password);
+    let address = hex::encode(address);
 
     // gen a folder to store account info
     let path = format!(
         "{}/{}/accounts/{}",
-        &opts.config_dir, &opts.chain_name, "0x014328c8df26a088c621e2f8ac034ff0aa21cffd"
+        &opts.config_dir, &opts.chain_name, &address
     );
     fs::create_dir_all(&path).unwrap();
 
-    // output address of new account
-    println!("0x014328c8df26a088c621e2f8ac034ff0aa21cffd");
+    // move account files info account folder
+    let from = format!("{}/{}/accounts/kms.db", &opts.config_dir, &opts.chain_name);
+    let to = format!(
+        "{}/{}/accounts/{}/kms.db",
+        &opts.config_dir, &opts.chain_name, &address
+    );
+    fs::rename(from, to).unwrap();
+    // store key_id
+    let path = format!(
+        "{}/{}/accounts/{}/key_id",
+        &opts.config_dir, &opts.chain_name, &address
+    );
+    write_file(format!("{}", key_id).as_bytes(), path);
 
-    Ok(())
+    // output key_id and address of new account
+    println!("key_id:{}, address:{}", key_id, address);
+
+    Ok((key_id, address))
 }

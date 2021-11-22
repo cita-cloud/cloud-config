@@ -105,6 +105,15 @@ pub fn write_toml<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>)
     file.write_all(b"\n").unwrap();
 }
 
+pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(path.as_ref())
+        .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
+    file.write_all(content).unwrap();
+}
+
 pub fn unix_now() -> u64 {
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
