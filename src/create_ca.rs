@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::error::Error;
+use crate::util::{ca_cert, write_file};
 use clap::Clap;
 
 /// A subcommand for run
@@ -26,9 +27,17 @@ pub struct CreateCAOpts {
     config_dir: String,
 }
 
-/// execute set admin
-pub fn execute_create_ca(opts: CreateCAOpts) -> Result<(), Error> {
-    // TODO : gen ca_cert and store it into ca_cert folder
+/// execute create ca
+pub fn execute_create_ca(opts: CreateCAOpts) -> Result<(String, String), Error> {
+    let (_, ca_cert_pem, ca_key_pem) = ca_cert();
 
-    Ok(())
+    let path = format!("{}/{}/ca_cert/cert.pem", &opts.config_dir, &opts.chain_name);
+    write_file(ca_cert_pem.as_bytes(), path);
+
+    println!("{}", ca_cert_pem);
+
+    let path = format!("{}/{}/ca_cert/key.pem", &opts.config_dir, &opts.chain_name);
+    write_file(ca_key_pem.as_bytes(), path);
+
+    Ok((ca_cert_pem, ca_key_pem))
 }

@@ -159,8 +159,8 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .build();
 
     let file_name = format!(
-        "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+        "{}/{}/chain_config.toml",
+        &opts.config_dir, &opts.chain_name
     );
     write_toml(&chain_config, file_name);
 

@@ -37,8 +37,8 @@ pub struct SetValidatorsOpts {
 pub fn execute_set_validators(opts: SetValidatorsOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
-        "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+        "{}/{}/chain_config.toml",
+        &opts.config_dir, &opts.chain_name
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 

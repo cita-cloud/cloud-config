@@ -19,7 +19,7 @@ use rcgen::{
     BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
 };
 use regex::Regex;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, path};
 use toml::de::Error;
@@ -114,6 +114,13 @@ pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
     file.write_all(content).unwrap();
 }
 
+pub fn read_file(path: impl AsRef<path::Path>) -> std::io::Result<String> {
+    let mut f = fs::File::open(path)?;
+    let mut s = String::new();
+    f.read_to_string(&mut s)?;
+    Ok(s)
+}
+
 pub fn unix_now() -> u64 {
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
@@ -165,6 +172,13 @@ pub fn ca_cert() -> (Certificate, String, String) {
     let cert_pem = cert.serialize_pem_with_signer(&cert).unwrap();
     let key_pem = cert.serialize_private_key_pem();
     (cert, cert_pem, key_pem)
+}
+
+pub fn restore_ca_cert(ca_cert_pem: &str, ca_key_pem: &str) -> Certificate {
+    let ca_key_pair = KeyPair::from_pem(ca_key_pem).unwrap();
+    let ca_param = CertificateParams::from_ca_cert_pem(ca_cert_pem, ca_key_pair).unwrap();
+
+    Certificate::from_params(ca_param).unwrap()
 }
 
 pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {

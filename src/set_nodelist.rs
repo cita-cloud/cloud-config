@@ -31,7 +31,7 @@ pub struct SetNodeListOpts {
     node_list: String,
 }
 
-/// execute set validators
+/// execute set node list
 pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(

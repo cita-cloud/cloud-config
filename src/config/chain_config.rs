@@ -108,7 +108,6 @@ pub struct ChainConfig {
     pub genesis_block: GenesisBlock,
     pub node_network_address_list: Vec<NodeNetworkAddress>,
     pub micro_service_list: Vec<MicroService>,
-    pub ca_cert_pem: Option<String>,
 }
 
 impl ChainConfig {
@@ -118,7 +117,6 @@ impl ChainConfig {
             genesis_block: GenesisBlock::new().build(),
             node_network_address_list: Vec::new(),
             micro_service_list: Vec::new(),
-            ca_cert_pem: None,
         }
     }
 
@@ -133,10 +131,6 @@ impl ChainConfig {
     pub fn set_node_network_address_list(&mut self, node_list: Vec<NodeNetworkAddress>) {
         self.node_network_address_list = node_list;
     }
-
-    pub fn set_ca_cert_pem(&mut self, ca_cert_pem: String) {
-        self.ca_cert_pem = Some(ca_cert_pem);
-    }
 }
 
 pub struct ChainConfigBuilder {
@@ -144,7 +138,6 @@ pub struct ChainConfigBuilder {
     pub genesis_block: GenesisBlock,
     pub node_network_address_list: Vec<NodeNetworkAddress>,
     pub micro_service_list: Vec<MicroService>,
-    pub ca_cert_pem: Option<String>,
 }
 
 impl ChainConfigBuilder {
@@ -174,18 +167,12 @@ impl ChainConfigBuilder {
         self
     }
 
-    pub fn ca_cert_pem(&mut self, ca_cert_pem: String) -> &mut ChainConfigBuilder {
-        self.ca_cert_pem = Some(ca_cert_pem);
-        self
-    }
-
     pub fn build(&self) -> ChainConfig {
         ChainConfig {
             system_config: self.system_config.clone(),
             genesis_block: self.genesis_block.clone(),
             node_network_address_list: self.node_network_address_list.clone(),
             micro_service_list: self.micro_service_list.clone(),
-            ca_cert_pem: self.ca_cert_pem.clone(),
         }
     }
 }

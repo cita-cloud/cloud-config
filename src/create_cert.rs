@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::error::Error;
+use crate::util::{cert, read_file, restore_ca_cert, write_file};
 use clap::Clap;
 use std::fs;
 
@@ -30,16 +31,31 @@ pub struct CreateCertOpts {
     domain: String,
 }
 
-/// execute set admin
-pub fn execute_create_cert(opts: CreateCertOpts) -> Result<(), Error> {
-    // TODO : load ca_cert and gen node cert then store it into certs folder
+/// execute create cert
+pub fn execute_create_cert(opts: CreateCertOpts) -> Result<(String, String), Error> {
+    // load ca cert
+    let ca_cert_path = format!("{}/{}/ca_cert/cert.pem", &opts.config_dir, &opts.chain_name);
+    let ca_cert_pem = read_file(ca_cert_path).unwrap();
 
-    // gen a folder to store account info
+    let ca_key_path = format!("{}/{}/ca_cert/key.pem", &opts.config_dir, &opts.chain_name);
+    let ca_key_pem = read_file(ca_key_path).unwrap();
+    let ca = restore_ca_cert(&ca_cert_pem, &ca_key_pem);
+
+    // gen cert of node by domain
+    let (_, cert_pem, key_pem) = cert(&opts.domain, &ca);
+
+    // gen a folder to store cert info
     let path = format!(
         "{}/{}/certs/{}",
         &opts.config_dir, &opts.chain_name, &opts.domain
     );
     fs::create_dir_all(&path).unwrap();
 
-    Ok(())
+    let cert_pem_path = format!("{}/cert.pem", &path);
+    write_file(cert_pem.as_bytes(), cert_pem_path);
+
+    let key_pem_path = format!("{}/key.pem", &path);
+    write_file(key_pem.as_bytes(), key_pem_path);
+
+    Ok((cert_pem, key_pem))
 }

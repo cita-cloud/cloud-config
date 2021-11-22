@@ -25,7 +25,6 @@ use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
-use crate::set_ca::{execute_set_ca, SetCAOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
 use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
@@ -44,7 +43,6 @@ mod init_chain_config;
 mod init_node;
 mod new_account;
 mod set_admin;
-mod set_ca;
 mod set_nodelist;
 mod set_validators;
 mod traits;
@@ -78,9 +76,6 @@ enum SubCommand {
     /// set admin of chain
     #[clap(name = "set-admin")]
     SetAdmin(SetAdminOpts),
-    /// set ca of chain
-    #[clap(name = "set-ca")]
-    SetCA(SetCAOpts),
     /// set validators of chain
     #[clap(name = "set-validators")]
     SetValidators(SetValidatorsOpts),
@@ -119,14 +114,13 @@ fn main() {
         SubCommand::InitChain(opts) => execute_init_chain(opts).unwrap(),
         SubCommand::InitChainConfig(opts) => execute_init_chain_config(opts).unwrap(),
         SubCommand::SetAdmin(opts) => execute_set_admin(opts).unwrap(),
-        SubCommand::SetCA(opts) => execute_set_ca(opts).unwrap(),
         SubCommand::SetValidators(opts) => execute_set_validators(opts).unwrap(),
         SubCommand::SetNodeList(opts) => execute_set_nodelist(opts).unwrap(),
         SubCommand::InitNode(opts) => execute_init_node(opts).unwrap(),
         SubCommand::UpdateNode(opts) => execute_update_node(opts).unwrap(),
         SubCommand::DeleteChain(opts) => execute_delete_chain(opts).unwrap(),
         SubCommand::NewAccount(opts) => execute_new_account(opts).map(|_| ()).unwrap(),
-        SubCommand::CreateCA(opts) => execute_create_ca(opts).unwrap(),
-        SubCommand::CreateCert(opts) => execute_create_cert(opts).unwrap(),
+        SubCommand::CreateCA(opts) => execute_create_ca(opts).map(|_| ()).unwrap(),
+        SubCommand::CreateCert(opts) => execute_create_cert(opts).map(|_| ()).unwrap(),
     }
 }
