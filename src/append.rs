@@ -338,7 +338,7 @@ impl Opts for AppendOpts {
                 config.write_log4rs(&chain_name);
             }
         }
-        let kms = KmsSmConfig::new(rpc_port + 5);
+        let kms = KmsSmConfig::new(rpc_port + 5, self.kms_password.clone());
         kms.write(&file_name);
         kms.write_log4rs(&chain_name);
 

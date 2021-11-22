@@ -35,6 +35,20 @@ impl Consensus {
             grpc_listen_port: network_port + 1,
         }
     }
+
+    pub fn new_all(
+        network_port: u16,
+        controller_port: u16,
+        node_addr: String,
+        grpc_listen_port: u16,
+    ) -> Self {
+        Self {
+            network_port,
+            controller_port,
+            node_addr,
+            grpc_listen_port,
+        }
+    }
 }
 
 impl YmlWriter for Consensus {

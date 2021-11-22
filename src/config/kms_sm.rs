@@ -19,11 +19,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct KmsSmConfig {
     pub kms_port: u16,
+    pub db_key: String,
 }
 
 impl KmsSmConfig {
-    pub fn new(kms_port: u16) -> Self {
-        Self { kms_port }
+    pub fn new(kms_port: u16, db_key: String) -> Self {
+        Self { kms_port, db_key }
     }
 }
 impl TomlWriter for KmsSmConfig {
