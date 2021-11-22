@@ -12,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// The response status code
-#[derive(Debug, Clone, Copy)]
-pub enum Error {
-    KmsNotDefaultOrKmsSm,
-    P2pPortsParamNotValid,
-    GrpcPortsParamNotValid,
-    ControllerNotExist,
-    ConsensusNotExist,
-    NetworkNotExist,
-    ExecutorNotExist,
-    StorageNotExist,
-    NodeCountNotExist,
-    ConfigDirNotExist,
-    DeleteParamNotValid,
-    // new error
-    DupChainName,
+use crate::error::Error;
+use clap::Clap;
+
+/// A subcommand for run
+#[derive(Clap, Debug, Clone)]
+pub struct CreateCAOpts {
+    /// set chain name
+    #[clap(long = "chain-name", default_value = "test-chain")]
+    chain_name: String,
+    /// set config file directory, default means current directory
+    #[clap(long = "config-dir", default_value = ".")]
+    config_dir: String,
+}
+
+/// execute set admin
+pub fn execute_create_ca(opts: CreateCAOpts) -> Result<(), Error> {
+    // TODO : gen ca_cert and store it into ca_cert folder
+
+    Ok(())
 }

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ChainConfig;
+use crate::config::node_config::NodeConfig;
 use crate::traits::{AggregateConfig, Kms, TomlWriter};
 use rcgen::{
     BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
@@ -75,6 +77,31 @@ pub fn read_from_file(path: impl AsRef<path::Path>) -> Result<AggregateConfig, E
     let buffer = std::fs::read_to_string(path)
         .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
     toml::from_str::<AggregateConfig>(&buffer)
+}
+
+pub fn read_chain_config(path: impl AsRef<path::Path>) -> Result<ChainConfig, Error> {
+    let buffer = std::fs::read_to_string(path)
+        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+    toml::from_str::<ChainConfig>(&buffer)
+}
+
+pub fn read_node_config(path: impl AsRef<path::Path>) -> Result<NodeConfig, Error> {
+    let buffer = std::fs::read_to_string(path)
+        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+    toml::from_str::<NodeConfig>(&buffer)
+}
+
+pub fn write_toml<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>) {
+    let toml = Value::try_from(content).unwrap();
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(path.as_ref())
+        .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
+    file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
+        .unwrap();
+    file.write_all(b"\n").unwrap();
 }
 
 #[allow(dead_code)]
