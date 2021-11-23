@@ -59,22 +59,43 @@ SUBCOMMANDS:
 
 用户通过命令行参数填充`链级配置`和`节点配置`的过程也被拆分成了多个子命令。一方面可以减少单个子命令的参数个数，另一方面整个过程更加灵活。可以适用于测试时集中生成的中心化模式，也可以适用于实际生产部署时，不同子命令由不同参与方执行的去中心化模式。
 
-整个过程分为：
+#### 配置项与数据结构
+
+当前版本的配置项如下图所示：
+![configuration](/img/configurations.png)
+
+数据结构如下图所示：
+![struct](/img/struct.png)
+
+#### 流程
+
+将创建链配置的过程拆分成9个子命令和3个辅助的子命令，以实现最正规的去中心化配置流程。
+
+3个辅助子命令为：
+
+1. [create-ca](/src/create_ca.rs)创建链的根证书。会在`$(config-dir)/$(chain-name)/ca_cert/`下生成`cert.pem`和`key.pem`两个文件。
+2. [create-cert](/src/create_cert.rs)为各个节点创建网络证书。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`和`key.pem`两个文件。
+3. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`key_id`和`kms.db`两个文件。
+
+9个子命令分别为：
 1. [init-chain](/src/init_chain.rs)。根据用户指定的`config-dir`和`chan-name`,初始化一个链的文件目录结构。
-2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。
-3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。
-4. 如果网络微服务选择了`network_tls`，则需要通过[create-ca](/src/create_ca.rs)创建根证书。
-5. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令创建。
-6. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留好节点的`ip`，`port`和域名。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。
-7. 如果网络微服务选择了`network_tls`，则需要通过[create-cert](/src/create_cert.rs)为各个节点创建网络证书。
-8. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。
-9. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
+    ```
+    $(config_dir)
+    --  $(chain_name)
+    ------  accounts
+    ------  ca_cert
+    ------  certs
+    ```
+2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。执行之后会生成`$(config-dir)/$(chain-name)/chain_config.toml`
+3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
+4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令创建。
+5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留好节点的`ip`，`port`和域名。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。
+6. 如果网络微服务选择了`network_tls`，则需要通过[create-cert](/src/create_cert.rs)为各个节点创建网络证书。
+7. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
+8. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
+9. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
 
-如果是测试环境，按照前述流程顺序执行下来即可。
-
-对于实际生产部署来说，因为有同步参与方顺序会更加复杂：
-1. 链的发起方。执行1-2-3-4，然后等待共识节点提供信息之后执行5-6-7。然后向节点参与方下发`chain_config.toml`以及可能的各节点的证书信息。
-2. 各个节点参与方执行1。然后执行`new-account`创建节点账户；准备自己节点的网络信息。将这些信息提供给链的发起人之后，等待下发`chain_config.toml`以及可能的各节点的证书信息。然后执行8-9生成节点配置文件。
+在前述流程的基础上，可以封装更高级更方便使用的子命令。比如针对开发测试，用户可以只传递所需的节点数量，其他信息都使用约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以直接生成一条链。
 
 
 ### 初始化链

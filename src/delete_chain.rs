@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::error::Error;
+use crate::util::read_chain_config;
 use clap::Clap;
 use std::fs;
 
@@ -32,9 +33,18 @@ pub struct DeleteChainOpts {
 /// --  $(chain_name)
 /// --  $(chain_name)-xxx
 pub fn execute_delete_chain(opts: DeleteChainOpts) -> Result<(), Error> {
-    // TODO
-    // get node id from chain_config
-    // delete every node folder
+    // load chain_config
+    let file_name = format!(
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+    );
+    let chain_config = read_chain_config(&file_name).unwrap();
+
+    // delete node folders
+    for node in chain_config.node_network_address_list {
+        let path = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &node.domain);
+        fs::remove_dir_all(&path).unwrap();
+    }
 
     let path = format!("{}/{}", &opts.config_dir, &opts.chain_name);
     fs::remove_dir_all(&path).unwrap();
