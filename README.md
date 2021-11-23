@@ -15,7 +15,7 @@ cargo install --path .
 ### 用法
 
 ```
-$ ./target/debug/cloud-config -h
+$ ./target/debug/cloud-config -h                                                                                             
 cloud-config 6.3.0
 
 Rivtower Technologies.
@@ -69,7 +69,7 @@ SUBCOMMANDS:
 
 #### 流程
 
-将创建链配置的过程拆分成9个子命令和3个辅助的子命令，以实现最正规的去中心化配置流程。
+将创建链配置的过程拆分成8个子命令和3个辅助的子命令，以实现最正规的去中心化配置流程。
 
 3个辅助子命令为：
 
@@ -77,8 +77,8 @@ SUBCOMMANDS:
 2. [create-cert](/src/create_cert.rs)为各个节点创建网络证书。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`和`key.pem`两个文件。
 3. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`key_id`和`kms.db`两个文件。
 
-9个子命令分别为：
-1. [init-chain](/src/init_chain.rs)。根据用户指定的`config-dir`和`chan-name`,初始化一个链的文件目录结构。
+8个子命令分别为：
+1. [init-chain](/src/init_chain.rs)。根据指定的`config-dir`和`chan-name`,初始化一个链的文件目录结构。
     ```
     $(config_dir)
     --  $(chain_name)
@@ -86,17 +86,503 @@ SUBCOMMANDS:
     ------  ca_cert
     ------  certs
     ```
-2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。执行之后会生成`$(config-dir)/$(chain-name)/chain_config.toml`
-3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
-4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令创建。
-5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留好节点的`ip`，`port`和域名。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。
-6. 如果网络微服务选择了`network_tls`，则需要通过[create-cert](/src/create_cert.rs)为各个节点创建网络证书。
-7. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
-8. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
-9. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
+2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些额外的准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。执行之后会生成`$(config-dir)/$(chain-name)/chain_config.toml`
+3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
+4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令，由各个共识节点分别创建，然后将账户地址集中到一起进行设置。
+5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。如果网络微服务选择了`network_tls`，则需要通过[create-cert](/src/create_cert.rs)根据节点的`domain`为各个节点创建证书，然后下发到各个节点。
+6. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
+7. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
+8. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
 
 在前述流程的基础上，可以封装更高级更方便使用的子命令。比如针对开发测试，用户可以只传递所需的节点数量，其他信息都使用约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以直接生成一条链。
 
+
+### 使用示例
+
+#### init-chain
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+```
+
+```
+$ ./target/debug/cloud-config init-chain   
+$ tree test-chain 
+test-chain
+├── accounts
+├── ca_cert
+└── certs
+```
+
+#### init-chain-config
+
+参数：
+
+```
+        --block_interval <BLOCK_INTERVAL>
+            set system config block_interval [default: 3]
+
+        --block_limit <BLOCK_LIMIT>
+            set system config block_limit [default: 100]
+
+        --chain-name <CHAIN_NAME>
+            set chain name [default: test-chain]
+
+        --chain_id <CHAIN_ID>
+            set system config chain_id [default: ]
+
+        --config-dir <CONFIG_DIR>
+            set config file directory, default means current directory [default: .]
+
+        --consensus_image <CONSENSUS_IMAGE>
+            set consensus micro service image name (consensus_bft/consensus_raft) [default:
+            consensus_raft]
+
+        --consensus_tag <CONSENSUS_TAG>
+            set consensus micro service image tag [default: latest]
+
+        --controller_image <CONTROLLER_IMAGE>
+            set controller micro service image name (controller) [default: controller]
+
+        --controller_tag <CONTROLLER_TAG>
+            set controller micro service image tag [default: latest]
+
+        --executor_image <EXECUTOR_IMAGE>
+            set executor micro service image name (executor_evm) [default: executor_evm]
+
+        --executor_tag <EXECUTOR_TAG>
+            set executor micro service image tag [default: latest]
+
+        --kms_image <KMS_IMAGE>
+            set kms micro service image name (kms_eth/kms_sm) [default: kms_sm]
+
+        --kms_tag <KMS_TAG>
+            set kms micro service image tag [default: latest]
+
+        --network_image <NETWORK_IMAGE>
+            set network micro service image name (network_tls/network_p2p) [default: network_p2p]
+
+        --network_tag <NETWORK_TAG>
+            set network micro service image tag [default: latest]
+
+        --prevhash <PREVHASH>
+            set genesis prevhash [default:
+            0x0000000000000000000000000000000000000000000000000000000000000000]
+
+        --storage_image <STORAGE_IMAGE>
+            set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
+
+        --storage_tag <STORAGE_TAG>
+            set storage micro service image tag [default: latest]
+
+        --timestamp <TIMESTAMP>
+            set genesis timestamp [default: 0]
+
+        --version <VERSION>
+            set system config version [default: 0]
+```
+
+说明：
+1. 参数部分基本对应`链级配置`数据结构，具体含义参见设计部分的描述。
+
+
+```
+$ ./target/debug/cloud-config init-chain-config
+
+$ tree test-chain
+test-chain
+├── accounts
+├── ca_cert
+├── certs
+└── chain_config.toml
+
+$ cat test-chain/chain_config.toml 
+node_network_address_list = []
+
+[[micro_service_list]]
+image = 'network_p2p'
+tag = 'latest'
+
+[[micro_service_list]]
+image = 'consensus_raft'
+tag = 'latest'
+
+[[micro_service_list]]
+image = 'executor_evm'
+tag = 'latest'
+
+[[micro_service_list]]
+image = 'storage_rocksdb'
+tag = 'latest'
+
+[[micro_service_list]]
+image = 'controller'
+tag = 'latest'
+
+[[micro_service_list]]
+image = 'kms_sm'
+tag = 'latest'
+
+[genesis_block]
+prevhash = '0x0000000000000000000000000000000000000000000000000000000000000000'
+timestamp = 1637647692548
+
+[system_config]
+admin = ''
+block_interval = 3
+block_limit = 100
+chain_id = '63586a3c0255f337c77a777ff54f0040b8c388da04f23ecee6bfd4953a6512b4'
+validators = []
+version = 0
+```
+
+说明：
+1. `timestamp`默认参数为0。检测到为默认值时，自动替换为当前时间对应的时间戳。
+2. `chain_id`默认为空字符串。检测到为默认值时，自动替换为`hex(sm3($(chain_name)))`。
+
+#### new-account
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>
+            set chain name [default: test-chain]
+
+        --config-dir <CONFIG_DIR>
+            set config file directory, default means current directory [default: .]
+
+        --kms-password <KMS_PASSWORD>
+            kms db password [default: 123456]
+```
+
+```
+$ ./target/debug/cloud-config new-account   
+key_id:1, address:aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+
+$ ./target/debug/cloud-config new-account
+key_id:1, address:1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+
+$ ./target/debug/cloud-config new-account
+key_id:1, address:344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+
+$ tree test-chain 
+test-chain
+├── accounts
+│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+```
+
+#### set-admin
+
+参数：
+
+```
+        --admin <ADMIN>              set admin
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+```
+
+说明：
+
+1. `admin`为必选参数。值为之前用`new-account`创建的地址。
+
+
+```
+./target/debug/cloud-config set-admin --admin aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+
+$ cat test-chain/chain_config.toml | grep admin
+admin = 'aeaa6e333b8ed911f89acd01e88e3d9892da87b5'
+```
+
+#### set-validators
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --validators <VALIDATORS>    validators account splited by ','
+```
+
+说明：
+
+1. `validators`为必选参数。值为多个之前用`new-account`创建的地址,用逗号分隔。
+
+```
+$ ./target/debug/cloud-config set-validators --validators 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa,344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+
+$ cat test-chain/chain_config.toml | grep -A3 validators
+validators = [
+    '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa',
+    '344a9d7c390ea5f884e7c0ebf30abb17bd8785cd',
+]
+```
+
+#### set-nodelist
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --nodelist <NODE_LIST>       node list looks like
+                                     localhost:40000:node1,localhost:40001:node2
+```
+
+说明：
+
+1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
+2. `domain`为任意字符串，只需要确保节点之间不重复即可。
+
+```
+$ ./target/debug/cloud-config set-nodelist --nodelist localhost:40000:node0,localhost:40001:node1 
+
+$ cat test-chain/chain_config.toml | grep -A3 node_network                                       
+[[node_network_address_list]]
+domain = 'node0'
+host = 'localhost'
+port = 40000
+--
+[[node_network_address_list]]
+domain = 'node1'
+host = 'localhost'
+port = 40001
+```
+
+#### create-ca
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+```
+
+```
+$ ./target/debug/cloud-config create-ca
+
+$ tree test-chain
+test-chain
+├── accounts
+│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+│   ├── cert.pem
+│   └── key.pem
+├── certs
+└── chain_config.toml
+```
+
+说明：
+1. 该命令生成文件形式的根证书，存放在`ca_cert`目录下。
+
+#### create-cert
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --domain <DOMAIN>            domain of node
+```
+
+说明：
+1. `domain`为必选参数。值为前面`set-nodelist`时传递的节点的网络地址中的`domain`。
+
+```
+$ ./target/debug/cloud-config create-cert --domain node0 
+
+$ ./target/debug/cloud-config create-cert --domain node1
+
+$ tree test-chain
+test-chain
+├── accounts
+│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+│   ├── cert.pem
+│   └── key.pem
+├── certs
+│   ├── node0
+│   │   ├── cert.pem
+│   │   └── key.pem
+│   └── node1
+│       ├── cert.pem
+│       └── key.pem
+└── chain_config.toml
+```
+
+说明：
+1. 该命令生成节点的文件形式的证书，存放在`certs`目录下。
+2. 每个节点的证书都在以节点`domain`为文件名的子文件夹内。
+
+#### init-node
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>
+            set chain name [default: test-chain]
+
+        --config-dir <CONFIG_DIR>
+            set config file directory, default means current directory [default: .]
+
+        --consensus-port <CONSENSUS_PORT>
+            grpc consensus_port of node [default: 50001]
+
+        --controller-port <CONTROLLER_PORT>
+            grpc controller_port of node [default: 50004]
+
+        --domain <DOMAIN>
+            domain of node
+
+        --executor-port <EXECUTOR_PORT>
+            grpc executor_port of node [default: 50002]
+
+        --key-id <KEY_ID>
+            key id of account in kms db [default: 1]
+
+        --kms-password <KMS_PASSWORD>
+            kms db password [default: 123456]
+
+        --kms-port <KMS_PORT>
+            grpc kms_port of node [default: 50005]
+
+        --log-level <LOG_LEVEL>
+            key id of account in kms db [default: info]
+
+        --network-listen-port <NETWORK_LISTEN_PORT>
+            network listen port of node [default: 40000]
+
+        --network-port <NETWORK_PORT>
+            grpc network_port of node [default: 50000]
+
+        --package-limit <PACKAGE_LIMIT>
+            set one block contains tx limit, default 30000 [default: 30000]
+
+        --storage-port <STORAGE_PORT>
+            grpc storage_port of node [default: 50003]
+```
+
+说明：
+1. 参数部分基本对应`节点配置`数据结构，具体含义参见设计部分的描述。
+2. `domain`为必选参数，作为节点的标识，节点文件夹将会以`$(chanin-name)-$(domain)`的形式命名。
+
+```
+$ ./target/debug/cloud-config init-node --domain node0 
+ 
+$ ./target/debug/cloud-config init-node --domain node1
+
+$ tree test-chain-node* 
+test-chain-node0
+└── node_config.toml
+test-chain-node1
+└── node_config.toml
+
+$ cat test-chain-node0/node_config.toml 
+db_key = '123456'
+key_id = 1
+log_level = 'info'
+network_listen_port = 40000
+package_limit = 30000
+
+[grpc_ports]
+consensus_port = 50001
+controller_port = 50004
+executor_port = 50002
+kms_port = 50005
+network_port = 50000
+storage_port = 50003
+```
+
+#### update-node
+
+参数：
+
+```
+        --account <ACCOUNT>            account of node
+        --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>      set config file directory, default means current directory
+                                       [default: .]
+        --config-name <CONFIG_NAME>    set config file name [default: config.toml]
+        --domain <DOMAIN>              domain of node
+```
+
+说明：
+1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
+2. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的地址。
+
+```
+$ ./target/debug/cloud-config update-node --domain node0 --account 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+
+$ ./target/debug/cloud-config update-node --domain node1 --account 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+
+$ tree test-chain-node*
+test-chain-node0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-node1
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+```
+
+#### delete-chain
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+```
+
+说明：
+1. 该命令会删除所有跟指定链相关的文件夹及文件，`使用时要慎重`。
 
 ### 初始化链
 

@@ -92,7 +92,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         );
         network_config.write(&config_file_name);
         network_config.write_log4rs(&node_dir);
-    } else if find_micro_service(&chain_config, "network_p2p") {
+    } else if find_micro_service(&chain_config, "network_tls") {
         let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {

@@ -25,9 +25,6 @@ pub struct SetValidatorsOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     config_dir: String,
-    /// validators count
-    #[clap(long = "count", default_value = "4")]
-    count: u16,
     /// validators account splited by ','
     #[clap(long = "validators")]
     validators: String,
