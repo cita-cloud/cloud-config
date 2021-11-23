@@ -15,7 +15,7 @@ cargo install --path .
 ### 用法
 
 ```
-$ ./target/debug/cloud-config -h                                                                                             
+$ ./target/debug/cloud-config -h                                                                           
 cloud-config 6.3.0
 
 Rivtower Technologies.
@@ -29,11 +29,14 @@ FLAGS:
 
 SUBCOMMANDS:
     append               append config
+    append-node          append a node into chain
+    append-validator     append a validator into chain
     create               create config
     create-ca            create CA
-    create-cert          create cert
+    create-csr           create csr
     delete               delete config
     delete-chain         delete a chain
+    delete-node          delete a node from chain
     help                 Print this message or the help of the given subcommand(s)
     init-chain           init a chain
     init-chain-config    init chain config
@@ -42,6 +45,7 @@ SUBCOMMANDS:
     set-admin            set admin of chain
     set-nodelist         set node list
     set-validators       set validators of chain
+    sign-csr             sign csr
     update-node          update node
 ```
 
@@ -69,13 +73,14 @@ SUBCOMMANDS:
 
 #### 流程
 
-将创建链配置的过程拆分成8个子命令和3个辅助的子命令，以实现最正规的去中心化配置流程。
+将创建链配置的过程拆分成8个子命令和4个辅助的子命令，以实现最正规的去中心化配置流程。
 
 3个辅助子命令为：
 
 1. [create-ca](/src/create_ca.rs)创建链的根证书。会在`$(config-dir)/$(chain-name)/ca_cert/`下生成`cert.pem`和`key.pem`两个文件。
-2. [create-cert](/src/create_cert.rs)为各个节点创建网络证书。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`和`key.pem`两个文件。
-3. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`key_id`和`kms.db`两个文件。
+2. [create-csr](/src/create_csr.rs)为各个节点创建证书和签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`csr.pem`和`key.pem`两个文件。
+3. [sign-csr](/src/sign_csr.rs)处理节点的签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`。
+4. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`key_id`和`kms.db`两个文件。
 
 8个子命令分别为：
 1. [init-chain](/src/init_chain.rs)。根据指定的`config-dir`和`chan-name`,初始化一个链的文件目录结构。
@@ -89,7 +94,7 @@ SUBCOMMANDS:
 2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些额外的准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。执行之后会生成`$(config-dir)/$(chain-name)/chain_config.toml`
 3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
 4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令，由各个共识节点分别创建，然后将账户地址集中到一起进行设置。
-5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。如果网络微服务选择了`network_tls`，则需要通过[create-cert](/src/create_cert.rs)根据节点的`domain`为各个节点创建证书，然后下发到各个节点。
+5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。如果网络微服务选择了`network_tls`，则需要通过`create-csr`根据节点的`domain`为各个节点创建证书和签名请求。然后请求`CA`通过`sign-crs`处理签名请求，并下发生成的`cert.pem`到各个节点。
 6. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
 7. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
 8. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
@@ -446,7 +451,7 @@ test-chain
 说明：
 1. 该命令生成文件形式的根证书，存放在`ca_cert`目录下。
 
-#### create-cert
+#### create-csr
 
 参数：
 
@@ -458,12 +463,12 @@ test-chain
 ```
 
 说明：
-1. `domain`为必选参数。值为前面`set-nodelist`时传递的节点的网络地址中的`domain`。
+1. `domain`为必选参数。值为前面`set-nodelist`或者`append-node`时传递的节点的网络地址中的`domain`。
 
 ```
-$ ./target/debug/cloud-config create-cert --domain node0 
+$ ./target/debug/cloud-config create-csr --domain node0 
 
-$ ./target/debug/cloud-config create-cert --domain node1
+$ ./target/debug/cloud-config create-csr --domain node1
 
 $ tree test-chain
 test-chain
@@ -482,17 +487,68 @@ test-chain
 │   └── key.pem
 ├── certs
 │   ├── node0
-│   │   ├── cert.pem
+│   │   ├── csr.pem
 │   │   └── key.pem
 │   └── node1
-│       ├── cert.pem
+│       ├── csr.pem
 │       └── key.pem
 └── chain_config.toml
 ```
 
 说明：
-1. 该命令生成节点的文件形式的证书，存放在`certs`目录下。
-2. 每个节点的证书都在以节点`domain`为文件名的子文件夹内。
+1. 该命令生成节点的私钥和签名请求，存放在`certs`目录下。
+2. 每个节点的文件都在以节点`domain`为文件名的子文件夹内。
+
+#### sign-csr
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --domain <DOMAIN>            domain of node
+```
+
+说明：
+1. `domain`为必选参数。值为前面执行`create-csr`时节点的`domain`。
+
+```
+$ ./target/debug/cloud-config sign-csr --domain node0 
+
+$ ./target/debug/cloud-config sign-csr --domain node1
+
+$ tree test-chain
+test-chain
+├── accounts
+│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+│   ├── cert.pem
+│   └── key.pem
+└── certs
+│    ├── node0
+│    │   ├── cert.pem
+│    │   ├── csr.pem
+│    │   └── key.pem
+│    └── node1
+│        ├── cert.pem
+│        ├── csr.pem
+│        └── key.pem
+└── chain_config.toml
+```
+
+说明：
+1. 该命令生成节点的证书文件`cert.pem`，存放在`certs`目录下。
+2. 每个节点的文件都在以节点`domain`为文件名的子文件夹内。
+
 
 #### init-node
 

@@ -19,7 +19,7 @@ use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::create::{execute_create, CreateOpts};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
-use crate::create_cert::{execute_create_cert, CreateCertOpts};
+use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete::{execute_delete, DeleteOpts};
 use crate::delete_chain::{execute_delete_chain, DeleteChainOpts};
 use crate::delete_node::{execute_delete_node, DeleteNodeOpts};
@@ -30,6 +30,7 @@ use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
 use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
+use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 
 mod append;
@@ -39,7 +40,7 @@ mod config;
 mod constant;
 mod create;
 mod create_ca;
-mod create_cert;
+mod create_csr;
 mod delete;
 mod delete_chain;
 mod delete_node;
@@ -51,6 +52,7 @@ mod new_account;
 mod set_admin;
 mod set_nodelist;
 mod set_validators;
+mod sign_csr;
 mod traits;
 mod update_node;
 mod util;
@@ -112,9 +114,12 @@ enum SubCommand {
     /// create CA
     #[clap(name = "create-ca")]
     CreateCA(CreateCAOpts),
-    /// create cert
-    #[clap(name = "create-cert")]
-    CreateCert(CreateCertOpts),
+    /// create csr
+    #[clap(name = "create-csr")]
+    CreateCSR(CreateCSROpts),
+    /// sign csr
+    #[clap(name = "sign-csr")]
+    SignCSR(SignCSROpts),
 }
 
 fn main() {
@@ -139,6 +144,7 @@ fn main() {
         SubCommand::DeleteChain(opts) => execute_delete_chain(opts).unwrap(),
         SubCommand::NewAccount(opts) => execute_new_account(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCA(opts) => execute_create_ca(opts).map(|_| ()).unwrap(),
-        SubCommand::CreateCert(opts) => execute_create_cert(opts).map(|_| ()).unwrap(),
+        SubCommand::CreateCSR(opts) => execute_create_csr(opts).map(|_| ()).unwrap(),
+        SubCommand::SignCSR(opts) => execute_sign_csr(opts).map(|_| ()).unwrap(),
     }
 }

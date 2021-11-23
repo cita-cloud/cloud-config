@@ -16,7 +16,8 @@ use crate::config::chain_config::ChainConfig;
 use crate::config::node_config::NodeConfig;
 use crate::traits::{AggregateConfig, Kms, TomlWriter};
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
+    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, IsCa, KeyPair,
+    PKCS_ECDSA_P256_SHA256,
 };
 use regex::Regex;
 use std::io::{Read, Write};
@@ -181,6 +182,28 @@ pub fn restore_ca_cert(ca_cert_pem: &str, ca_key_pem: &str) -> Certificate {
     let ca_param = CertificateParams::from_ca_cert_pem(ca_cert_pem, ca_key_pair).unwrap();
 
     Certificate::from_params(ca_param).unwrap()
+}
+
+pub fn create_csr(domain: &str) -> (String, String) {
+    let subject_alt_names = vec![domain.into()];
+    let mut params = CertificateParams::new(subject_alt_names);
+
+    let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
+    params.key_pair.replace(keypair);
+
+    let cert = Certificate::from_params(params).unwrap();
+
+    let csr_pem = cert.serialize_request_pem().unwrap();
+    let key_pem = cert.serialize_private_key_pem();
+
+    (csr_pem, key_pem)
+}
+
+pub fn sign_csr(csr_pem: &str, ca_cert: &Certificate) -> String {
+    let csr = CertificateSigningRequest::from_pem(&csr_pem).unwrap();
+    let cert_pem = csr.serialize_pem_with_signer(&ca_cert).unwrap();
+
+    cert_pem
 }
 
 pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {

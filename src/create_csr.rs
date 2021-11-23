@@ -13,13 +13,13 @@
 // limitations under the License.
 
 use crate::error::Error;
-use crate::util::{cert, read_file, restore_ca_cert, write_file};
+use crate::util::{create_csr, write_file};
 use clap::Clap;
 use std::fs;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
-pub struct CreateCertOpts {
+pub struct CreateCSROpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
     chain_name: String,
@@ -31,18 +31,10 @@ pub struct CreateCertOpts {
     domain: String,
 }
 
-/// execute create cert
-pub fn execute_create_cert(opts: CreateCertOpts) -> Result<(String, String), Error> {
-    // load ca cert
-    let ca_cert_path = format!("{}/{}/ca_cert/cert.pem", &opts.config_dir, &opts.chain_name);
-    let ca_cert_pem = read_file(ca_cert_path).unwrap();
-
-    let ca_key_path = format!("{}/{}/ca_cert/key.pem", &opts.config_dir, &opts.chain_name);
-    let ca_key_pem = read_file(ca_key_path).unwrap();
-    let ca = restore_ca_cert(&ca_cert_pem, &ca_key_pem);
-
-    // gen cert of node by domain
-    let (_, cert_pem, key_pem) = cert(&opts.domain, &ca);
+/// execute create csr
+pub fn execute_create_csr(opts: CreateCSROpts) -> Result<(String, String), Error> {
+    // gen csr and key_pem of node by domain
+    let (csr_pem, key_pem) = create_csr(&opts.domain);
 
     // gen a folder to store cert info
     let path = format!(
@@ -51,11 +43,11 @@ pub fn execute_create_cert(opts: CreateCertOpts) -> Result<(String, String), Err
     );
     fs::create_dir_all(&path).unwrap();
 
-    let cert_pem_path = format!("{}/cert.pem", &path);
-    write_file(cert_pem.as_bytes(), cert_pem_path);
+    let csr_pem_path = format!("{}/csr.pem", &path);
+    write_file(csr_pem.as_bytes(), csr_pem_path);
 
     let key_pem_path = format!("{}/key.pem", &path);
     write_file(key_pem.as_bytes(), key_pem_path);
 
-    Ok((cert_pem, key_pem))
+    Ok((csr_pem, key_pem))
 }
