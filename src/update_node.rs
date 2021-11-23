@@ -59,6 +59,9 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
     let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
 
+    // delete old config file
+    let _ = fs::remove_file(&config_file_name);
+
     // load node_config
     let file_name = format!("{}/node_config.toml", &node_dir);
     let node_config = read_node_config(file_name).unwrap();

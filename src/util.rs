@@ -98,6 +98,7 @@ pub fn write_toml<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>)
     let mut file = fs::OpenOptions::new()
         .create(true)
         .write(true)
+        .truncate(true)
         .open(path.as_ref())
         .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
@@ -109,6 +110,7 @@ pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
     let mut file = fs::OpenOptions::new()
         .create(true)
         .write(true)
+        .truncate(true)
         .open(path.as_ref())
         .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(content).unwrap();

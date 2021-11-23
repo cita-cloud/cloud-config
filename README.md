@@ -334,6 +334,22 @@ validators = [
 ]
 ```
 
+#### append-validator
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --validator <VALIDATOR>      validator account
+```
+
+说明：
+
+1. `validator`为必选参数。值为之前用`new-account`创建的地址。
+2. 功能与`set-validators`相似，只不过是每次添加一个地址。
+
 #### set-nodelist
 
 参数：
@@ -343,7 +359,7 @@ validators = [
         --config-dir <CONFIG_DIR>    set config file directory, default means current directory
                                      [default: .]
         --nodelist <NODE_LIST>       node list looks like
-                                     localhost:40000:node1,localhost:40001:node2
+                                     localhost:40000:node0,localhost:40001:node1
 ```
 
 说明：
@@ -365,6 +381,35 @@ domain = 'node1'
 host = 'localhost'
 port = 40001
 ```
+
+#### append-node
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --node <NODE>                node network address looks like localhost:40002:node2
+```
+
+1. `node`为必选参数。值为节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
+2. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
+
+
+#### delete-node
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --domain <DOMAIN>            domain of node that want to delete
+```
+
+1. `domain`为必选参数。作为节点的标识，标识要删除的节点。
+2. 功能与`append-node`相反，删除添加一个节点。
 
 #### create-ca
 
