@@ -22,10 +22,10 @@ use std::path::Path;
 pub struct InitChainOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
 }
 
 /// dir looks like

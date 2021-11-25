@@ -460,6 +460,7 @@ mod create_test {
             p2p_listen_ports: "default".to_string(),
             peers_count: Some(2),
             kms_password: "123456".to_string(),
+            admin_password: "".to_string(),
             package_limit: 100,
             use_num: true,
         });

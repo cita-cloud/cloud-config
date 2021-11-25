@@ -21,13 +21,13 @@ use clap::Clap;
 pub struct SignCSROpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// domain of node
     #[clap(long = "domain")]
-    domain: String,
+    pub(crate) domain: String,
 }
 
 /// execute sign cert

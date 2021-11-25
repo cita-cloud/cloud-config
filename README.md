@@ -732,10 +732,9 @@ OPTIONS:
         --network <NETWORK>
             Set network micro-service
 
-        --p2p-ports <P2P_PORTS>
-            p2p port list, input "ip1:port1,ip2:port2,ip3:port3,ip4:port4", use default port count
-            from 127.0.0.1:40000 + 1 * i, use default must set peer_count or grpc_ports [default:
-            default]
+        --node-list <NODE_LIST>
+            input "localhost:40000:node0,localhost:40001:node1", use default port count from
+            127.0.0.1:40000 + 1 * i:nodei, use default must set peer_count or grpc_ports
 
         --package-limit <PACKAGE_LIMIT>
             set one block contains tx limit, default 30000 [default: 30000]

@@ -23,46 +23,46 @@ use std::fs;
 pub struct InitNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// domain of node
     #[clap(long = "domain")]
-    domain: String,
+    pub(crate) domain: String,
     /// grpc network_port of node
     #[clap(long = "network-port", default_value = "50000")]
-    network_port: u16,
+    pub(crate) network_port: u16,
     /// grpc consensus_port of node
     #[clap(long = "consensus-port", default_value = "50001")]
-    consensus_port: u16,
+    pub(crate) consensus_port: u16,
     /// grpc executor_port of node
     #[clap(long = "executor-port", default_value = "50002")]
-    executor_port: u16,
+    pub(crate) executor_port: u16,
     /// grpc storage_port of node
     #[clap(long = "storage-port", default_value = "50003")]
-    storage_port: u16,
+    pub(crate) storage_port: u16,
     /// grpc controller_port of node
     #[clap(long = "controller-port", default_value = "50004")]
-    controller_port: u16,
+    pub(crate) controller_port: u16,
     /// grpc kms_port of node
     #[clap(long = "kms-port", default_value = "50005")]
-    kms_port: u16,
+    pub(crate) kms_port: u16,
     /// network listen port of node
     #[clap(long = "network-listen-port", default_value = "40000")]
-    network_listen_port: u16,
+    pub(crate) network_listen_port: u16,
     /// kms db password
     #[clap(long = "kms-password", default_value = "123456")]
-    kms_password: String,
+    pub(crate) kms_password: String,
     /// key id of account in kms db
     #[clap(long = "key-id", default_value = "1")]
-    key_id: u64,
+    pub(crate) key_id: u64,
     /// set one block contains tx limit, default 30000
     #[clap(long = "package-limit", default_value = "30000")]
-    package_limit: u64,
+    pub(crate) package_limit: u64,
     /// key id of account in kms db
     #[clap(long = "log-level", default_value = "info")]
-    log_level: String,
+    pub(crate) log_level: String,
 }
 
 /// execute set validators

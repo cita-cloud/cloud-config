@@ -32,19 +32,19 @@ use std::fs;
 pub struct UpdateNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// set config file name
     #[clap(long = "config-name", default_value = "config.toml")]
-    config_name: String,
+    pub(crate) config_name: String,
     /// domain of node
     #[clap(long = "domain")]
-    domain: String,
+    pub(crate) domain: String,
     /// account of node
     #[clap(long = "account")]
-    account: String,
+    pub(crate) account: String,
 }
 
 /// generate node config files by chain_config and node_config
@@ -102,7 +102,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 tls_peers.push(crate::config::network_tls::PeerConfig {
                     host: node_network_address.host.clone(),
                     port: node_network_address.port,
-                    domain: opts.domain.clone(),
+                    domain: node_network_address.domain.clone(),
                 });
             }
         }

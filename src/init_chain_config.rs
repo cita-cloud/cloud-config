@@ -23,67 +23,67 @@ use clap::Clap;
 pub struct InitChainConfigOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// set genesis timestamp
     #[clap(long = "timestamp", default_value = "0")]
-    timestamp: u64,
+    pub(crate) timestamp: u64,
     /// set genesis prevhash
     #[clap(
         long = "prevhash",
         default_value = "0x0000000000000000000000000000000000000000000000000000000000000000"
     )]
-    prevhash: String,
+    pub(crate) prevhash: String,
     /// set system config version
     #[clap(long = "version", default_value = "0")]
-    version: u32,
+    pub(crate) version: u32,
     /// set system config chain_id
     #[clap(long = "chain_id", default_value = "")]
-    chain_id: String,
+    pub(crate) chain_id: String,
     /// set system config block_interval
     #[clap(long = "block_interval", default_value = "3")]
-    block_interval: u32,
+    pub(crate) block_interval: u32,
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
-    block_limit: u64,
+    pub(crate) block_limit: u64,
     /// set network micro service image name (network_tls/network_p2p)
     #[clap(long = "network_image", default_value = "network_p2p")]
-    network_image: String,
+    pub(crate) network_image: String,
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
-    network_tag: String,
+    pub(crate) network_tag: String,
     /// set consensus micro service image name (consensus_bft/consensus_raft)
     #[clap(long = "consensus_image", default_value = "consensus_raft")]
-    consensus_image: String,
+    pub(crate) consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]
-    consensus_tag: String,
+    pub(crate) consensus_tag: String,
     /// set executor micro service image name (executor_evm)
     #[clap(long = "executor_image", default_value = "executor_evm")]
-    executor_image: String,
+    pub(crate) executor_image: String,
     /// set executor micro service image tag
     #[clap(long = "executor_tag", default_value = "latest")]
-    executor_tag: String,
+    pub(crate) executor_tag: String,
     /// set storage micro service image name (storage_rocksdb)
     #[clap(long = "storage_image", default_value = "storage_rocksdb")]
-    storage_image: String,
+    pub(crate) storage_image: String,
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
-    storage_tag: String,
+    pub(crate) storage_tag: String,
     /// set controller micro service image name (controller)
     #[clap(long = "controller_image", default_value = "controller")]
-    controller_image: String,
+    pub(crate) controller_image: String,
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
-    controller_tag: String,
+    pub(crate) controller_tag: String,
     /// set kms micro service image name (kms_eth/kms_sm)
     #[clap(long = "kms_image", default_value = "kms_sm")]
-    kms_image: String,
+    pub(crate) kms_image: String,
     /// set kms micro service image tag
     #[clap(long = "kms_tag", default_value = "latest")]
-    kms_tag: String,
+    pub(crate) kms_tag: String,
 }
 
 /// init chain config

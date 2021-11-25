@@ -22,13 +22,13 @@ use std::fs;
 pub struct NewAccountOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// kms db password
     #[clap(long = "kms-password", default_value = "123456")]
-    kms_password: String,
+    pub(crate) kms_password: String,
 }
 
 /// execute new account
