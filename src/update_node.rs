@@ -26,6 +26,8 @@ use crate::traits::YmlWriter;
 use crate::util::{read_chain_config, read_file, read_node_config};
 use clap::Clap;
 use std::fs;
+use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT};
+use crate::config::consensus_bft::ConsensusBft;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -139,12 +141,21 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // consensus config file
     // if consensus_raft
-    if find_micro_service(&chain_config, "consensus_raft") {
+    if find_micro_service(&chain_config, CONSENSUS_RAFT) {
         let consensus_config = RAFT_Consensus::new_all(
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.controller_port,
             opts.account.clone(),
             node_config.grpc_ports.consensus_port,
+        );
+        consensus_config.write(&config_file_name);
+    } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
+        let consensus_config = ConsensusBft::new(
+            node_config.grpc_ports.controller_port,
+            node_config.grpc_ports.consensus_port,
+            node_config.grpc_ports.network_port,
+            node_config.grpc_ports.kms_port,
+            format!("0x{}", opts.account.clone()),
         );
         consensus_config.write(&config_file_name);
     } else {
@@ -209,7 +220,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     Ok(())
 }
 
-fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> bool {
+pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> bool {
     for micro_service in &chain_config.micro_service_list {
         if micro_service.image == service_name {
             return true;

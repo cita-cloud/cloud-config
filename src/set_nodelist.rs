@@ -60,3 +60,13 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
 
     Ok(())
 }
+
+pub fn get_old_node_list_count(opts: SetNodeListOpts) -> Vec<NodeNetworkAddress> {
+    // load chain_config
+    let file_name = format!(
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+    );
+    let mut chain_config = read_chain_config(&file_name).unwrap();
+    chain_config.node_network_address_list
+}

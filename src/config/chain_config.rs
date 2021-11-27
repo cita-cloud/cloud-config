@@ -15,7 +15,7 @@
 use crate::config::controller::{GenesisBlock, SystemConfigFile};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq)]
 pub struct NodeNetworkAddress {
     pub host: String,
     pub port: u16,
@@ -29,6 +29,12 @@ impl NodeNetworkAddress {
             port: 0,
             domain: "".to_string(),
         }
+    }
+}
+
+impl PartialEq for NodeNetworkAddress {
+    fn eq(&self, other: &Self) -> bool {
+        self.domain == other.domain || (self.host == other.host && self.port == other.port && self.domain == other.domain)
     }
 }
 

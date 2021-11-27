@@ -16,19 +16,20 @@ use crate::config::chain_config::NodeNetworkAddress;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
 use clap::Clap;
+use std::fs;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
 pub struct AppendNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// node network address looks like localhost:40002:node2
     #[clap(long = "node")]
-    node: String,
+    pub(crate) node: String,
 }
 
 /// execute set node list

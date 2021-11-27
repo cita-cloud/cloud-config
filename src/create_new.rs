@@ -99,12 +99,6 @@ pub struct CreateLocalOpts {
     /// set config file name
     #[clap(long = "config-name", default_value = "config.toml")]
     config_name: String,
-    // /// domain of node
-    // #[clap(long = "domain")]
-    // domain: String,
-    // /// account of node
-    // #[clap(long = "account")]
-    // account: String,
     /// kms db password
     #[clap(long = "kms-password", default_value = "123456")]
     kms_password: String,
@@ -331,7 +325,7 @@ mod create_new_test {
             block_limit: 100,
             network_image: "network_p2p".to_string(),
             network_tag: "latest".to_string(),
-            consensus_image: "consensus_raft".to_string(),
+            consensus_image: "consensus_bft".to_string(),
             consensus_tag: "latest".to_string(),
             executor_image: "executor_evm".to_string(),
             executor_tag: "latest".to_string(),
@@ -344,7 +338,7 @@ mod create_new_test {
             grpc_ports: "default".to_string(),
             node_list: "default".to_string(),
             p2p_listen_ports: "default".to_string(),
-            peers_count: Some(4),
+            peers_count: Some(2),
             config_name: "config.toml".to_string(),
             kms_password: "123456".to_string(),
             log_level: "info".to_string(),

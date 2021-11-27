@@ -28,4 +28,5 @@ pub enum Error {
     DeleteParamNotValid,
     // new error
     DupChainName,
+    DupNodeName,
 }
