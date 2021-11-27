@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::controller::{GenesisBlock, SystemConfigFile};
+use crate::config::controller::{GenesisBlock, SystemConfigFile, GenesisBlockBuilder, SystemConfigBuilder};
 use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Hash, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct NodeNetworkAddress {
     pub host: String,
     pub port: u16,
@@ -23,18 +24,20 @@ pub struct NodeNetworkAddress {
 }
 
 impl NodeNetworkAddress {
-    pub fn new() -> NodeNetworkAddressBuilder {
-        NodeNetworkAddressBuilder {
-            host: "localhost".to_string(),
-            port: 0,
-            domain: "".to_string(),
-        }
-    }
+
 }
 
 impl PartialEq for NodeNetworkAddress {
     fn eq(&self, other: &Self) -> bool {
-        self.domain == other.domain || (self.host == other.host && self.port == other.port && self.domain == other.domain)
+        self.domain == other.domain
+    }
+}
+
+impl Hash for NodeNetworkAddress {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.domain.hash(state);
+        self.port.hash(state);
+        self.host.hash(state);
     }
 }
 
@@ -45,6 +48,13 @@ pub struct NodeNetworkAddressBuilder {
 }
 
 impl NodeNetworkAddressBuilder {
+    pub fn new() -> NodeNetworkAddressBuilder {
+        NodeNetworkAddressBuilder {
+            host: "localhost".to_string(),
+            port: 0,
+            domain: "".to_string(),
+        }
+    }
     pub fn host(&mut self, host: String) -> &mut NodeNetworkAddressBuilder {
         self.host = host;
         self
@@ -76,12 +86,7 @@ pub struct MicroService {
 }
 
 impl MicroService {
-    pub fn new() -> MicroServiceBuilder {
-        MicroServiceBuilder {
-            image: "".to_string(),
-            tag: "latest".to_string(),
-        }
-    }
+
 }
 
 pub struct MicroServiceBuilder {
@@ -90,6 +95,13 @@ pub struct MicroServiceBuilder {
 }
 
 impl MicroServiceBuilder {
+    pub fn new() -> MicroServiceBuilder {
+        MicroServiceBuilder {
+            image: "".to_string(),
+            tag: "latest".to_string(),
+        }
+    }
+
     pub fn image(&mut self, image: String) -> &mut MicroServiceBuilder {
         self.image = image;
         self
@@ -117,14 +129,6 @@ pub struct ChainConfig {
 }
 
 impl ChainConfig {
-    pub fn new() -> ChainConfigBuilder {
-        ChainConfigBuilder {
-            system_config: SystemConfigFile::new().build(),
-            genesis_block: GenesisBlock::new().build(),
-            node_network_address_list: Vec::new(),
-            micro_service_list: Vec::new(),
-        }
-    }
 
     pub fn set_admin(&mut self, admin: String) {
         self.system_config.set_admin(admin);
@@ -147,6 +151,14 @@ pub struct ChainConfigBuilder {
 }
 
 impl ChainConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            system_config: SystemConfigBuilder::new().build(),
+            genesis_block: GenesisBlockBuilder::new().build(),
+            node_network_address_list: Vec::new(),
+            micro_service_list: Vec::new(),
+        }
+    }
     pub fn system_config(&mut self, system_config: SystemConfigFile) -> &mut ChainConfigBuilder {
         self.system_config = system_config;
         self

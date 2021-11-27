@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::node_config::{GrpcPorts, NodeConfig};
+use crate::config::node_config::{GrpcPortsBuilder, NodeConfigBuilder};
 use crate::error::Error;
 use crate::util::write_toml;
 use clap::Clap;
@@ -67,7 +67,7 @@ pub struct InitNodeOpts {
 
 /// execute set validators
 pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
-    let grpc_ports = GrpcPorts::new()
+    let grpc_ports = GrpcPortsBuilder::new()
         .network_port(opts.network_port)
         .consensus_port(opts.consensus_port)
         .executor_port(opts.executor_port)
@@ -75,7 +75,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .controller_port(opts.controller_port)
         .kms_port(opts.kms_port)
         .build();
-    let node_config = NodeConfig::new()
+    let node_config = NodeConfigBuilder::new()
         .grpc_ports(grpc_ports)
         .network_listen_port(opts.network_listen_port)
         .db_key(opts.kms_password)

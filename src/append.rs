@@ -186,7 +186,7 @@ impl Opts for AppendOpts {
             for history_address in &current.history_addresses {
                 let address_port: Vec<&str> = history_address.split(':').collect();
                 if clean_0x(address_port[0]) == clean_0x(&current.addresses[i]) {
-                    real_index = u16::from_str_radix(&address_port[1], 10).unwrap();
+                    real_index = address_port[1].parse::<u16>().unwrap();
                 }
             }
 

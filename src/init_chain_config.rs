@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::chain_config::{ChainConfig, MicroService};
-use crate::config::controller::{GenesisBlock, SystemConfigFile};
+use crate::config::chain_config::{MicroService, ChainConfigBuilder, MicroServiceBuilder};
+use crate::config::controller::{SystemConfigBuilder, GenesisBlockBuilder};
 use crate::error::Error;
 use crate::util::{sm3_hash, unix_now, write_toml};
 use clap::Clap;
@@ -105,27 +105,27 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
     };
 
     // proc six micro service
-    let network_micro_service = MicroService::new()
+    let network_micro_service = MicroServiceBuilder::new()
         .image(opts.network_image)
         .tag(opts.network_tag)
         .build();
-    let consensus_micro_service = MicroService::new()
+    let consensus_micro_service = MicroServiceBuilder::new()
         .image(opts.consensus_image)
         .tag(opts.consensus_tag)
         .build();
-    let executor_micro_service = MicroService::new()
+    let executor_micro_service = MicroServiceBuilder::new()
         .image(opts.executor_image)
         .tag(opts.executor_tag)
         .build();
-    let storage_micro_service = MicroService::new()
+    let storage_micro_service = MicroServiceBuilder::new()
         .image(opts.storage_image)
         .tag(opts.storage_tag)
         .build();
-    let controller_micro_service = MicroService::new()
+    let controller_micro_service = MicroServiceBuilder::new()
         .image(opts.controller_image)
         .tag(opts.controller_tag)
         .build();
-    let kms_micro_service = MicroService::new()
+    let kms_micro_service = MicroServiceBuilder::new()
         .image(opts.kms_image)
         .tag(opts.kms_tag)
         .build();
@@ -139,20 +139,20 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
     ];
 
     // genesis block
-    let genesis_block = GenesisBlock::new()
+    let genesis_block = GenesisBlockBuilder::new()
         .timestamp(timestamp)
         .prevhash(opts.prevhash)
         .build();
 
     // system config
-    let system_config = SystemConfigFile::new()
+    let system_config = SystemConfigBuilder::new()
         .version(opts.version)
         .chain_id(chain_id)
         .block_interval(opts.block_interval)
         .block_limit(opts.block_limit)
         .build();
 
-    let chain_config = ChainConfig::new()
+    let chain_config = ChainConfigBuilder::new()
         .system_config(system_config)
         .genesis_block(genesis_block)
         .micro_service_list(micro_service_list)

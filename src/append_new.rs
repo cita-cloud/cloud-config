@@ -3,7 +3,7 @@ use crate::constant::{DEFAULT_VALUE, NETWORK_TLS};
 use crate::util::read_chain_config;
 use crate::update_node::{find_micro_service, execute_update_node, UpdateNodeOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
-use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts, get_old_node_list_count};
+use crate::set_nodelist::{SetNodeListOpts, get_old_node_list_count};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
@@ -59,25 +59,32 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
     let mut listen_ports: Vec<u16> = Vec::new();
     let mut network_ports: Vec<u16> = Vec::new();
     let mut nodes_addresses: Vec<String> = Vec::new();
-    let current_nodes = get_old_node_list_count(SetNodeListOpts {
+    let mut current_nodes = get_old_node_list_count(SetNodeListOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
         node_list: "".to_string()
     });
-    let old_count = current_nodes.len();
+    current_nodes.reverse();
+    let mut old_count: usize = 0;
+    for node in current_nodes.clone() {
+        if node.domain.starts_with("node") {
+            old_count = node.domain.replace("node", "").parse::<usize>().unwrap() + 1;
+            break;
+        }
+    }
     if opts.grpc_ports == DEFAULT_VALUE {
         if opts.node_list == DEFAULT_VALUE && opts.peers_count == None {
             return Err(Error::NodeCountNotExist);
         }
         if opts.node_list != DEFAULT_VALUE {
             let url: Vec<String> = opts.node_list.split(',').map(String::from).collect();
-            for i in 0..listen_ports.len() {
-                nodes_addresses.push(url[i].clone());
-                let pair: Vec<&str> = url[i].split(":").collect();
+            for (i, item) in url.iter().enumerate() {
+                nodes_addresses.push(item.clone());
+                let pair: Vec<&str> = item.split(':').collect();
                 let node = NodeNetworkAddress {
                     host: pair[0].into(),
                     port: pair[1].parse().unwrap(),
-                    domain: pair[2].clone().to_string()
+                    domain: pair[2].to_string()
                 };
                 let node_set: HashSet<NodeNetworkAddress> = HashSet::from_iter(current_nodes.clone());
                 if node_set.contains(&node) {
@@ -125,13 +132,13 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
             }
         } else {
             let node_list: Vec<String> = opts.node_list.split(',').map(String::from).collect();
-            for i in 0..node_list.len() {
-                nodes_addresses.push(node_list[i].clone());
-                let pair: Vec<&str> = node_list[i].split(":").collect();
+            for (i, item) in  node_list.iter().enumerate() {
+                nodes_addresses.push(item.clone());
+                let pair: Vec<&str> = item.split(':').collect();
                 let node = NodeNetworkAddress {
                     host: pair[0].into(),
                     port: pair[1].parse().unwrap(),
-                    domain: pair[2].clone().to_string()
+                    domain: pair[2].to_string()
                 };
                 let node_set: HashSet<NodeNetworkAddress> = HashSet::from_iter(current_nodes.clone());
                 if node_set.contains(&node) {
@@ -148,12 +155,6 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
 
     }
 
-    let mut node_list = String::from("");
-    for i in 0..domains.len() - 1 {
-        node_list = format!("{}{}", node_list, format!("{}:{}:{},", ips[i], listen_ports[i], domains[i]));
-    }
-    let last_index = domains.len() - 1;
-    node_list = format!("{}{}", node_list, format!("{}:{}:{}", ips[last_index], listen_ports[last_index], domains[last_index]));
 
     let file_name = format!(
         "{}/{}/{}",
@@ -174,7 +175,6 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
 
     for i in 0..domains.len() {
         let network_port = network_ports[i];
-        let domain: String = domains[i].to_string();
         let listen_port: u16 = listen_ports[i];
         let domain: String = domains[i].to_string();
         let node: (u64, String) = nodes[i].clone();
@@ -183,12 +183,12 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
                 chain_name: opts.chain_name.clone(),
                 config_dir: opts.config_dir.clone(),
                 domain: domain.clone()
-            });
+            }).unwrap();
             execute_sign_csr(SignCSROpts {
                 chain_name: opts.chain_name.clone(),
                 config_dir: opts.config_dir.clone(),
                 domain: domain.clone()
-            });
+            }).unwrap();
         }
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -203,21 +203,21 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
             network_listen_port: listen_port,
             kms_password: opts.kms_password.clone(),
             key_id: node.0,
-            package_limit: opts.package_limit.clone(),
+            package_limit: opts.package_limit,
             log_level: opts.log_level.clone()
-        });
+        }).unwrap();
         execute_append_node(AppendNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             node: nodes_addresses[i].clone()
-        });
+        }).unwrap();
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             config_name: opts.config_name.clone(),
             domain: domain.clone(),
             account: node.1
-        });
+        }).unwrap();
 
     }
 
@@ -235,13 +235,13 @@ mod append_new_test {
             config_dir: ".".to_string(),
             config_name: "config.toml".to_string(),
             grpc_ports: "default".to_string(),
-            node_list: "default".to_string(),
+            node_list: "localhost:4000:hj1,localhost:4001:hn1".to_string(),
             p2p_listen_ports: "default".to_string(),
-            peers_count: Some(1),
+            peers_count: None,
             kms_password: "123456".to_string(),
             log_level: "info".to_string(),
             package_limit: 20000
-        });
+        }).unwrap();
     }
 }
 

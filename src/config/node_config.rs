@@ -25,16 +25,7 @@ pub struct GrpcPorts {
 }
 
 impl GrpcPorts {
-    pub fn new() -> GrpcPortsBuilder {
-        GrpcPortsBuilder {
-            network_port: 50000,
-            consensus_port: 50001,
-            executor_port: 50002,
-            storage_port: 50003,
-            controller_port: 50004,
-            kms_port: 50005,
-        }
-    }
+
 }
 
 pub struct GrpcPortsBuilder {
@@ -47,6 +38,17 @@ pub struct GrpcPortsBuilder {
 }
 
 impl GrpcPortsBuilder {
+
+    pub fn new() -> Self {
+        Self {
+            network_port: 50000,
+            consensus_port: 50001,
+            executor_port: 50002,
+            storage_port: 50003,
+            controller_port: 50004,
+            kms_port: 50005,
+        }
+    }
     pub fn network_port(&mut self, network_port: u16) -> &mut GrpcPortsBuilder {
         self.network_port = network_port;
         self
@@ -100,16 +102,7 @@ pub struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub fn new() -> NodeConfigBuilder {
-        NodeConfigBuilder {
-            grpc_ports: GrpcPorts::new().build(),
-            network_listen_port: 40000,
-            db_key: "123456".to_string(),
-            key_id: 1,
-            package_limit: 30000,
-            log_level: "info".to_string(),
-        }
-    }
+
 }
 
 pub struct NodeConfigBuilder {
@@ -122,6 +115,16 @@ pub struct NodeConfigBuilder {
 }
 
 impl NodeConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            grpc_ports: GrpcPortsBuilder::new().build(),
+            network_listen_port: 40000,
+            db_key: "123456".to_string(),
+            key_id: 1,
+            package_limit: 30000,
+            log_level: "info".to_string(),
+        }
+    }
     pub fn grpc_ports(&mut self, grpc_ports: GrpcPorts) -> &mut NodeConfigBuilder {
         self.grpc_ports = grpc_ports;
         self

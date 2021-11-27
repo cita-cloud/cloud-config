@@ -91,16 +91,7 @@ impl SystemConfigFile {
         }
     }
 
-    pub fn new() -> SystemConfigBuilder {
-        SystemConfigBuilder {
-            version: 0,
-            chain_id: "".to_string(),
-            admin: "".to_string(),
-            block_interval: DEFAULT_BLOCK_INTERVAL,
-            validators: Vec::new(),
-            block_limit: DEFAULT_BLOCK_LIMIT,
-        }
-    }
+
 
     pub fn set_admin(&mut self, admin: String) {
         self.admin = admin;
@@ -129,6 +120,18 @@ pub struct SystemConfigBuilder {
 }
 
 impl SystemConfigBuilder {
+
+    pub fn new() -> Self {
+        Self {
+            version: 0,
+            chain_id: "".to_string(),
+            admin: "".to_string(),
+            block_interval: DEFAULT_BLOCK_INTERVAL,
+            validators: Vec::new(),
+            block_limit: DEFAULT_BLOCK_LIMIT,
+        }
+    }
+
     pub fn version(&mut self, version: u32) -> &mut SystemConfigBuilder {
         self.version = version;
         self
@@ -193,12 +196,7 @@ impl GenesisBlock {
         }
     }
 
-    pub fn new() -> GenesisBlockBuilder {
-        GenesisBlockBuilder {
-            timestamp: 0,
-            prevhash: PRE_HASH.to_string(),
-        }
-    }
+
 }
 
 impl TomlWriter for GenesisBlock {
@@ -214,6 +212,12 @@ pub struct GenesisBlockBuilder {
 }
 
 impl GenesisBlockBuilder {
+    pub fn new() -> Self {
+        Self {
+            timestamp: 0,
+            prevhash: PRE_HASH.to_string(),
+        }
+    }
     pub fn timestamp(&mut self, timestamp: u64) -> &mut GenesisBlockBuilder {
         self.timestamp = timestamp;
         self

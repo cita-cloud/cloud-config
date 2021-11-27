@@ -155,7 +155,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.kms_port,
-            format!("0x{}", opts.account.clone()),
+            format!("0x{}", opts.account),
         );
         consensus_config.write(&config_file_name);
     } else {
@@ -197,7 +197,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             controller_port: node_config.grpc_ports.controller_port,
             kms_port: node_config.grpc_ports.kms_port,
             key_id: node_config.key_id,
-            node_address: opts.account.clone(),
+            node_address: opts.account,
             package_limit: node_config.package_limit,
         };
         controller_config.write(&config_file_name);
@@ -210,7 +210,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // if kms_sm
     if find_micro_service(&chain_config, "kms_sm") {
         let kms_config =
-            KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key.clone());
+            KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
         kms_config.write(&config_file_name);
         kms_config.write_log4rs(&node_dir);
     } else {
@@ -219,6 +219,79 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     Ok(())
 }
+
+// pub fn execute_update_network(opts: UpdateNodeOpts) -> Result<(), Error> {
+//     // load chain_config
+//     let file_name = format!(
+//         "{}/{}/{}",
+//         &opts.config_dir, &opts.chain_name, "chain_config.toml"
+//     );
+//     let chain_config = read_chain_config(&file_name).unwrap();
+//
+//     //delete node folder
+//     let path = format!("{}/{}-{}/{}", &opts.config_dir, &opts.chain_name, &opts.domain, &opts.config_name);
+//     let config_toml = read_from_file(&path).unwrap();
+//     // network config file
+//     // if network_p2p
+//     if find_micro_service(&chain_config, "network_p2p") {
+//         let mut uris: Vec<PeerConfig> = Vec::new();
+//         for node_network_address in &chain_config.node_network_address_list {
+//             if node_network_address.domain != opts.domain {
+//                 uris.push(PeerConfig {
+//                     address: format!(
+//                         "/dns4/{}/tcp/{}",
+//                         node_network_address.host, node_network_address.port
+//                     ),
+//                 });
+//             }
+//         }
+//         config_toml.network_p2p.unwrap().peers = uris;
+//
+//
+//     } else if find_micro_service(&chain_config, "network_tls") {
+//         let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
+//         for node_network_address in &chain_config.node_network_address_list {
+//             if node_network_address.domain != opts.domain {
+//                 tls_peers.push(crate::config::network_tls::PeerConfig {
+//                     host: node_network_address.host.clone(),
+//                     port: node_network_address.port,
+//                     domain: node_network_address.domain.clone(),
+//                 });
+//             }
+//         }
+//         // load cert
+//         let ca_cert = read_file(format!(
+//             "{}/{}/ca_cert/cert.pem",
+//             &opts.config_dir, &opts.chain_name
+//         ))
+//             .unwrap();
+//         let cert = read_file(format!(
+//             "{}/{}/certs/{}/cert.pem",
+//             &opts.config_dir, &opts.chain_name, &opts.domain
+//         ))
+//             .unwrap();
+//         let key = read_file(format!(
+//             "{}/{}/certs/{}/key.pem",
+//             &opts.config_dir, &opts.chain_name, &opts.domain
+//         ))
+//             .unwrap();
+//
+//         let network_config = NetworkConfig::new(
+//             node_config.network_listen_port,
+//             node_config.grpc_ports.network_port,
+//             ca_cert,
+//             cert,
+//             key,
+//             tls_peers,
+//         );
+//         network_config.write(&config_file_name);
+//         network_config.write_log4rs(&node_dir);
+//     } else {
+//         panic!("unsupport network service");
+//     }
+//
+//     OK(())
+// }
 
 pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> bool {
     for micro_service in &chain_config.micro_service_list {

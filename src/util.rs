@@ -36,7 +36,7 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
         .create(true)
         .append(true)
         .open(path.as_ref())
-        .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
+        .unwrap_or_else(|_| panic!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
         .unwrap();
     file.write_all(b"\n").unwrap();
@@ -101,7 +101,7 @@ pub fn write_toml<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>)
         .write(true)
         .truncate(true)
         .open(path.as_ref())
-        .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
+        .unwrap_or_else(|_| panic!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
         .unwrap();
     file.write_all(b"\n").unwrap();
@@ -113,7 +113,7 @@ pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
         .write(true)
         .truncate(true)
         .open(path.as_ref())
-        .expect(&format!("open file({:?}) failed.", path.as_ref().to_str()));
+        .unwrap_or_else(|_| panic!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(content).unwrap();
 }
 
@@ -200,10 +200,8 @@ pub fn create_csr(domain: &str) -> (String, String) {
 }
 
 pub fn sign_csr(csr_pem: &str, ca_cert: &Certificate) -> String {
-    let csr = CertificateSigningRequest::from_pem(&csr_pem).unwrap();
-    let cert_pem = csr.serialize_pem_with_signer(&ca_cert).unwrap();
-
-    cert_pem
+    let csr = CertificateSigningRequest::from_pem(csr_pem).unwrap();
+    csr.serialize_pem_with_signer(ca_cert).unwrap()
 }
 
 pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {
@@ -220,11 +218,12 @@ pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String)
 }
 
 pub fn clean_0x(s: &str) -> &str {
-    if s.starts_with("0x") {
-        &s[2..]
+    if let Some(stripped) = s.strip_prefix("0x") {
+        stripped
     } else {
         s
     }
+
 }
 
 #[cfg(test)]

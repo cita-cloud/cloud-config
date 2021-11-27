@@ -58,6 +58,7 @@ mod update_node;
 mod util;
 mod create_new;
 mod append_new;
+mod delete_new;
 
 #[derive(Clap)]
 #[clap(version = "6.3.0", author = "Rivtower Technologies.")]

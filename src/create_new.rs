@@ -139,9 +139,9 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
         }
         if opts.node_list != DEFAULT_VALUE {
             let url: Vec<String> = opts.node_list.split(',').map(String::from).collect();
-            for i in 0..listen_ports.len() {
-                let pair: Vec<&str> = url[i].split(":").collect();
-                domains.push(pair[2].clone().to_string());
+            for (i, item) in url.iter().enumerate() {
+                let pair: Vec<&str> = item.split(':').collect();
+                domains.push(pair[2].to_string());
                 listen_ports.push(pair[1].parse().unwrap());
                 network_ports.push((50000 + i * 1000) as u16);
                 ips.push(pair[0].into());
@@ -178,8 +178,8 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
             }
         } else {
             let node_list: Vec<String> = opts.node_list.split(',').map(String::from).collect();
-            for i in 0..node_list.len() {
-                let pair: Vec<&str> = node_list[i].split(":").collect();
+            for item in &node_list {
+                let pair: Vec<&str> = item.split(':').collect();
                 listen_ports.push(pair[1].parse().unwrap());
                 domains.push(pair[2].parse().unwrap());
                 ips.push(pair[0].to_string());
@@ -199,7 +199,7 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
     execute_init_chain(InitChainOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone()
-    });
+    }).unwrap();
     execute_init_chain_config(InitChainConfigOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
@@ -221,14 +221,14 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
         controller_tag: opts.controller_tag,
         kms_image: opts.kms_image,
         kms_tag: opts.kms_tag
-    });
-    let is_tls = opts.network_image.clone().as_str() == NETWORK_TLS;
+    }).unwrap();
+    let is_tls = opts.network_image.as_str() == NETWORK_TLS;
 
     if is_tls {
         execute_create_ca(CreateCAOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-        });
+        }).unwrap();
     }
     let mut nodes: Vec<(u64, String)>  = Vec::new();
     for _ in 0..(domains.len() + 1) {
@@ -242,24 +242,24 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
         admin: nodes[0].clone().1
-    });
+    }).unwrap();
 
     let mut validators = String::from("");
-    for i in 1..nodes.len() - 1 {
-        validators = format!("{}{}", validators, format!("{}{}", nodes[i].1, ","));
+    for item in  nodes.iter().take(nodes.len() - 1).skip(1) {
+        validators = format!("{}{}", validators, format!("{}{}", item.1, ","));
     }
     validators = format!("{}{}", validators, nodes[nodes.len() - 1].1);
     execute_set_validators(SetValidatorsOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        validators: validators.to_string()
-    });
+        validators
+    }).unwrap();
 
     execute_set_nodelist(SetNodeListOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        node_list: node_list
-    });
+        node_list
+    }).unwrap();
 
 
     for i in 0..domains.len() {
@@ -272,12 +272,12 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
                 chain_name: opts.chain_name.clone(),
                 config_dir: opts.config_dir.clone(),
                 domain: domain.clone()
-            });
+            }).unwrap();
             execute_sign_csr(SignCSROpts {
                 chain_name: opts.chain_name.clone(),
                 config_dir: opts.config_dir.clone(),
                 domain: domain.clone()
-            });
+            }).unwrap();
         }
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -292,16 +292,16 @@ pub fn execute_create(opts: CreateLocalOpts) -> Result<(), Error> {
             network_listen_port: listen_port,
             kms_password: opts.kms_password.clone(),
             key_id: node.0,
-            package_limit: opts.package_limit.clone(),
+            package_limit: opts.package_limit,
             log_level: opts.log_level.clone()
-        });
+        }).unwrap();
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             config_name: opts.config_name.clone(),
             domain: domain.clone(),
             account: node.1
-        });
+        }).unwrap();
 
     }
 
@@ -323,7 +323,7 @@ mod create_new_test {
             chain_id: "".to_string(),
             block_interval: 3,
             block_limit: 100,
-            network_image: "network_p2p".to_string(),
+            network_image: "network_tls".to_string(),
             network_tag: "latest".to_string(),
             consensus_image: "consensus_bft".to_string(),
             consensus_tag: "latest".to_string(),
@@ -336,13 +336,13 @@ mod create_new_test {
             kms_image: "kms_sm".to_string(),
             kms_tag: "latest".to_string(),
             grpc_ports: "default".to_string(),
-            node_list: "default".to_string(),
+            node_list: "localhost:4000:hj,localhost:4001:hn".to_string(),
             p2p_listen_ports: "default".to_string(),
-            peers_count: Some(2),
+            peers_count: Some(3),
             config_name: "config.toml".to_string(),
             kms_password: "123456".to_string(),
             log_level: "info".to_string(),
             package_limit: 30000,
-        });
+        }).unwrap();
     }
 }
