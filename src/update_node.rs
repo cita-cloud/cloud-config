@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::config::chain_config::ChainConfig;
+use crate::config::consensus_bft::ConsensusBft;
 use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
@@ -20,14 +21,16 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
 use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
+use crate::constant::{
+    CONSENSUS_BFT, CONSENSUS_RAFT, DNS4, EXECUTOR_EVM, KMS_SM, NETWORK_P2P, NETWORK_TLS,
+    STORAGE_ROCKSDB,
+};
 use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
 use crate::util::{read_chain_config, read_file, read_node_config};
 use clap::Clap;
 use std::fs;
-use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT};
-use crate::config::consensus_bft::ConsensusBft;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -78,14 +81,14 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // network config file
     // if network_p2p
-    if find_micro_service(&chain_config, "network_p2p") {
+    if find_micro_service(&chain_config, NETWORK_P2P) {
         let mut uris: Vec<P2P_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
                 uris.push(P2P_PeerConfig {
                     address: format!(
-                        "/dns4/{}/tcp/{}",
-                        node_network_address.host, node_network_address.port
+                        "/{}/{}/tcp/{}",
+                        DNS4, node_network_address.host, node_network_address.port
                     ),
                 });
             }
@@ -97,7 +100,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         );
         network_config.write(&config_file_name);
         network_config.write_log4rs(&node_dir);
-    } else if find_micro_service(&chain_config, "network_tls") {
+    } else if find_micro_service(&chain_config, NETWORK_TLS) {
         let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
@@ -158,13 +161,14 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             format!("0x{}", opts.account),
         );
         consensus_config.write(&config_file_name);
+        consensus_config.write_log4rs(&node_dir);
     } else {
         panic!("unsupport consensus service");
     }
 
     // executor config file
     // if executor_evm
-    if find_micro_service(&chain_config, "executor_evm") {
+    if find_micro_service(&chain_config, EXECUTOR_EVM) {
         let executor_config = ExecutorEvmConfig::new(node_config.grpc_ports.executor_port);
         executor_config.write(&config_file_name);
         executor_config.write_log4rs(&node_dir);
@@ -174,7 +178,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // storage config file
     // if storage_rocksdb
-    if find_micro_service(&chain_config, "storage_rocksdb") {
+    if find_micro_service(&chain_config, STORAGE_ROCKSDB) {
         let storage_config = StorageRocksdbConfig::new(
             node_config.grpc_ports.kms_port,
             node_config.grpc_ports.storage_port,
@@ -208,9 +212,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // kms config file
     // if kms_sm
-    if find_micro_service(&chain_config, "kms_sm") {
-        let kms_config =
-            KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
+    if find_micro_service(&chain_config, KMS_SM) {
+        let kms_config = KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
         kms_config.write(&config_file_name);
         kms_config.write_log4rs(&node_dir);
     } else {

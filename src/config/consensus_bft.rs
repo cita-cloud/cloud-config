@@ -18,7 +18,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ConsensusBft {
-
     pub controller_port: u16,
 
     pub consensus_port: u16,
@@ -31,7 +30,6 @@ pub struct ConsensusBft {
 }
 
 impl ConsensusBft {
-
     pub fn new(
         controller_port: u16,
         consensus_port: u16,
@@ -39,13 +37,13 @@ impl ConsensusBft {
         kms_port: u16,
         node_address: String,
     ) -> Self {
-       Self {
-           controller_port,
-           consensus_port,
-           network_port,
-           kms_port,
-           node_address
-       }
+        Self {
+            controller_port,
+            consensus_port,
+            network_port,
+            kms_port,
+            node_address,
+        }
     }
 }
 

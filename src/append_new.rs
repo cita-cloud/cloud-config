@@ -1,17 +1,17 @@
-use crate::error::Error;
-use crate::constant::{DEFAULT_VALUE, NETWORK_TLS};
-use crate::util::read_chain_config;
-use crate::update_node::{find_micro_service, execute_update_node, UpdateNodeOpts};
-use crate::new_account::{execute_new_account, NewAccountOpts};
-use crate::set_nodelist::{SetNodeListOpts, get_old_node_list_count};
-use crate::create_csr::{execute_create_csr, CreateCSROpts};
-use crate::sign_csr::{execute_sign_csr, SignCSROpts};
-use crate::init_node::{execute_init_node, InitNodeOpts};
-use clap::Clap;
-use x509_parser::nom::lib::std::collections::HashSet;
-use std::iter::FromIterator;
-use crate::config::chain_config::NodeNetworkAddress;
 use crate::append_node::{execute_append_node, AppendNodeOpts};
+use crate::config::chain_config::NodeNetworkAddress;
+use crate::constant::{DEFAULT_VALUE, NETWORK_TLS};
+use crate::create_csr::{execute_create_csr, CreateCSROpts};
+use crate::error::Error;
+use crate::init_node::{execute_init_node, InitNodeOpts};
+use crate::new_account::{execute_new_account, NewAccountOpts};
+use crate::set_nodelist::{get_old_node_list_count, SetNodeListOpts};
+use crate::sign_csr::{execute_sign_csr, SignCSROpts};
+use crate::update_node::{execute_update_node, find_micro_service, UpdateNodeOpts};
+use crate::util::read_chain_config;
+use clap::Clap;
+use std::iter::FromIterator;
+use x509_parser::nom::lib::std::collections::HashSet;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -53,7 +53,6 @@ pub struct AppendNewOpts {
 }
 
 pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
-
     let mut domains: Vec<String> = Vec::new();
     let mut ips: Vec<String> = Vec::new();
     let mut listen_ports: Vec<u16> = Vec::new();
@@ -62,7 +61,7 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
     let mut current_nodes = get_old_node_list_count(SetNodeListOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        node_list: "".to_string()
+        node_list: "".to_string(),
     });
     current_nodes.reverse();
     let mut old_count: usize = 0;
@@ -84,9 +83,10 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
                 let node = NodeNetworkAddress {
                     host: pair[0].into(),
                     port: pair[1].parse().unwrap(),
-                    domain: pair[2].to_string()
+                    domain: pair[2].to_string(),
                 };
-                let node_set: HashSet<NodeNetworkAddress> = HashSet::from_iter(current_nodes.clone());
+                let node_set: HashSet<NodeNetworkAddress> =
+                    HashSet::from_iter(current_nodes.clone());
                 if node_set.contains(&node) {
                     return Err(Error::DupNodeName);
                 }
@@ -96,7 +96,6 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
                 network_ports.push((50000 + index * 1000) as u16);
                 ips.push(node.host);
             }
-
         } else {
             let peers_count = opts.peers_count.unwrap() as usize;
             for i in 0..peers_count {
@@ -105,9 +104,13 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
                 network_ports.push((50000 + index * 1000) as u16);
                 domains.push(format!("node{}", index));
                 ips.push("localhost".to_string());
-                nodes_addresses.push(format!("{}:{}:node{}", "localhost".to_string(), (40000 + index) as u16, index));
+                nodes_addresses.push(format!(
+                    "{}:{}:node{}",
+                    "localhost".to_string(),
+                    (40000 + index) as u16,
+                    index
+                ));
             }
-
         }
     } else {
         if opts.node_list != DEFAULT_VALUE
@@ -128,19 +131,25 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
                 listen_ports.push((40000 + index) as u16);
                 domains.push(format!("node{}", index));
                 ips.push("localhost".to_string());
-                nodes_addresses.push(format!("{}:{}:node{}", "localhost".to_string(), (40000 + index) as u16, index));
+                nodes_addresses.push(format!(
+                    "{}:{}:node{}",
+                    "localhost".to_string(),
+                    (40000 + index) as u16,
+                    index
+                ));
             }
         } else {
             let node_list: Vec<String> = opts.node_list.split(',').map(String::from).collect();
-            for (i, item) in  node_list.iter().enumerate() {
+            for (i, item) in node_list.iter().enumerate() {
                 nodes_addresses.push(item.clone());
                 let pair: Vec<&str> = item.split(':').collect();
                 let node = NodeNetworkAddress {
                     host: pair[0].into(),
                     port: pair[1].parse().unwrap(),
-                    domain: pair[2].to_string()
+                    domain: pair[2].to_string(),
                 };
-                let node_set: HashSet<NodeNetworkAddress> = HashSet::from_iter(current_nodes.clone());
+                let node_set: HashSet<NodeNetworkAddress> =
+                    HashSet::from_iter(current_nodes.clone());
                 if node_set.contains(&node) {
                     return Err(Error::DupNodeName);
                 }
@@ -150,11 +159,8 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
                 network_ports.push((50000 + index * 1000) as u16);
                 ips.push(node.host);
             }
-
         }
-
     }
-
 
     let file_name = format!(
         "{}/{}/{}",
@@ -163,15 +169,17 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
     let chain_config = read_chain_config(&file_name).unwrap();
     let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
 
-    let mut nodes: Vec<(u64, String)>  = Vec::new();
+    let mut nodes: Vec<(u64, String)> = Vec::new();
     for _ in 0..(domains.len()) {
-        nodes.push(execute_new_account(NewAccountOpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            kms_password: opts.kms_password.clone()
-        }).unwrap());
+        nodes.push(
+            execute_new_account(NewAccountOpts {
+                chain_name: opts.chain_name.clone(),
+                config_dir: opts.config_dir.clone(),
+                kms_password: opts.kms_password.clone(),
+            })
+            .unwrap(),
+        );
     }
-
 
     for i in 0..domains.len() {
         let network_port = network_ports[i];
@@ -182,13 +190,15 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
             execute_create_csr(CreateCSROpts {
                 chain_name: opts.chain_name.clone(),
                 config_dir: opts.config_dir.clone(),
-                domain: domain.clone()
-            }).unwrap();
+                domain: domain.clone(),
+            })
+            .unwrap();
             execute_sign_csr(SignCSROpts {
                 chain_name: opts.chain_name.clone(),
                 config_dir: opts.config_dir.clone(),
-                domain: domain.clone()
-            }).unwrap();
+                domain: domain.clone(),
+            })
+            .unwrap();
         }
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -204,23 +214,24 @@ pub fn execute_append(opts: AppendNewOpts) -> Result<(), Error> {
             kms_password: opts.kms_password.clone(),
             key_id: node.0,
             package_limit: opts.package_limit,
-            log_level: opts.log_level.clone()
-        }).unwrap();
+            log_level: opts.log_level.clone(),
+        })
+        .unwrap();
         execute_append_node(AppendNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            node: nodes_addresses[i].clone()
-        }).unwrap();
+            node: nodes_addresses[i].clone(),
+        })
+        .unwrap();
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             config_name: opts.config_name.clone(),
             domain: domain.clone(),
-            account: node.1
-        }).unwrap();
-
+            account: node.1,
+        })
+        .unwrap();
     }
-
 
     Ok(())
 }
@@ -240,8 +251,8 @@ mod append_new_test {
             peers_count: None,
             kms_password: "123456".to_string(),
             log_level: "info".to_string(),
-            package_limit: 20000
-        }).unwrap();
+            package_limit: 20000,
+        })
+        .unwrap();
     }
 }
-

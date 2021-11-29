@@ -24,9 +24,7 @@ pub struct GrpcPorts {
     pub kms_port: u16,
 }
 
-impl GrpcPorts {
-
-}
+impl GrpcPorts {}
 
 pub struct GrpcPortsBuilder {
     pub network_port: u16,
@@ -38,7 +36,6 @@ pub struct GrpcPortsBuilder {
 }
 
 impl GrpcPortsBuilder {
-
     pub fn new() -> Self {
         Self {
             network_port: 50000,
@@ -101,9 +98,7 @@ pub struct NodeConfig {
     pub log_level: String,
 }
 
-impl NodeConfig {
-
-}
+impl NodeConfig {}
 
 pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,

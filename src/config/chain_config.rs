@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::controller::{GenesisBlock, SystemConfigFile, GenesisBlockBuilder, SystemConfigBuilder};
+use crate::config::controller::{
+    GenesisBlock, GenesisBlockBuilder, SystemConfigBuilder, SystemConfigFile,
+};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
@@ -23,9 +25,7 @@ pub struct NodeNetworkAddress {
     pub domain: String,
 }
 
-impl NodeNetworkAddress {
-
-}
+impl NodeNetworkAddress {}
 
 impl PartialEq for NodeNetworkAddress {
     fn eq(&self, other: &Self) -> bool {
@@ -85,9 +85,7 @@ pub struct MicroService {
     pub tag: String,
 }
 
-impl MicroService {
-
-}
+impl MicroService {}
 
 pub struct MicroServiceBuilder {
     pub image: String,
@@ -129,7 +127,6 @@ pub struct ChainConfig {
 }
 
 impl ChainConfig {
-
     pub fn set_admin(&mut self, admin: String) {
         self.system_config.set_admin(admin);
     }

@@ -117,6 +117,14 @@ pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
     file.write_all(content).unwrap();
 }
 
+pub fn touch_file(path: impl AsRef<path::Path>) {
+    fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(path.as_ref())
+        .unwrap_or_else(|_| panic!("touch file({:?}) failed.", path.as_ref().to_str()));
+}
+
 pub fn read_file(path: impl AsRef<path::Path>) -> std::io::Result<String> {
     let mut f = fs::File::open(path)?;
     let mut s = String::new();
@@ -223,7 +231,6 @@ pub fn clean_0x(s: &str) -> &str {
     } else {
         s
     }
-
 }
 
 #[cfg(test)]

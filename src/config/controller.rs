@@ -91,8 +91,6 @@ impl SystemConfigFile {
         }
     }
 
-
-
     pub fn set_admin(&mut self, admin: String) {
         self.admin = admin;
     }
@@ -120,7 +118,6 @@ pub struct SystemConfigBuilder {
 }
 
 impl SystemConfigBuilder {
-
     pub fn new() -> Self {
         Self {
             version: 0,
@@ -195,8 +192,6 @@ impl GenesisBlock {
             prevhash: PRE_HASH.to_string(),
         }
     }
-
-
 }
 
 impl TomlWriter for GenesisBlock {

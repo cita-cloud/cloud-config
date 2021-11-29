@@ -34,6 +34,7 @@ use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 
 mod append;
+mod append_new;
 mod append_node;
 mod append_validator;
 mod config;
@@ -41,8 +42,10 @@ mod constant;
 mod create;
 mod create_ca;
 mod create_csr;
+mod create_new;
 mod delete;
 mod delete_chain;
+mod delete_new;
 mod delete_node;
 mod error;
 mod init_chain;
@@ -56,9 +59,6 @@ mod sign_csr;
 mod traits;
 mod update_node;
 mod util;
-mod create_new;
-mod append_new;
-mod delete_new;
 
 #[derive(Clap)]
 #[clap(version = "6.3.0", author = "Rivtower Technologies.")]

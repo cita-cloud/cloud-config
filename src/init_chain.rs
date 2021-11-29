@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::error::Error;
+use crate::util::{touch_file, write_file};
 use clap::Clap;
 use std::fs;
 use std::path::Path;
@@ -32,8 +33,12 @@ pub struct InitChainOpts {
 /// $(config_dir)
 /// --  $(chain_name)
 /// ------  accounts
+/// --------  .gitkeep
 /// ------  ca_cert
+/// --------  .gitkeep
 /// ------  certs
+/// --------  .gitkeep
+/// ------  .gitignore
 pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
     let chain_path = format!("{}/{}", &opts.config_dir, &opts.chain_name);
     if Path::new(&chain_path).exists() {
@@ -42,11 +47,21 @@ pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
 
     let path = format!("{}/{}", &chain_path, "accounts");
     fs::create_dir_all(&path).unwrap();
+    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, "accounts");
+    touch_file(gitkeep_path);
 
     let path = format!("{}/{}", &chain_path, "certs");
     fs::create_dir_all(&path).unwrap();
+    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, "certs");
+    touch_file(gitkeep_path);
 
     let path = format!("{}/{}", &chain_path, "ca_cert");
     fs::create_dir_all(&path).unwrap();
+    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, "ca_cert");
+    touch_file(gitkeep_path);
+
+    let git_ignore_path = format!("{}/.gitignore", &chain_path);
+    let git_ignore_content = "accounts/*/\nca_cert/key.pem\ncerts/*/key.pem\n";
+    write_file(git_ignore_content.as_bytes(), git_ignore_path);
     Ok(())
 }

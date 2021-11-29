@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::chain_config::{MicroService, ChainConfigBuilder, MicroServiceBuilder};
-use crate::config::controller::{SystemConfigBuilder, GenesisBlockBuilder};
+use crate::config::chain_config::{ChainConfigBuilder, MicroService, MicroServiceBuilder};
+use crate::config::controller::{GenesisBlockBuilder, SystemConfigBuilder};
 use crate::error::Error;
 use crate::util::{sm3_hash, unix_now, write_toml};
 use clap::Clap;

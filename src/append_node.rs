@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::chain_config::{NodeNetworkAddressBuilder};
+use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
 use clap::Clap;

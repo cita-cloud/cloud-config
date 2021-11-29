@@ -1,13 +1,12 @@
+use crate::constant::DEFAULT_VALUE;
+use crate::delete_node::{execute_delete_folder, execute_set_node_list, DeleteNodeOpts};
 use crate::error::Error;
 use crate::set_nodelist::{get_old_node_list_count, SetNodeListOpts};
-use std::collections::HashSet;
-use std::iter::FromIterator;
-use crate::constant::DEFAULT_VALUE;
-use clap::Clap;
-use crate::delete_node::{DeleteNodeOpts, execute_set_node_list, execute_delete_folder};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::read_from_file;
-
+use clap::Clap;
+use std::collections::HashSet;
+use std::iter::FromIterator;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -36,9 +35,10 @@ pub fn execute_delete(opts: DeleteNewOpts) -> Result<(), Error> {
         panic!("please input address to delete");
     }
     let input: Vec<String> = opts.addresses.split(',').map(String::from).collect();
-    let domains: Vec<String> = current_nodes.iter().map(|node| {
-        node.domain.clone()
-    }).collect();
+    let domains: Vec<String> = current_nodes
+        .iter()
+        .map(|node| node.domain.clone())
+        .collect();
     let input_set: HashSet<String> = HashSet::from_iter(input.clone());
     let domain_set: HashSet<String> = HashSet::from_iter(domains);
     if domain_set.intersection(&input_set).ne(&input_set) {
@@ -58,20 +58,24 @@ pub fn execute_delete(opts: DeleteNewOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             config_name: opts.config_name.clone(),
-            domain
+            domain,
         });
     }
 
     for node in current_nodes {
-        let path = format!("{}/{}-{}/{}", &opts.config_dir, &opts.chain_name, &node.domain, &opts.config_name);
+        let path = format!(
+            "{}/{}-{}/{}",
+            &opts.config_dir, &opts.chain_name, &node.domain, &opts.config_name
+        );
         let config_toml = read_from_file(&path).unwrap();
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             config_name: opts.config_name.clone(),
             domain: node.domain,
-            account: config_toml.controller.unwrap().node_address
-        }).unwrap();
+            account: config_toml.controller.unwrap().node_address,
+        })
+        .unwrap();
     }
 
     for domain in input.clone() {
@@ -79,7 +83,7 @@ pub fn execute_delete(opts: DeleteNewOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             config_name: opts.config_name.clone(),
-            domain
+            domain,
         });
     }
 
@@ -95,7 +99,8 @@ mod delete_new_test {
             chain_name: "test-chain".to_string(),
             config_dir: ".".to_string(),
             config_name: "config.toml".to_string(),
-            addresses: "hj,hj1".to_string()
-        }).unwrap();
+            addresses: "hj,hj1".to_string(),
+        })
+        .unwrap();
     }
 }
