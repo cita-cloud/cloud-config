@@ -48,5 +48,6 @@ pub fn execute_delete_chain(opts: DeleteChainOpts) -> Result<(), Error> {
 
     let path = format!("{}/{}", &opts.config_dir, &opts.chain_name);
     fs::remove_dir_all(&path).unwrap();
+
     Ok(())
 }

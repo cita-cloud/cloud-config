@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub(crate) mod admin;
 pub(crate) mod chain_config;
 pub(crate) mod consensus_bft;
 pub(crate) mod consensus_raft;

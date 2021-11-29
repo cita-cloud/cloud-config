@@ -17,7 +17,6 @@ use crate::constant::{
 };
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {
@@ -38,22 +37,6 @@ pub struct ControllerConfig {
     pub node_address: String,
 
     pub package_limit: u64,
-}
-
-impl ControllerConfig {
-    pub fn new(network_port: u16, key_id: u64, address: &str, package_limit: u64) -> Self {
-        Self {
-            network_port,
-            consensus_port: network_port + 1,
-            executor_port: network_port + 2,
-            storage_port: network_port + 3,
-            controller_port: network_port + 4,
-            kms_port: network_port + 5,
-            key_id,
-            node_address: address.into(),
-            package_limit,
-        }
-    }
 }
 
 impl TomlWriter for ControllerConfig {
@@ -80,17 +63,6 @@ pub struct SystemConfigFile {
 }
 
 impl SystemConfigFile {
-    pub fn default(version: u32, chain_id: String, admin: String, validators: Vec<String>) -> Self {
-        Self {
-            version,
-            chain_id,
-            admin,
-            block_interval: DEFAULT_BLOCK_INTERVAL,
-            validators,
-            block_limit: DEFAULT_BLOCK_LIMIT,
-        }
-    }
-
     pub fn set_admin(&mut self, admin: String) {
         self.admin = admin;
     }
@@ -139,6 +111,7 @@ impl SystemConfigBuilder {
         self
     }
 
+    #[allow(dead_code)]
     pub fn admin(&mut self, chain_id: String) -> &mut SystemConfigBuilder {
         self.chain_id = chain_id;
         self
@@ -149,6 +122,7 @@ impl SystemConfigBuilder {
         self
     }
 
+    #[allow(dead_code)]
     pub fn validators(&mut self, validators: Vec<String>) -> &mut SystemConfigBuilder {
         self.validators = validators;
         self
@@ -175,23 +149,6 @@ impl SystemConfigBuilder {
 pub struct GenesisBlock {
     pub timestamp: u64,
     pub prevhash: String,
-}
-
-fn timestamp() -> u64 {
-    let start = SystemTime::now();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
-    let ms = since_the_epoch.as_secs() as i64 * 1000i64
-        + (since_the_epoch.subsec_nanos() as i64 / 1_000_000) as i64;
-    ms as u64
-}
-
-impl GenesisBlock {
-    pub fn default() -> Self {
-        Self {
-            timestamp: timestamp(),
-            prevhash: PRE_HASH.to_string(),
-        }
-    }
 }
 
 impl TomlWriter for GenesisBlock {

@@ -4,7 +4,7 @@
 
 ### 依赖
 
-* rust: 1.54.0
+* rust: 1.56.1
 
 ### 安装
 
@@ -15,7 +15,7 @@ cargo install --path .
 ### 用法
 
 ```
-$ ./target/debug/cloud-config -h                                                                           
+$ cloud-config -h
 cloud-config 6.3.0
 
 Rivtower Technologies.
@@ -28,14 +28,14 @@ FLAGS:
     -V, --version    Print version information
 
 SUBCOMMANDS:
-    append               append config
+    append-dev           append node in env dev
     append-node          append a node into chain
     append-validator     append a validator into chain
-    create               create config
     create-ca            create CA
     create-csr           create csr
-    delete               delete config
+    create-dev           create config in env dev
     delete-chain         delete a chain
+    delete-dev           delete node in env dev
     delete-node          delete a node from chain
     help                 Print this message or the help of the given subcommand(s)
     init-chain           init a chain
@@ -88,8 +88,12 @@ SUBCOMMANDS:
     $(config_dir)
     --  $(chain_name)
     ------  accounts
+    --------  .gitkeep
     ------  ca_cert
+    --------  .gitkeep
     ------  certs
+    --------  .gitkeep
+    ------  .gitignore
     ```
 2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些额外的准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。执行之后会生成`$(config-dir)/$(chain-name)/chain_config.toml`
 3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
@@ -99,7 +103,8 @@ SUBCOMMANDS:
 7. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
 8. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
 
-在前述流程的基础上，可以封装更高级更方便使用的子命令。比如针对开发测试，用户可以只传递所需的节点数量，其他信息都使用约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以直接生成一条链。
+在前述流程的基础上，封装了更高级更方便使用的子命令。
+比如针对开发环境，有`create-dev`，`append-dev`和`delete-dev`，使用开发环境约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以生成和操作一条链的配置。
 
 
 ### 使用示例
@@ -115,7 +120,7 @@ SUBCOMMANDS:
 ```
 
 ```
-$ ./target/debug/cloud-config init-chain   
+$ cloud-config init-chain   
 $ tree test-chain 
 test-chain
 ├── accounts
@@ -196,7 +201,7 @@ test-chain
 
 
 ```
-$ ./target/debug/cloud-config init-chain-config
+$ cloud-config init-chain-config
 
 $ tree test-chain
 test-chain
@@ -265,13 +270,13 @@ version = 0
 ```
 
 ```
-$ ./target/debug/cloud-config new-account   
+$ cloud-config new-account   
 key_id:1, address:aeaa6e333b8ed911f89acd01e88e3d9892da87b5
 
-$ ./target/debug/cloud-config new-account
+$ cloud-config new-account
 key_id:1, address:1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
 
-$ ./target/debug/cloud-config new-account
+$ cloud-config new-account
 key_id:1, address:344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
 
 $ tree test-chain 
@@ -308,7 +313,7 @@ test-chain
 
 
 ```
-./target/debug/cloud-config set-admin --admin aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+$ cloud-config set-admin --admin aeaa6e333b8ed911f89acd01e88e3d9892da87b5
 
 $ cat test-chain/chain_config.toml | grep admin
 admin = 'aeaa6e333b8ed911f89acd01e88e3d9892da87b5'
@@ -330,7 +335,7 @@ admin = 'aeaa6e333b8ed911f89acd01e88e3d9892da87b5'
 1. `validators`为必选参数。值为多个之前用`new-account`创建的地址,用逗号分隔。
 
 ```
-$ ./target/debug/cloud-config set-validators --validators 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa,344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+$ cloud-config set-validators --validators 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa,344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
 
 $ cat test-chain/chain_config.toml | grep -A3 validators
 validators = [
@@ -373,7 +378,7 @@ validators = [
 2. `domain`为任意字符串，只需要确保节点之间不重复即可。
 
 ```
-$ ./target/debug/cloud-config set-nodelist --nodelist localhost:40000:node0,localhost:40001:node1 
+$ cloud-config set-nodelist --nodelist localhost:40000:node0,localhost:40001:node1 
 
 $ cat test-chain/chain_config.toml | grep -A3 node_network                                       
 [[node_network_address_list]]
@@ -427,7 +432,7 @@ port = 40001
 ```
 
 ```
-$ ./target/debug/cloud-config create-ca
+$ cloud-config create-ca
 
 $ tree test-chain
 test-chain
@@ -466,9 +471,9 @@ test-chain
 1. `domain`为必选参数。值为前面`set-nodelist`或者`append-node`时传递的节点的网络地址中的`domain`。
 
 ```
-$ ./target/debug/cloud-config create-csr --domain node0 
+$ cloud-config create-csr --domain node0 
 
-$ ./target/debug/cloud-config create-csr --domain node1
+$ cloud-config create-csr --domain node1
 
 $ tree test-chain
 test-chain
@@ -514,9 +519,9 @@ test-chain
 1. `domain`为必选参数。值为前面执行`create-csr`时节点的`domain`。
 
 ```
-$ ./target/debug/cloud-config sign-csr --domain node0 
+$ cloud-config sign-csr --domain node0 
 
-$ ./target/debug/cloud-config sign-csr --domain node1
+$ cloud-config sign-csr --domain node1
 
 $ tree test-chain
 test-chain
@@ -555,6 +560,9 @@ test-chain
 参数：
 
 ```
+        --account <ACCOUNT>
+            account of node
+
         --chain-name <CHAIN_NAME>
             set chain name [default: test-chain]
 
@@ -601,11 +609,12 @@ test-chain
 说明：
 1. 参数部分基本对应`节点配置`数据结构，具体含义参见设计部分的描述。
 2. `domain`为必选参数，作为节点的标识，节点文件夹将会以`$(chanin-name)-$(domain)`的形式命名。
+3. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的地址。
 
 ```
-$ ./target/debug/cloud-config init-node --domain node0 
+$ cloud-config init-node --domain node0 --account 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
  
-$ ./target/debug/cloud-config init-node --domain node1
+$ cloud-config init-node --domain node1 --account 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
 
 $ tree test-chain-node* 
 test-chain-node0
@@ -613,7 +622,8 @@ test-chain-node0
 test-chain-node1
 └── node_config.toml
 
-$ cat test-chain-node0/node_config.toml 
+$ cat test-chain-node0/node_config.toml
+account = '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa'
 db_key = '123456'
 key_id = 1
 log_level = 'info'
@@ -634,7 +644,6 @@ storage_port = 50003
 参数：
 
 ```
-        --account <ACCOUNT>            account of node
         --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>      set config file directory, default means current directory
                                        [default: .]
@@ -644,12 +653,11 @@ storage_port = 50003
 
 说明：
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
-2. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的地址。
 
 ```
-$ ./target/debug/cloud-config update-node --domain node0 --account 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+$ cloud-config update-node --domain node0
 
-$ ./target/debug/cloud-config update-node --domain node1 --account 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+$ cloud-config update-node --domain node1
 
 $ tree test-chain-node*
 test-chain-node0
@@ -685,230 +693,295 @@ test-chain-node1
 说明：
 1. 该命令会删除所有跟指定链相关的文件夹及文件，`使用时要慎重`。
 
-### 初始化链
+### 开发环境
 
+约定：
+1. 节点的`ip`都为`localhost`。
+2. 节点的网络端口从`40000`开始往后顺延。
+3. 节点的`domain`使用节点的序号。
+4. 节点的`kms`密码都为`123456`。
+5. 节点各个微服务的`gRPC`端口从`50000 + i*1000`。其中`i`为节点的序号。
+6. 日志默认输出到文件。
+7. 增加节点只能在最大的节点序号往后增加。
+8. 删除节点也只能从最大的节点序号开始往前删除。
+
+适用于开发阶段，在单机非容器环境直接跑链进行测试。
+
+#### create-dev
+
+参数：
 ```
-$ config-config create -h
-cloud-config-create 
+$ cloud-config create-dev -h
+cloud-config-create-dev 
 
-create config
+create config in env dev
 
 USAGE:
-    cloud-config create [OPTIONS] --consensus <CONSENSUS>
-
-FLAGS:
-    -h, --help    Print help information
-        --use_num    use serial number instead of node address
-
-OPTIONS:
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory
-
-        --config-name <CONFIG_NAME>
-            set config file name [default: config.toml]
-
-        --consensus <CONSENSUS>
-            Set consensus micro-service
-
-        --controller <CONTROLLER>
-            Set controller micro-service [default: controller]
-
-        --executor <EXECUTOR>
-            Set executor micro-service [default: executor_evm]
-
-        --grpc-ports <GRPC_PORTS>
-            grpc port list, input "p1,p2,p3,p4", use default grpc port count from 50000 + 1000 * i
-            use default must set peer_count or p2p_ports [default: default]
-
-        --kms <KMS>
-            Set kms micro-service [default: kms_sm]
-
-        --kms-password <KMS_PASSWORD>
-            kms db password [default: 123456]
-
-        --network <NETWORK>
-            Set network micro-service
-
-        --node-list <NODE_LIST>
-            input "localhost:40000:node0,localhost:40001:node1", use default port count from
-            127.0.0.1:40000 + 1 * i:nodei, use default must set peer_count or grpc_ports
-
-        --package-limit <PACKAGE_LIMIT>
-            set one block contains tx limit, default 30000 [default: 30000]
-
-        --peers-count <PEERS_COUNT>
-            set initial node number, default "none" mean not use this must set grpc_ports or
-            p2p_ports, if set peers_count, grpc_ports and p2p_ports, base on grpc_ports > p2p_ports
-            > peers_count
-
-        --storage <STORAGE>
-            Set storage micro-service [default: storage_rocksdb]
-
-        --version <VERSION>
-            set version [default: 0]
-```
-
-#### 例子
-
-```
-$ cloud-config create --peers-count 4 --network network_p2p --consensus consensus_raft --config-dir /tmp/test
-```
-
-#### 生成的文件
-
-```
-$ cd /tmp/test 
-$ ls
-test-chain                                           test-chain-57b98686b6636877a04710dc57127526feac76e7  test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-test-chain-3e3acf2feb25ac611db9348244de132d01327dab  test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
-
-$ tree .
-.
-├── test-chain
-│   ├── config.toml
-│   └── kms.db
-├── test-chain-3e3acf2feb25ac611db9348244de132d01327dab
-│   ├── config.toml
-│   ├── consensus-log4rs.yaml
-│   ├── controller-log4rs.yaml
-│   ├── executor-log4rs.yaml
-│   ├── kms.db
-│   ├── kms-log4rs.yaml
-│   ├── network-log4rs.yaml
-│   └── storage-log4rs.yaml
-├── test-chain-57b98686b6636877a04710dc57127526feac76e7
-│   ├── config.toml
-│   ├── consensus-log4rs.yaml
-│   ├── controller-log4rs.yaml
-│   ├── executor-log4rs.yaml
-│   ├── kms.db
-│   ├── kms-log4rs.yaml
-│   ├── network-log4rs.yaml
-│   └── storage-log4rs.yaml
-├── test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
-│   ├── config.toml
-│   ├── consensus-log4rs.yaml
-│   ├── controller-log4rs.yaml
-│   ├── executor-log4rs.yaml
-│   ├── kms.db
-│   ├── kms-log4rs.yaml
-│   ├── network-log4rs.yaml
-│   └── storage-log4rs.yaml
-└── test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-    ├── config.toml
-    ├── consensus-log4rs.yaml
-    ├── controller-log4rs.yaml
-    ├── executor-log4rs.yaml
-    ├── kms.db
-    ├── kms-log4rs.yaml
-    ├── network-log4rs.yaml
-    └── storage-log4rs.yaml
-
-5 directories, 34 files
-```
-
-`test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e`：节点名称的构造为 `<chain-name>-<node-address>`
-
-### 增加节点
-
-```
-$ cloud-config append -h
-cloud-config-append 
-
-append config
-
-USAGE:
-    cloud-config append [OPTIONS]
+    cloud-config create-dev [FLAGS] [OPTIONS]
 
 FLAGS:
     -h, --help       Print help information
+        --is-tls     is network tls
     -V, --version    Print version information
 
 OPTIONS:
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory
-
-        --config-name <CONFIG_NAME>
-            set config file name [default: config.toml]
-
-        --grpc-ports <GRPC_PORTS>
-            grpc port list, input "p1,p2,p3,p4", use default grpc port count from 50000 + 1000 * i
-            use default must set peer_count or p2p_ports [default: default]
-
-        --kms-password <KMS_PASSWORD>
-            kms db password [default: 123456]
-
-        --network <NETWORK>
-            Set network micro-service
-
-        --p2p-ports <P2P_PORTS>
-            p2p port list, input "ip1:port1,ip2:port2,ip3:port3,ip4:port4", use default port count
-            from 127.0.0.1:40000 + 1 * i, use default must set peer_count or grpc_ports [default:
-            default]
-
-        --package-limit <PACKAGE_LIMIT>
-            set one block contains tx limit, default 30000 [default: 30000]
-
-        --peers-count <PEERS_COUNT>
-            set initial node number, default "none" mean not use this must set grpc_ports or
-            p2p_ports, if set peers_count, grpc_ports and p2p_ports, base on grpc_ports > p2p_ports
-            > peers_count
-```
-
-##### 例子
-
-```
-$ cloud-config append --peers-count 2 --config-dir /tmp/test
-
-$ ls /tmp/test
-test-chain-3e3acf2feb25ac611db9348244de132d01327dab  test-chain-57b98686b6636877a04710dc57127526feac76e7  test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-test-chain  test-chain-4f9cec049857a119b51472dac520f4bde0bca4d0  test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8  test-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2
-```
-
-增加了2个新节点 `test-chain-4f9cec049857a119b51472dac520f4bde0bca4d0`，`test-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2`
-
-### 减少节点
-
-```
-$ cloud-config delete -h
-cloud-config-delete 
-
-delete config
-
-USAGE:
-    cloud-config delete [OPTIONS]
-
-FLAGS:
-    -h, --help       Print help information
-    -V, --version    Print version information
-
-OPTIONS:
-        --addresses <ADDRESSES>        delete node address. Such as
-                                       0x16e80b488f6e423b9faff014d1883493c5043d29,0x5bc21f512f877f18840abe13de5816c1226c4710
-                                       will node with the address [default: default]
         --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>      set config file directory, default means current directory
-        --config-name <CONFIG_NAME>    set config file name [default: config.toml]
-        --index <INDEX>                delete index. Such as 1,2 will delete first and second node
-                                       [default: default]
+                                       [default: .]
+        --log-level <LOG_LEVEL>        log level [default: info]
+        --peers-count <PEERS_COUNT>    set initial node number [default: 4]
 ```
 
-#### 例子
+说明：
+1. `--is-tls`标识网络微服务是否选择了`network_tls`。
 
 ```
-$ cloud-config delete --addresses 0x4f9cec049857a119b51472dac520f4bde0bca4d0,0xe51ab390ec569bb5e9b0c96a84df40b9f6923af2 --config-dir /tmp/test
+$ cloud-config create-dev  
+key_id:1, address:5928e5527c4c1c6ba75059c6aa2d5832cd543eab
+key_id:1, address:c83e8a0aa624f26d8344badfe6e0e9149e50965a
+key_id:1, address:74866e7bf097f3889465ceab1a0028cca65495f2
+key_id:1, address:e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
+key_id:1, address:c36d6b36b049a9d7ce30c472be389f6ff45f26ef
 
-$ ls /tmp/test
-test-chain                                           test-chain-57b98686b6636877a04710dc57127526feac76e7  test-chain-b4d2011d32ff5484b18dcb237e0dbf504b11c97e
-test-chain-3e3acf2feb25ac611db9348244de132d01327dab  test-chain-94cc5493111435bcfb0a03eb39921ad0f2e379f8
+$ tree test-chain*
+test-chain
+├── accounts
+│   ├── 5928e5527c4c1c6ba75059c6aa2d5832cd543eab
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 74866e7bf097f3889465ceab1a0028cca65495f2
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── c36d6b36b049a9d7ce30c472be389f6ff45f26ef
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── c83e8a0aa624f26d8344badfe6e0e9149e50965a
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+test-chain-0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-1
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-2
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-3
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
 ```
 
-节点`test-chain-4f9cec049857a119b51472dac520f4bde0bca4d0`，`test-chain-e51ab390ec569bb5e9b0c96a84df40b9f6923af2`被删除
+#### append-dev
 
-### 
+参数：
+```
+$ cloud-config append-dev -h
+cloud-config-append-dev 
+
+append node in env dev
+
+USAGE:
+    cloud-config append-dev [OPTIONS]
+
+FLAGS:
+    -h, --help       Print help information
+    -V, --version    Print version information
+
+OPTIONS:
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --log-level <LOG_LEVEL>      log level [default: info]
+```
+
+```
+$ cloud-config append-dev
+key_id:1, address:50887f9dc812402e41fab3129c955c93dc176896
+
+$ tree test-chain*
+test-chain
+├── accounts
+│   ├── 50887f9dc812402e41fab3129c955c93dc176896
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 5928e5527c4c1c6ba75059c6aa2d5832cd543eab
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 74866e7bf097f3889465ceab1a0028cca65495f2
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── c36d6b36b049a9d7ce30c472be389f6ff45f26ef
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── c83e8a0aa624f26d8344badfe6e0e9149e50965a
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+test-chain-0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-1
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-2
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-3
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-4
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+```
+
+#### delete-dev
+
+参数：
+```
+$ cloud-config delete-dev -h
+cloud-config-delete-dev 
+
+delete node in env dev
+
+USAGE:
+    cloud-config delete-dev [OPTIONS]
+
+FLAGS:
+    -h, --help       Print help information
+    -V, --version    Print version information
+
+OPTIONS:
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --log-level <LOG_LEVEL>      log level [default: info]
+
+```
+
+```
+$ cloud-config delete-dev
+
+$ tree test-chain*
+test-chain
+├── accounts
+│   ├── 5928e5527c4c1c6ba75059c6aa2d5832cd543eab
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 74866e7bf097f3889465ceab1a0028cca65495f2
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── c36d6b36b049a9d7ce30c472be389f6ff45f26ef
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── c83e8a0aa624f26d8344badfe6e0e9149e50965a
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+test-chain-0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-1
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-2
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-3
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+```

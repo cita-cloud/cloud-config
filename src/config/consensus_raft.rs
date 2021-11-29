@@ -27,16 +27,7 @@ pub struct Consensus {
 }
 
 impl Consensus {
-    pub fn new(network_port: u16, node_addr: String) -> Self {
-        Self {
-            network_port,
-            controller_port: network_port + 4,
-            node_addr,
-            grpc_listen_port: network_port + 1,
-        }
-    }
-
-    pub fn new_all(
+    pub fn new(
         network_port: u16,
         controller_port: u16,
         node_addr: String,

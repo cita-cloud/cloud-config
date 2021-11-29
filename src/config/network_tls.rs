@@ -66,18 +66,6 @@ impl NetworkConfig {
             peers,
         }
     }
-
-    pub fn default(peers: Vec<PeerConfig>) -> Self {
-        Self {
-            listen_port: None,
-            grpc_port: None,
-            reconnect_timeout: None,
-            ca_cert: None,
-            cert: None,
-            priv_key: None,
-            peers,
-        }
-    }
 }
 
 impl TomlWriter for NetworkConfig {

@@ -63,6 +63,9 @@ pub struct InitNodeOpts {
     /// key id of account in kms db
     #[clap(long = "log-level", default_value = "info")]
     pub(crate) log_level: String,
+    /// account of node
+    #[clap(long = "account")]
+    pub(crate) account: String,
 }
 
 /// execute set validators
@@ -82,6 +85,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .key_id(opts.key_id)
         .package_limit(opts.package_limit)
         .log_level(opts.log_level)
+        .account(opts.account)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::CONSENSUS_BFT;
+use crate::constant::{CONSENSUS, CONSENSUS_BFT};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
@@ -55,6 +55,6 @@ impl YmlWriter for ConsensusBft {
 
 impl TomlWriter for ConsensusBft {
     fn section(&self) -> String {
-        CONSENSUS_BFT.to_string()
+        CONSENSUS.to_string()
     }
 }

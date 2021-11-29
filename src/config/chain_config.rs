@@ -25,7 +25,16 @@ pub struct NodeNetworkAddress {
     pub domain: String,
 }
 
-impl NodeNetworkAddress {}
+impl NodeNetworkAddress {
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new() -> NodeNetworkAddressBuilder {
+        NodeNetworkAddressBuilder {
+            host: "localhost".to_string(),
+            port: 0,
+            domain: "".to_string(),
+        }
+    }
+}
 
 impl PartialEq for NodeNetworkAddress {
     fn eq(&self, other: &Self) -> bool {
@@ -48,13 +57,6 @@ pub struct NodeNetworkAddressBuilder {
 }
 
 impl NodeNetworkAddressBuilder {
-    pub fn new() -> NodeNetworkAddressBuilder {
-        NodeNetworkAddressBuilder {
-            host: "localhost".to_string(),
-            port: 0,
-            domain: "".to_string(),
-        }
-    }
     pub fn host(&mut self, host: String) -> &mut NodeNetworkAddressBuilder {
         self.host = host;
         self
@@ -166,6 +168,7 @@ impl ChainConfigBuilder {
         self
     }
 
+    #[allow(dead_code)]
     pub fn node_network_address_list(
         &mut self,
         node_network_address_list: Vec<NodeNetworkAddress>,

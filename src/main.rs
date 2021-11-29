@@ -14,15 +14,16 @@
 
 use clap::Clap;
 
-use crate::append::{execute_append, AppendOpts};
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::create::{execute_create, CreateOpts};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
-use crate::delete::{execute_delete, DeleteOpts};
 use crate::delete_chain::{execute_delete_chain, DeleteChainOpts};
 use crate::delete_node::{execute_delete_node, DeleteNodeOpts};
+use crate::env_dev::{
+    execute_append_dev, execute_create_dev, execute_delete_dev, AppendDevOpts, CreateDevOpts,
+    DeleteDevOpts,
+};
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
@@ -33,20 +34,15 @@ use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 
-mod append;
-mod append_new;
 mod append_node;
 mod append_validator;
 mod config;
 mod constant;
-mod create;
 mod create_ca;
 mod create_csr;
-mod create_new;
-mod delete;
 mod delete_chain;
-mod delete_new;
 mod delete_node;
+mod env_dev;
 mod error;
 mod init_chain;
 mod init_chain_config;
@@ -67,17 +63,9 @@ struct Opts {
     sub_cmd: SubCommand,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clap)]
 enum SubCommand {
-    /// create config
-    #[clap(name = "create")]
-    Create(CreateOpts),
-    /// append config
-    #[clap(name = "append")]
-    Append(AppendOpts),
-    /// delete config
-    #[clap(name = "delete")]
-    Delete(DeleteOpts),
     /// init a chain
     #[clap(name = "init-chain")]
     InitChain(InitChainOpts),
@@ -123,6 +111,15 @@ enum SubCommand {
     /// sign csr
     #[clap(name = "sign-csr")]
     SignCSR(SignCSROpts),
+    /// create config in env dev
+    #[clap(name = "create-dev")]
+    CreateDev(CreateDevOpts),
+    /// append node in env dev
+    #[clap(name = "append-dev")]
+    AppendDev(AppendDevOpts),
+    /// delete node in env dev
+    #[clap(name = "delete-dev")]
+    DeleteDev(DeleteDevOpts),
 }
 
 fn main() {
@@ -131,9 +128,6 @@ fn main() {
     let opts: Opts = Opts::parse();
 
     match opts.sub_cmd {
-        SubCommand::Create(opts) => execute_create(opts).unwrap(),
-        SubCommand::Append(opts) => execute_append(opts).unwrap(),
-        SubCommand::Delete(opts) => execute_delete(opts).unwrap(),
         SubCommand::InitChain(opts) => execute_init_chain(opts).unwrap(),
         SubCommand::InitChainConfig(opts) => execute_init_chain_config(opts).unwrap(),
         SubCommand::SetAdmin(opts) => execute_set_admin(opts).unwrap(),
@@ -149,5 +143,8 @@ fn main() {
         SubCommand::CreateCA(opts) => execute_create_ca(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCSR(opts) => execute_create_csr(opts).map(|_| ()).unwrap(),
         SubCommand::SignCSR(opts) => execute_sign_csr(opts).map(|_| ()).unwrap(),
+        SubCommand::CreateDev(opts) => execute_create_dev(opts).unwrap(),
+        SubCommand::AppendDev(opts) => execute_append_dev(opts).unwrap(),
+        SubCommand::DeleteDev(opts) => execute_delete_dev(opts).unwrap(),
     }
 }

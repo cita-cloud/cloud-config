@@ -21,13 +21,13 @@ use clap::Clap;
 pub struct AppendValidatorOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub(crate) config_dir: String,
     /// validator account
     #[clap(long = "validator")]
-    validator: String,
+    pub(crate) validator: String,
 }
 
 /// execute set validators
