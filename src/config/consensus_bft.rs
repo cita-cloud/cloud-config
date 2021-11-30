@@ -49,12 +49,12 @@ impl ConsensusBft {
 
 impl YmlWriter for ConsensusBft {
     fn service(&self) -> String {
-        CONSENSUS_BFT.to_string()
+        CONSENSUS.to_string()
     }
 }
 
 impl TomlWriter for ConsensusBft {
     fn section(&self) -> String {
-        CONSENSUS.to_string()
+        CONSENSUS_BFT.to_string()
     }
 }
