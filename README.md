@@ -725,6 +725,7 @@ USAGE:
 
 FLAGS:
     -h, --help       Print help information
+        --is-bft     is consensus bft
         --is-tls     is network tls
     -V, --version    Print version information
 
@@ -738,6 +739,7 @@ OPTIONS:
 
 说明：
 1. `--is-tls`标识网络微服务是否选择了`network_tls`。
+2. `--is-bft`标识共识微服务是否选择了`consensus_bft`。
 
 ```
 $ cloud-config create-dev  

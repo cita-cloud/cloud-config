@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::NETWORK_TLS;
+use crate::constant::{CONSENSUS_BFT, NETWORK_TLS};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -47,6 +47,9 @@ pub struct CreateDevOpts {
     /// is network tls
     #[clap(long = "is-tls")]
     is_tls: bool,
+    /// is consensus bft
+    #[clap(long = "is-bft")]
+    is_bft: bool,
 }
 
 /// node network ip is 127.0.0.1
@@ -73,6 +76,9 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     init_chain_config_opts.config_dir = opts.config_dir.clone();
     if is_tls {
         init_chain_config_opts.network_image = NETWORK_TLS.to_string();
+    }
+    if opts.is_bft {
+        init_chain_config_opts.consensus_image = CONSENSUS_BFT.to_string();
     }
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
