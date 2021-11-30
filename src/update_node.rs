@@ -103,10 +103,11 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
+                let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
                 tls_peers.push(crate::config::network_tls::PeerConfig {
                     host: node_network_address.host.clone(),
                     port: node_network_address.port,
-                    domain: node_network_address.domain.clone(),
+                    domain: real_domain,
                 });
             }
         }

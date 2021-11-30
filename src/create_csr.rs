@@ -34,7 +34,8 @@ pub struct CreateCSROpts {
 /// execute create csr
 pub fn execute_create_csr(opts: CreateCSROpts) -> Result<(String, String), Error> {
     // gen csr and key_pem of node by domain
-    let (csr_pem, key_pem) = create_csr(&opts.domain);
+    let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
+    let (csr_pem, key_pem) = create_csr(&real_domain);
 
     // gen a folder to store cert info
     let path = format!(
