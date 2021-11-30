@@ -24,6 +24,10 @@ use crate::env_dev::{
     execute_append_dev, execute_create_dev, execute_delete_dev, AppendDevOpts, CreateDevOpts,
     DeleteDevOpts,
 };
+use crate::env_k8s::{
+    execute_append_k8s, execute_create_k8s, execute_delete_k8s, AppendK8sOpts, CreateK8sOpts,
+    DeleteK8sOpts,
+};
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
@@ -43,6 +47,7 @@ mod create_csr;
 mod delete_chain;
 mod delete_node;
 mod env_dev;
+mod env_k8s;
 mod error;
 mod init_chain;
 mod init_chain_config;
@@ -120,6 +125,15 @@ enum SubCommand {
     /// delete node in env dev
     #[clap(name = "delete-dev")]
     DeleteDev(DeleteDevOpts),
+    /// create config in env k8s
+    #[clap(name = "create-k8s")]
+    CreateK8s(CreateK8sOpts),
+    /// append node in env k8s
+    #[clap(name = "append-k8s")]
+    AppendK8s(AppendK8sOpts),
+    /// delete node in env k8s
+    #[clap(name = "delete-k8s")]
+    DeleteK8s(DeleteK8sOpts),
 }
 
 fn main() {
@@ -146,5 +160,8 @@ fn main() {
         SubCommand::CreateDev(opts) => execute_create_dev(opts).unwrap(),
         SubCommand::AppendDev(opts) => execute_append_dev(opts).unwrap(),
         SubCommand::DeleteDev(opts) => execute_delete_dev(opts).unwrap(),
+        SubCommand::CreateK8s(opts) => execute_create_k8s(opts).unwrap(),
+        SubCommand::AppendK8s(opts) => execute_append_k8s(opts).unwrap(),
+        SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
     }
 }

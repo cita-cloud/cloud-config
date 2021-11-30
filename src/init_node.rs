@@ -60,7 +60,7 @@ pub struct InitNodeOpts {
     /// set one block contains tx limit, default 30000
     #[clap(long = "package-limit", default_value = "30000")]
     pub(crate) package_limit: u64,
-    /// key id of account in kms db
+    /// log level
     #[clap(long = "log-level", default_value = "info")]
     pub(crate) log_level: String,
     /// account of node

@@ -54,6 +54,7 @@ pub struct CreateDevOpts {
 /// node domain is i
 /// kms password is 123456
 /// grpc ports start from 50000 + i*1000
+/// node network listen port is 40000 + i
 /// is stdout is false
 pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let is_tls = opts.is_tls;
@@ -299,9 +300,6 @@ pub struct DeleteDevOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     config_dir: String,
-    /// log level
-    #[clap(long = "log-level", default_value = "info")]
-    log_level: String,
 }
 
 pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {

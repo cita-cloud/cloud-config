@@ -16,4 +16,5 @@
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
     DupChainName,
+    ListLenNotMatch,
 }

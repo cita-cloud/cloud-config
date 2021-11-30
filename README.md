@@ -29,13 +29,16 @@ FLAGS:
 
 SUBCOMMANDS:
     append-dev           append node in env dev
+    append-k8s           append node in env k8s
     append-node          append a node into chain
     append-validator     append a validator into chain
     create-ca            create CA
     create-csr           create csr
     create-dev           create config in env dev
+    create-k8s           create config in env k8s
     delete-chain         delete a chain
     delete-dev           delete node in env dev
+    delete-k8s           delete node in env k8s
     delete-node          delete a node from chain
     help                 Print this message or the help of the given subcommand(s)
     init-chain           init a chain
@@ -105,6 +108,7 @@ SUBCOMMANDS:
 
 在前述流程的基础上，封装了更高级更方便使用的子命令。
 比如针对开发环境，有`create-dev`，`append-dev`和`delete-dev`，使用开发环境约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以生成和操作一条链的配置。
+针对演示或者生产阶段的`k8s`环境，有`create-k8s`，`append-k8s`和`delete-k8s`。
 
 
 ### 使用示例
@@ -700,7 +704,7 @@ test-chain-node1
 2. 节点的网络端口从`40000`开始往后顺延。
 3. 节点的`domain`使用节点的序号。
 4. 节点的`kms`密码都为`123456`。
-5. 节点各个微服务的`gRPC`端口从`50000 + i*1000`。其中`i`为节点的序号。
+5. 节点各个微服务的`gRPC`端口从`50000 + i*1000`开始往后顺延。其中`i`为节点的序号。
 6. 日志默认输出到文件。
 7. 增加节点只能在最大的节点序号往后增加。
 8. 删除节点也只能从最大的节点序号开始往前删除。
@@ -976,6 +980,261 @@ test-chain-2
 ├── node_config.toml
 └── storage-log4rs.yaml
 test-chain-3
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+```
+
+
+### k8s环境
+
+约定：
+1. 超级管理员账户由用户自行创建并通过参数传入。
+2. 节点的`kms`密码都由用户设置并通过参数传入。
+3. 节点各个微服务的`gRPC`端口固定从`50000`开始往后顺延。
+4. 节点的网络监听端口固定为`40000`。
+5. 日志默认输出到`stdout`。
+
+适用于演示或者生产阶段，在k8s环境部署链。
+
+#### create-k8s
+
+参数：
+```
+        --admin <ADMIN>
+            set admin
+
+        --block_interval <BLOCK_INTERVAL>
+            set system config block_interval [default: 3]
+
+        --block_limit <BLOCK_LIMIT>
+            set system config block_limit [default: 100]
+
+        --chain-name <CHAIN_NAME>
+            set chain name [default: test-chain]
+
+        --chain_id <CHAIN_ID>
+            set system config chain_id [default: ]
+
+        --config-dir <CONFIG_DIR>
+            set config file directory, default means current directory [default: .]
+
+        --consensus_image <CONSENSUS_IMAGE>
+            set consensus micro service image name (consensus_bft/consensus_raft) [default:
+            consensus_raft]
+
+        --consensus_tag <CONSENSUS_TAG>
+            set consensus micro service image tag [default: latest]
+
+        --controller_image <CONTROLLER_IMAGE>
+            set controller micro service image name (controller) [default: controller]
+
+        --controller_tag <CONTROLLER_TAG>
+            set controller micro service image tag [default: latest]
+
+        --executor_image <EXECUTOR_IMAGE>
+            set executor micro service image name (executor_evm) [default: executor_evm]
+
+        --executor_tag <EXECUTOR_TAG>
+            set executor micro service image tag [default: latest]
+
+        --kms-password-list <KMS_PASSWORD_LIST>
+            kms db password list, splited by ,
+
+        --kms_image <KMS_IMAGE>
+            set kms micro service image name (kms_eth/kms_sm) [default: kms_sm]
+
+        --kms_tag <KMS_TAG>
+            set kms micro service image tag [default: latest]
+
+        --log-level <LOG_LEVEL>
+            log level [default: info]
+
+        --network_image <NETWORK_IMAGE>
+            set network micro service image name (network_tls/network_p2p) [default: network_p2p]
+
+        --network_tag <NETWORK_TAG>
+            set network micro service image tag [default: latest]
+
+        --nodelist <NODE_LIST>
+            node list looks like localhost:40000:node0,localhost:40001:node1
+
+        --prevhash <PREVHASH>
+            set genesis prevhash [default:
+            0x0000000000000000000000000000000000000000000000000000000000000000]
+
+        --storage_image <STORAGE_IMAGE>
+            set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
+
+        --storage_tag <STORAGE_TAG>
+            set storage micro service image tag [default: latest]
+
+        --timestamp <TIMESTAMP>
+            set genesis timestamp [default: 0]
+
+        --version <VERSION>
+            set system config version [default: 0]
+```
+
+说明:
+1. `admin`为必选参数。使用用户事先创建好的超级管理员账户地址。
+2. `kms-password-list`为必选参数。用逗号隔开的多个节点的`kms`数据库密码。
+3. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
+4. `kms-password-list`和`nodelist`的数量必须相同。
+
+```
+$ cloud-config create-k8s --admin 8f81961f263f45f88230375623394c9301c033e7 --kms-password-list 123456,123456 --nodelist localhost:40000:node0,localhost:40001:node1
+key_id:1, address:4b209a87a31f67f2c64a7583301ff5a360796241
+key_id:1, address:b7f1a7d398da3eee28a5f01f02e8ae05317270c8
+
+$ tree test-chain*
+test-chain
+├── accounts
+│   ├── 4b209a87a31f67f2c64a7583301ff5a360796241
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── b7f1a7d398da3eee28a5f01f02e8ae05317270c8
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+test-chain-node0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-node1
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+```
+
+#### append-k8s
+
+参数：
+```
+        --chain-name <CHAIN_NAME>
+            set chain name [default: test-chain]
+
+        --config-dir <CONFIG_DIR>
+            set config file directory, default means current directory [default: .]
+
+        --kms-password <KMS_PASSWORD>
+            kms db password
+
+        --log-level <LOG_LEVEL>
+            log level [default: info]
+
+        --node <NODE>
+            node network address looks like localhost:40002:node2
+```
+
+说明：
+1. `kms-password`为必选参数。值为新增节点的`kms`数据库密码。
+2. `node`为必选参数。值为新增节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
+
+
+```
+$ cloud-config append-k8s --kms-password 123456 --node localhost:40002:node2
+key_id:1, address:6ee268553c09f203dedd54f7d0a678c8a9439915
+
+$ tree test-chain*
+test-chain
+├── accounts
+│   ├── 4b209a87a31f67f2c64a7583301ff5a360796241
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 6ee268553c09f203dedd54f7d0a678c8a9439915
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── b7f1a7d398da3eee28a5f01f02e8ae05317270c8
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+test-chain-node0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-node1
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-node2
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+```
+
+#### delete-k8s
+
+参数：
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --domain <DOMAIN>            domain of node that want to delete
+```
+
+说明：
+1. `domain`为必选参数。值为要删除节点的标识，与创建链和增加节点时的`domain`保持一致。
+
+```
+$ cloud-config delete-k8s --domain node2
+
+$ tree test-chain*
+test-chain
+├── accounts
+│   ├── 4b209a87a31f67f2c64a7583301ff5a360796241
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── b7f1a7d398da3eee28a5f01f02e8ae05317270c8
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+└── chain_config.toml
+test-chain-node0
+├── config.toml
+├── controller-log4rs.yaml
+├── executor-log4rs.yaml
+├── kms.db
+├── kms-log4rs.yaml
+├── network-log4rs.yaml
+├── node_config.toml
+└── storage-log4rs.yaml
+test-chain-node1
 ├── config.toml
 ├── controller-log4rs.yaml
 ├── executor-log4rs.yaml
