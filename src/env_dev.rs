@@ -49,7 +49,7 @@ pub struct CreateDevOpts {
     is_tls: bool,
 }
 
-/// node network ip is localhost
+/// node network ip is 127.0.0.1
 /// node network port is 40000 + i
 /// node domain is i
 /// kms password is 123456
@@ -110,7 +110,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
 
     // append node
     for i in 0..peers_count {
-        let node = format!("localhost:{}:{}", 40000 + i, i);
+        let node = format!("127.0.0.1:{}:{}", 40000 + i, i);
         execute_append_node(AppendNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
@@ -216,7 +216,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     .unwrap();
 
     // append node
-    let node = format!("localhost:{}:{}", 40000 + new_node_id, new_node_id);
+    let node = format!("127.0.0.1:{}:{}", 40000 + new_node_id, new_node_id);
     execute_append_node(AppendNodeOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
