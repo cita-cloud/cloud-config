@@ -164,24 +164,3 @@ pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> boo
     }
     false
 }
-
-#[cfg(test)]
-mod util_test {
-    use crate::util::read_from_file;
-    use rand::prelude::*;
-    use rcgen::{KeyPair, PKCS_ECDSA_P256_SHA256};
-
-    // type Type = [u8, 32]
-
-    #[test]
-    fn util_test() {
-        let config = read_from_file("cita-chain/config.toml");
-        println!("{:?}", config)
-    }
-
-    #[test]
-    fn random_address() {
-        let rand: [u8; 16] = thread_rng().gen();
-        println!("{}", hex::encode(rand));
-    }
-}
