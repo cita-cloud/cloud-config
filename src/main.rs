@@ -31,6 +31,7 @@ use crate::env_k8s::{
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
+use crate::migrate::{execute_migrate, MigrateOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
@@ -52,6 +53,7 @@ mod error;
 mod init_chain;
 mod init_chain_config;
 mod init_node;
+mod migrate;
 mod new_account;
 mod set_admin;
 mod set_nodelist;
@@ -134,6 +136,9 @@ enum SubCommand {
     /// delete node in env k8s
     #[clap(name = "delete-k8s")]
     DeleteK8s(DeleteK8sOpts),
+    /// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
+    #[clap(name = "migrate")]
+    Migrate(MigrateOpts),
 }
 
 fn main() {
@@ -163,5 +168,6 @@ fn main() {
         SubCommand::CreateK8s(opts) => execute_create_k8s(opts).unwrap(),
         SubCommand::AppendK8s(opts) => execute_append_k8s(opts).unwrap(),
         SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
+        SubCommand::Migrate(opts) => execute_migrate(opts).unwrap(),
     }
 }
