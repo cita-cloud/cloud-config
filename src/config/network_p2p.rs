@@ -59,18 +59,6 @@ impl NetConfig {
             peers,
         }
     }
-
-    pub fn default(addresses: &[PeerConfig]) -> Self {
-        let mut peers = Vec::with_capacity(addresses.len());
-        for address in addresses {
-            peers.push(address.clone())
-        }
-        Self {
-            port: None,
-            grpc_port: None,
-            peers,
-        }
-    }
 }
 
 impl TomlWriter for NetConfig {
