@@ -95,17 +95,13 @@ pub fn read_file(path: impl AsRef<path::Path>) -> std::io::Result<String> {
 pub fn unix_now() -> u64 {
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
-    let ms = since_the_epoch.as_secs() as i64 * 1000i64
-        + (since_the_epoch.subsec_nanos() as i64 / 1_000_000) as i64;
-    ms as u64
+    since_the_epoch.as_millis() as u64
 }
 
 const HASH_BYTES_LEN: usize = 32;
 
 pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
-    let mut result = [0u8; HASH_BYTES_LEN];
-    result.copy_from_slice(libsm::sm3::hash::Sm3Hash::new(input).get_hash().as_ref());
-    result
+    libsm::sm3::hash::Sm3Hash::new(input).get_hash()
 }
 
 pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
