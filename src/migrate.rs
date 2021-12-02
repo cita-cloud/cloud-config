@@ -241,7 +241,9 @@ mod migrate_impl {
             #[serde(rename = "network_tls")]
             pub network: NetworkTlsConfig,
 
-            // Helper data, will be filled later
+            // Helper data, Option will be filled later
+            #[serde(skip)]
+            pub node_key: String,
             #[serde(skip)]
             pub network_host: Option<String>,
             #[serde(skip)]
@@ -311,6 +313,7 @@ mod migrate_impl {
         // kms
         kms_password: String,
         key_id: u64,
+        node_key: String,
 
         // network
         network_config: old::NetworkConfig,
@@ -343,10 +346,9 @@ mod migrate_impl {
                 extract_toml(&data_dir, "init_sys_config.toml")?;
             let genesis_block: old::Genesis = extract_toml(&data_dir, "genesis.toml")?;
 
-            let key_id = extract_text(&data_dir, "key_id")?.parse()?;
-            // It seeems that we don't use kms at that version and no kms related material generated.
-            // So we use a random generated kms password.
-            // let kms_password = extract_text(&data_dir, "key_file")?;
+            let key_id = 0;
+            let node_key = extract_text(&data_dir, "node_key")?;
+
             let kms_password = {
                 use rand::Rng;
                 let random: [u8; 32] = rand::thread_rng().gen();
@@ -369,6 +371,7 @@ mod migrate_impl {
                 // kms
                 kms_password,
                 key_id,
+                node_key,
 
                 // network
                 network_config,
@@ -464,6 +467,7 @@ mod migrate_impl {
                 kms,
                 network,
 
+                node_key: self.node_key.clone(),
                 network_host: None,
                 network_port: None,
             }
@@ -751,6 +755,8 @@ mod migrate_impl {
                 .write_all(node_config_content.as_bytes())
                 .context("cannot write node's `config.toml`")?;
 
+            generate_kms_db(&new_node_dir, node_config.kms.db_key, node_config.node_key)
+                .context("cannot generate kms db")?;
             migrate_log4rs(&old_node_dir, &new_node_dir).with_context(|| {
                 format!(
                     "cannot migrate log4rs yamls and kms db for `{}`",
@@ -765,6 +771,28 @@ mod migrate_impl {
             //         )
             //     })?;
         }
+
+        Ok(())
+    }
+
+    fn generate_kms_db(
+        new_dir: impl AsRef<Path>,
+        kms_password: String,
+        node_key: String,
+    ) -> Result<()> {
+        let db_path = new_dir.as_ref().join("kms.db").to_string_lossy().into();
+        let priv_key = {
+            use crate::util::remove_0x;
+            let s = remove_0x(&node_key);
+            hex::decode(s).context("invalid `node_key`")?
+        };
+
+        use crate::traits::Kms;
+        let kms = crate::config::kms_sm::Kms::create_kms_db(db_path, kms_password);
+        assert!(
+            kms.insert_privkey(priv_key) == 0,
+            "The return key_id from `insert_privkey` must be 0"
+        );
 
         Ok(())
     }

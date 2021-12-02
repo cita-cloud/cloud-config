@@ -35,6 +35,15 @@ impl TomlWriter for KmsSmConfig {
 
 pub struct Kms(kms_sm::kms::Kms);
 
+impl Kms {
+    pub fn insert_privkey(&self, priv_key: Vec<u8>) -> u64 {
+        // will return account_id
+        self.0
+            .insert_privkey(priv_key, "node_key from migration".into())
+            .unwrap()
+    }
+}
+
 impl crate::traits::Kms for Kms {
     fn create_kms_db(db_path: String, password: String) -> Self {
         Kms(kms_sm::kms::Kms::new(db_path, password))

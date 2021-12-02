@@ -165,6 +165,10 @@ pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> boo
     false
 }
 
+pub fn remove_0x(s: &str) -> &str {
+    s.strip_prefix("0x").unwrap_or(s)
+}
+
 #[cfg(test)]
 mod util_test {
     use crate::util::read_from_file;
