@@ -263,7 +263,7 @@ mod migrate_impl {
         #[derive(Serialize)]
         pub struct MetaAdminConfig {
             pub admin_address: String,
-            pub key_id: u64,
+            // pub key_id: u64,
         }
 
         #[derive(Serialize)]
@@ -343,7 +343,14 @@ mod migrate_impl {
             let genesis_block: old::Genesis = extract_toml(&data_dir, "genesis.toml")?;
 
             let key_id = extract_text(&data_dir, "key_id")?.parse()?;
-            let kms_password = extract_text(&data_dir, "key_file")?;
+            // It seeems that we don't use kms at that version and no kms related material generated.
+            // So we use a random generated kms password.
+            // let kms_password = extract_text(&data_dir, "key_file")?;
+            let kms_password = {
+                use rand::Rng;
+                let random: [u8; 32] = rand::thread_rng().gen();
+                hex::encode(&random)
+            };
 
             let this = Self {
                 controller_port,
@@ -500,29 +507,44 @@ mod migrate_impl {
                 full_peer_set
             };
 
-            // Find nodes' host and port
-            node_configs
-                .iter_mut()
-                .map(|c| {
-                    let peer_set: HashSet<(String, u16)> = c
-                        .network
-                        .peers
-                        .iter()
-                        .map(|p| (p.host.clone(), p.port))
-                        .collect();
-                    let (host, port) = full_peer_set.difference(&peer_set).next().cloned()
-                        .context(
-                            "Cannot find out node's self host and port. \
-                            The assumption that node's peers info contains all (and only) other peers has been violated"
-                        )?;
-                    c.network_host.replace(host.clone());
-                    c.network_port.replace(port);
+            if full_peer_set.is_empty() {
+                let c = node_configs
+                    .first_mut()
+                    .context("Empty chain. No node config found.")?;
+                let host = String::from("localhost");
+                let port = c.network.listen_port;
+                c.network_host.replace(host.clone());
+                c.network_port.replace(port);
 
-                    Ok(
-                        ((host, port), c.controller.node_address.clone())
-                    )
-                })
-                .collect::<Result<_>>()?
+                // It isn't necessary and won't be used since the single node's network config contains no other peers.
+                let mut single_node_map = HashMap::new();
+                single_node_map.insert((host, port), c.controller.node_address.clone());
+                single_node_map
+            } else {
+                // Find nodes' host and port
+                node_configs
+                    .iter_mut()
+                    .map(|c| {
+                        let peer_set: HashSet<(String, u16)> = c
+                            .network
+                            .peers
+                            .iter()
+                            .map(|p| (p.host.clone(), p.port))
+                            .collect();
+                        let (host, port) = full_peer_set.difference(&peer_set).next().cloned()
+                            .context(
+                                "Cannot find out node's self host and port. \
+                                The assumption that node's peers info contains all (and only) other peers has been violated"
+                            )?;
+                        c.network_host.replace(host.clone());
+                        c.network_port.replace(port);
+
+                        Ok(
+                            ((host, port), c.controller.node_address.clone())
+                        )
+                    })
+                    .collect::<Result<_>>()?
+            }
         };
 
         let node_addrs: Vec<String> = node_configs
@@ -568,8 +590,6 @@ mod migrate_impl {
 
         let new_chain_data_dir = new_chain_data_dir.as_ref();
         let new_chain_metadata_dir = new_chain_data_dir.join(chain_name);
-        fs::create_dir_all(&new_chain_data_dir).unwrap();
-        fs::create_dir_all(&new_chain_metadata_dir).unwrap();
 
         // Load node dirs.
         let mut node_dirs: Vec<PathBuf> = fs::read_dir(chain_data_dir)
@@ -670,16 +690,16 @@ mod migrate_impl {
 
             let admin_config = {
                 let admin_address = first_node.system_config.admin.clone();
-                let key_id = {
-                    let admin_key_dir = chain_metadata_dir.join(&admin_address);
-                    extract_text(admin_key_dir, "key_id")
-                        .context("cannot load admin `key_id`")?
-                        .parse()
-                        .context("invalid admin `key_id`")?
-                };
+                // let key_id = {
+                //     let admin_key_dir = chain_metadata_dir.join(&admin_address);
+                //     extract_text(admin_key_dir, "key_id")
+                //         .context("cannot load admin `key_id`")?
+                //         .parse()
+                //         .context("invalid admin `key_id`")?
+                // };
                 new::MetaAdminConfig {
                     admin_address,
-                    key_id,
+                    // key_id,
                 }
             };
 
@@ -692,6 +712,9 @@ mod migrate_impl {
             }
         };
 
+        fs::create_dir_all(&new_chain_data_dir).unwrap();
+        fs::create_dir_all(&new_chain_metadata_dir).unwrap();
+
         // construct new meta data
         let mut meta_config_toml = File::create(new_chain_metadata_dir.join("config.toml"))
             .context("cannot create meta `config.toml`")?;
@@ -701,7 +724,7 @@ mod migrate_impl {
             .context("cannot write meta `config.toml`")?;
 
         let sample_node = node_dirs.first().unwrap();
-        migrate_log4rs_and_kms_db(sample_node, new_chain_metadata_dir)
+        migrate_log4rs(sample_node, new_chain_metadata_dir)
             .context("cannot copy log4rs and kms_db config to meta config dir")?;
 
         // construct new node data
@@ -729,25 +752,26 @@ mod migrate_impl {
                 .write_all(node_config_content.as_bytes())
                 .context("cannot write node's `config.toml`")?;
 
-            migrate_log4rs_and_kms_db(&old_node_dir, &new_node_dir).with_context(|| {
+            migrate_log4rs(&old_node_dir, &new_node_dir).with_context(|| {
                 format!(
                     "cannot migrate log4rs yamls and kms db for `{}`",
                     old_node_dir.to_string_lossy()
                 )
             })?;
-            migrate_chain_data_and_storage_data_and_logs(&old_node_dir, &new_node_dir)
-                .with_context(|| {
-                    format!(
-                        "cannot migrate {{chain data, storage data, logs}} for `{}`",
-                        old_node_dir.to_string_lossy()
-                    )
-                })?;
+            // migrate_chain_data_and_storage_data_and_logs(&old_node_dir, &new_node_dir)
+            //     .with_context(|| {
+            //         format!(
+            //             "cannot migrate {{chain data, storage data, logs}} for `{}`",
+            //             old_node_dir.to_string_lossy()
+            //         )
+            //     })?;
         }
 
         Ok(())
     }
 
-    fn migrate_log4rs_and_kms_db<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
+    // fn migrate_log4rs_and_kms_db<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
+    fn migrate_log4rs<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
     where
         P: AsRef<Path>,
         Q: AsRef<Path>,
@@ -760,7 +784,7 @@ mod migrate_impl {
             "storage-log4rs.yaml",
             "executor-log4rs.yaml",
             "kms-log4rs.yaml",
-            "kms.db",
+            // "kms.db",
         ];
 
         for f in files {
@@ -777,6 +801,8 @@ mod migrate_impl {
         Ok(())
     }
 
+    // We don't have access to runtime data
+    #[allow(unused)]
     fn migrate_chain_data_and_storage_data_and_logs<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
     where
         P: AsRef<Path>,
