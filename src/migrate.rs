@@ -192,6 +192,7 @@ mod migrate_impl {
             // Optional fields will be filled latter
             pub ca_cert: Option<String>,
             pub cert: Option<String>,
+            pub priv_key: Option<String>,
             pub grpc_port: u16,
             pub listen_port: u16,
             pub peers: Vec<NetworkTlsPeerConfig>,
@@ -444,6 +445,7 @@ mod migrate_impl {
                     // will be filled latter
                     ca_cert: None,
                     cert: None,
+                    priv_key: None,
                     grpc_port: self.network_port,
                     // listen network peers' connections
                     listen_port: self.network_config.port,
@@ -559,6 +561,7 @@ mod migrate_impl {
             .try_for_each(|(c, cert_and_key)| {
                 c.network.ca_cert.replace(ca_cert_and_key.cert.clone());
                 c.network.cert.replace(cert_and_key.cert);
+                c.network.priv_key.replace(cert_and_key.key);
 
                 for p in c.network.peers.iter_mut() {
                     let node_addr = host_port_to_addr
