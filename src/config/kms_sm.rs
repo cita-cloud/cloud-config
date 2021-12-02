@@ -59,19 +59,3 @@ impl YmlWriter for KmsSmConfig {
         KMS.to_string()
     }
 }
-
-#[cfg(test)]
-mod kms_test {
-    use super::*;
-    use crate::util::write_to_file;
-    use toml::Value;
-
-    #[test]
-    fn basic_test() {
-        // let _ = std::fs::remove_file("example/config.toml");
-        //
-        // let config = KmsSmConfig { kms_port: 51235 };
-        //
-        // config.write("example/config.toml");
-    }
-}

@@ -24,8 +24,6 @@ pub struct GrpcPorts {
     pub kms_port: u16,
 }
 
-impl GrpcPorts {}
-
 pub struct GrpcPortsBuilder {
     pub network_port: u16,
     pub consensus_port: u16,
@@ -98,8 +96,6 @@ pub struct NodeConfig {
     pub log_level: String,
     pub account: String,
 }
-
-impl NodeConfig {}
 
 pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,

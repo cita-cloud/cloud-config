@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::config::chain_config::NodeNetworkAddress;
+use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
 use crate::constant::NETWORK_TLS;
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
@@ -168,7 +168,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
-            NodeNetworkAddress::new()
+            NodeNetworkAddressBuilder::new()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())
@@ -311,7 +311,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
 
     // parse node network info
     let node_network_info: Vec<&str> = opts.node.split(':').collect();
-    let new_node = NodeNetworkAddress::new()
+    let new_node = NodeNetworkAddressBuilder::new()
         .host(node_network_info[0].to_string())
         .port(node_network_info[1].parse::<u16>().unwrap())
         .domain(node_network_info[2].to_string())

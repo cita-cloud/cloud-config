@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::chain_config::NodeNetworkAddress;
+use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
 use clap::Clap;
@@ -45,7 +45,7 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
-            NodeNetworkAddress::new()
+            NodeNetworkAddressBuilder::new()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())
