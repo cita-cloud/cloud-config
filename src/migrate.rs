@@ -484,12 +484,12 @@ mod migrate_impl {
             format!(
                 "cannot open file `{}` in `{}`",
                 file_name,
-                data_dir.as_ref().to_string_lossy()
+                data_dir.as_ref().display()
             )
         })?;
         let mut buf = String::new();
         f.read_to_string(&mut buf)
-            .with_context(|| format!("cannot read data from {}", path.to_string_lossy()))?;
+            .with_context(|| format!("cannot read data from {}", path.display()))?;
         Ok(buf)
     }
 
@@ -624,9 +624,8 @@ mod migrate_impl {
         let mut node_configs = node_dirs
             .iter()
             .map(|d| {
-                NodeConfigMigrate::from_old(d).with_context(|| {
-                    format!("cannot migrate node config in `{}`", d.to_string_lossy())
-                })
+                NodeConfigMigrate::from_old(d)
+                    .with_context(|| format!("cannot migrate node config in `{}`", d.display()))
             })
             .collect::<Result<Vec<new::Config>>>()?;
 
@@ -742,10 +741,7 @@ mod migrate_impl {
                     .context("invalid node address, must be a hex string with `0x` prefix")?
             ));
             fs::create_dir_all(&new_node_dir).with_context(|| {
-                format!(
-                    "cannot create new node dir `{}`",
-                    new_node_dir.to_string_lossy()
-                )
+                format!("cannot create new node dir `{}`", new_node_dir.display())
             })?;
 
             let mut node_config_toml = File::create(new_node_dir.join("config.toml"))
@@ -758,14 +754,14 @@ mod migrate_impl {
             migrate_log4rs(&old_node_dir, &new_node_dir).with_context(|| {
                 format!(
                     "cannot migrate log4rs yamls and kms db for `{}`",
-                    old_node_dir.to_string_lossy()
+                    old_node_dir.display()
                 )
             })?;
             // migrate_chain_data_and_storage_data_and_logs(&old_node_dir, &new_node_dir)
             //     .with_context(|| {
             //         format!(
             //             "cannot migrate {{chain data, storage data, logs}} for `{}`",
-            //             old_node_dir.to_string_lossy()
+            //             old_node_dir.display()
             //         )
             //     })?;
         }
@@ -796,8 +792,8 @@ mod migrate_impl {
             fs::copy(&from, &to).with_context(|| {
                 format!(
                     "cannot copy file from `{}` to `{}`",
-                    from.to_string_lossy(),
-                    to.to_string_lossy()
+                    from.display(),
+                    to.display()
                 )
             })?;
         }
@@ -827,8 +823,8 @@ mod migrate_impl {
             copy_dir(&from, &to, &opts).with_context(|| {
                 format!(
                     "cannot copy dir from `{}` to `{}`",
-                    from.to_string_lossy(),
-                    to.to_string_lossy()
+                    from.display(),
+                    to.display()
                 )
             })?;
         }
@@ -862,6 +858,8 @@ pub fn execute_migrate(opts: MigrateOpts) -> Result<()> {
     let out_dir = opts.out_dir;
     let chain_name = opts.chain_name;
 
-    migrate_impl::migrate(chain_dir, out_dir, &chain_name).context("cannot migrate chain")?;
+    migrate_impl::migrate(&chain_dir, &out_dir, &chain_name).context("cannot migrate chain")?;
+
+    println!("Finshed. new config write to `{}`", out_dir);
     Ok(())
 }
