@@ -158,7 +158,8 @@ mod migrate_impl {
             pub kms_port: u16,
             pub network_port: u16,
 
-            pub key_id: u64,
+            // key_id will be filled later when kms.db is generated.
+            pub key_id: Option<u64>,
             pub node_address: String,
             pub package_limit: u64,
         }
@@ -312,7 +313,6 @@ mod migrate_impl {
 
         // kms
         kms_password: String,
-        key_id: u64,
         node_key: String,
 
         // network
@@ -346,9 +346,7 @@ mod migrate_impl {
                 extract_toml(&data_dir, "init_sys_config.toml")?;
             let genesis_block: old::Genesis = extract_toml(&data_dir, "genesis.toml")?;
 
-            let key_id = 0;
             let node_key = extract_text(&data_dir, "node_key")?;
-
             let kms_password = {
                 use rand::Rng;
                 let random: [u8; 32] = rand::thread_rng().gen();
@@ -370,7 +368,6 @@ mod migrate_impl {
 
                 // kms
                 kms_password,
-                key_id,
                 node_key,
 
                 // network
@@ -403,7 +400,8 @@ mod migrate_impl {
                 kms_port: self.kms_port,
                 storage_port: self.storage_port,
 
-                key_id: self.key_id,
+                // will be filled later
+                key_id: None,
                 node_address: self.node_addr.clone(),
                 package_limit: new::DEFAULT_PACKAGE_LIMIT,
             };
@@ -734,7 +732,7 @@ mod migrate_impl {
             .context("cannot copy log4rs and kms_db config to meta config dir")?;
 
         // construct new node data
-        for (old_node_dir, node_config) in node_dirs.iter().zip(node_configs) {
+        for (old_node_dir, mut node_config) in node_dirs.iter().zip(node_configs) {
             let new_node_dir = new_chain_data_dir.join(format!(
                 "{}-{}",
                 chain_name,
@@ -748,6 +746,14 @@ mod migrate_impl {
                 format!("cannot create new node dir `{}`", new_node_dir.display())
             })?;
 
+            let key_id = generate_kms_db(
+                &new_node_dir,
+                &node_config.kms.db_key,
+                &node_config.node_key,
+            )
+            .context("cannot generate kms db")?;
+            node_config.controller.key_id.replace(key_id);
+
             let mut node_config_toml = File::create(new_node_dir.join("config.toml"))
                 .context("cannot create node's `config.toml`")?;
             let node_config_content = toml::to_string_pretty(&node_config).unwrap();
@@ -755,8 +761,6 @@ mod migrate_impl {
                 .write_all(node_config_content.as_bytes())
                 .context("cannot write node's `config.toml`")?;
 
-            generate_kms_db(&new_node_dir, node_config.kms.db_key, node_config.node_key)
-                .context("cannot generate kms db")?;
             migrate_log4rs(&old_node_dir, &new_node_dir).with_context(|| {
                 format!(
                     "cannot migrate log4rs yamls and kms db for `{}`",
@@ -777,24 +781,20 @@ mod migrate_impl {
 
     fn generate_kms_db(
         new_dir: impl AsRef<Path>,
-        kms_password: String,
-        node_key: String,
-    ) -> Result<()> {
+        kms_password: &str,
+        node_key: &str,
+    ) -> Result<u64> {
         let db_path = new_dir.as_ref().join("kms.db").to_string_lossy().into();
         let priv_key = {
-            use crate::util::remove_0x;
-            let s = remove_0x(&node_key);
+            let s = crate::util::remove_0x(node_key);
             hex::decode(s).context("invalid `node_key`")?
         };
 
         use crate::traits::Kms;
-        let kms = crate::config::kms_sm::Kms::create_kms_db(db_path, kms_password);
-        assert!(
-            kms.insert_privkey(priv_key) == 0,
-            "The return key_id from `insert_privkey` must be 0"
-        );
+        let kms = crate::config::kms_sm::Kms::create_kms_db(db_path, kms_password.into());
+        let key_id = kms.insert_privkey(priv_key);
 
-        Ok(())
+        Ok(key_id)
     }
 
     // fn migrate_log4rs_and_kms_db<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
