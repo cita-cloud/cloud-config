@@ -98,6 +98,8 @@ mod migrate_impl {
 
     use super::cert::{generate_certs, CertAndKey};
 
+    pub use new::ConsensusType;
+
     mod old {
         use serde::Deserialize;
 
@@ -172,6 +174,29 @@ mod migrate_impl {
             pub node_addr: String,
         }
 
+        #[derive(Serialize)]
+        pub struct ConsensusBftConfig {
+            pub controller_port: u16,
+            pub consensus_port: u16,
+            pub network_port: u16,
+            pub kms_port: u16,
+            pub node_address: String,
+        }
+
+        #[derive(Serialize)]
+        pub enum ConsensusConfig {
+            #[serde(rename = "consensus_raft")]
+            Raft(ConsensusRaftConfig),
+            #[serde(rename = "consensus_bft")]
+            Bft(ConsensusBftConfig),
+        }
+
+        #[derive(Clone, Copy)]
+        pub enum ConsensusType {
+            Raft,
+            Bft,
+        }
+
         #[derive(Serialize, Clone)]
         pub struct GenesisBlock {
             pub prevhash: String,
@@ -231,8 +256,8 @@ mod migrate_impl {
 
             #[serde(rename = "controller")]
             pub controller: ControllerConfig,
-            #[serde(rename = "consensus_raft")]
-            pub consensus: ConsensusRaftConfig,
+            #[serde(flatten)]
+            pub consensus: ConsensusConfig,
             #[serde(rename = "storage_rocksdb")]
             pub storage: StorageRocksDbConfig,
             #[serde(rename = "executor_evm")]
@@ -320,10 +345,13 @@ mod migrate_impl {
     }
 
     impl NodeConfigMigrate {
-        pub fn from_old(data_dir: impl AsRef<Path>) -> Result<new::Config> {
+        pub fn from_old(
+            data_dir: impl AsRef<Path>,
+            consensus_type: new::ConsensusType,
+        ) -> Result<new::Config> {
             let old =
                 Self::extract_from(data_dir).context("cannot extract info from old node config")?;
-            Ok(old.generate_new())
+            Ok(old.generate_new(consensus_type))
         }
 
         fn extract_from(data_dir: impl AsRef<Path>) -> Result<Self> {
@@ -377,7 +405,7 @@ mod migrate_impl {
             Ok(this)
         }
 
-        fn generate_new(&self) -> new::Config {
+        fn generate_new(&self, consensus_type: new::ConsensusType) -> new::Config {
             let genesis_block = new::GenesisBlock {
                 prevhash: self.genesis_block.prevhash.clone(),
                 timestamp: self.genesis_block.timestamp,
@@ -406,11 +434,20 @@ mod migrate_impl {
                 package_limit: new::DEFAULT_PACKAGE_LIMIT,
             };
 
-            let consensus = new::ConsensusRaftConfig {
-                controller_port: self.controller_port,
-                network_port: self.network_port,
-                node_addr: self.node_addr.clone(),
-                grpc_listen_port: self.consensus_port,
+            let consensus = match consensus_type {
+                new::ConsensusType::Raft => new::ConsensusConfig::Raft(new::ConsensusRaftConfig {
+                    controller_port: self.controller_port,
+                    network_port: self.network_port,
+                    node_addr: self.node_addr.clone(),
+                    grpc_listen_port: self.consensus_port,
+                }),
+                new::ConsensusType::Bft => new::ConsensusConfig::Bft(new::ConsensusBftConfig {
+                    controller_port: self.controller_port,
+                    network_port: self.network_port,
+                    consensus_port: self.consensus_port,
+                    kms_port: self.kms_port,
+                    node_address: self.node_addr.clone(),
+                }),
             };
 
             let kms = new::KmsSmConfig {
@@ -583,7 +620,12 @@ mod migrate_impl {
         Ok(ca_cert_and_key)
     }
 
-    pub fn migrate<P, Q>(chain_data_dir: P, new_chain_data_dir: Q, chain_name: &str) -> Result<()>
+    pub fn migrate<P, Q>(
+        chain_data_dir: P,
+        new_chain_data_dir: Q,
+        chain_name: &str,
+        consensus_type: new::ConsensusType,
+    ) -> Result<()>
     where
         P: AsRef<Path>,
         Q: AsRef<Path>,
@@ -626,7 +668,7 @@ mod migrate_impl {
         let mut node_configs = node_dirs
             .iter()
             .map(|d| {
-                NodeConfigMigrate::from_old(d)
+                NodeConfigMigrate::from_old(d, consensus_type)
                     .with_context(|| format!("cannot migrate node config in `{}`", d.display()))
             })
             .collect::<Result<Vec<new::Config>>>()?;
@@ -864,8 +906,11 @@ mod migrate_impl {
 
 use clap::{Clap, ValueHint};
 
+use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
+
+use migrate_impl::{migrate, ConsensusType};
 
 /// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
 #[derive(Clap, Debug, Clone)]
@@ -879,14 +924,22 @@ pub struct MigrateOpts {
     /// Name of the chain
     #[clap(short = 'n', long = "chain-name")]
     pub chain_name: String,
+    /// Consensus type, possible values are [`raft`, `bft`]
+    #[clap(short = 'c', long = "consensus-type", default_value = "raft")]
+    pub consensus_type: String,
 }
 
 pub fn execute_migrate(opts: MigrateOpts) -> Result<()> {
     let chain_dir = opts.chain_dir;
     let out_dir = opts.out_dir;
     let chain_name = opts.chain_name;
+    let consensus_type = match opts.consensus_type.to_ascii_lowercase().as_str() {
+        "raft" => ConsensusType::Raft,
+        "bft" => ConsensusType::Bft,
+        _ => bail!("unkown consensus type, possible values are [`raft`, `bft`]"),
+    };
 
-    migrate_impl::migrate(&chain_dir, &out_dir, &chain_name).context("cannot migrate chain")?;
+    migrate(&chain_dir, &out_dir, &chain_name, consensus_type).context("cannot migrate chain")?;
 
     println!("Finshed. new config write to `{}`", out_dir);
     Ok(())
