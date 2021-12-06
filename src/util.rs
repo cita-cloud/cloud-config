@@ -24,6 +24,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, path};
 use toml::de::Error;
 use toml::Value;
+use crate::constant::KMS_DB;
 
 pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>, name: String) {
     let value = Value::try_from(content).unwrap();
@@ -106,7 +107,7 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
 
 pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
     let kms = crate::config::kms_sm::Kms::create_kms_db(
-        format!("{}/{}", node_dir, "kms.db"),
+        format!("{}/{}", node_dir, KMS_DB),
         kms_password,
     );
     kms.generate_key_pair("create by cmd".to_string())

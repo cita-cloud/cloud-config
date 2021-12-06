@@ -22,3 +22,4 @@ pub(crate) mod network_p2p;
 pub(crate) mod network_tls;
 pub(crate) mod node_config;
 pub(crate) mod storage_rocksdb;
+pub(crate) mod kms_eth;

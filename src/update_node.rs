@@ -17,13 +17,11 @@ use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::kms_sm::KmsSmConfig;
+use crate::config::kms_eth::KmsEthConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
 use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{
-    CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KMS_SM, NETWORK_P2P,
-    NETWORK_TLS, STORAGE_ROCKSDB,
-};
+use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KMS_SM, NETWORK_P2P, NETWORK_TLS, STORAGE_ROCKSDB, KMS_ETH, KMS_DB, KMS, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE, ACCOUNT_DIR, CERTS_DIR, CA_CERT_DIR, KEY_PEM, CERT_PEM, LOG4RS_YAML};
 use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
@@ -56,7 +54,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
 
@@ -67,15 +65,15 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let _ = fs::remove_file(&config_file_name);
 
     // load node_config
-    let file_name = format!("{}/node_config.toml", &node_dir);
+    let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     let node_config = read_node_config(file_name).unwrap();
 
     // move account files info node folder
     let from = format!(
-        "{}/{}/accounts/{}/kms.db",
-        &opts.config_dir, &opts.chain_name, &node_config.account
+        "{}/{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &node_config.account, KMS_DB
     );
-    let to = format!("{}/kms.db", &node_dir);
+    let to = format!("{}/{}", &node_dir, KMS_DB);
     fs::copy(from, to).unwrap();
 
     // network config file
@@ -113,18 +111,18 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         }
         // load cert
         let ca_cert = read_file(format!(
-            "{}/{}/ca_cert/cert.pem",
-            &opts.config_dir, &opts.chain_name
+            "{}/{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CA_CERT_DIR, CERT_PEM
         ))
         .unwrap();
         let cert = read_file(format!(
-            "{}/{}/certs/{}/cert.pem",
-            &opts.config_dir, &opts.chain_name, &opts.domain
+            "{}/{}/{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CERT_PEM
         ))
         .unwrap();
         let key = read_file(format!(
-            "{}/{}/certs/{}/key.pem",
-            &opts.config_dir, &opts.chain_name, &opts.domain
+            "{}/{}/{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, KEY_PEM
         ))
         .unwrap();
 
@@ -213,7 +211,11 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // kms config file
     // if kms_sm
     if find_micro_service(&chain_config, KMS_SM) {
-        let kms_config = KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
+        let kms_config = KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key, KMS_DB.to_string(), format!("{}-{}", KMS, LOG4RS_YAML));
+        kms_config.write(&config_file_name);
+        kms_config.write_log4rs(&node_dir, opts.is_stdout);
+    } else if find_micro_service(&chain_config, KMS_ETH) {
+        let kms_config = KmsEthConfig::new(node_config.grpc_ports.kms_port, node_config.db_key, KMS_DB.to_string(), format!("{}-{}", KMS, LOG4RS_YAML));
         kms_config.write(&config_file_name);
         kms_config.write_log4rs(&node_dir, opts.is_stdout);
     } else {

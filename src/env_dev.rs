@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CONSENSUS_BFT, NETWORK_TLS};
+use crate::constant::{CONSENSUS_BFT, NETWORK_TLS, KMS_ETH, CHAIN_CONFIG_FILE};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -50,6 +50,9 @@ pub struct CreateDevOpts {
     /// is consensus bft
     #[clap(long = "is-bft")]
     is_bft: bool,
+    /// is kms eth
+    #[clap(long = "is-eth")]
+    is_eth: bool,
 }
 
 /// node network ip is 127.0.0.1
@@ -79,6 +82,9 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     }
     if opts.is_bft {
         init_chain_config_opts.consensus_image = CONSENSUS_BFT.to_string();
+    }
+    if opts.is_eth {
+        init_chain_config_opts.kms_image = KMS_ETH.to_string();
     }
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
@@ -205,8 +211,8 @@ pub struct AppendDevOpts {
 /// append a new node into chain
 pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
     let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
@@ -310,8 +316,8 @@ pub struct DeleteDevOpts {
 
 pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
     let peers_count = chain_config.node_network_address_list.len();
@@ -343,3 +349,41 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod dev_test {
+    use super::*;
+    use crate::util::write_to_file;
+    use toml::Value;
+
+    #[test]
+    fn create_test() {
+       execute_create_dev(CreateDevOpts {
+           chain_name: "test-chain".to_string(),
+           config_dir: ".".to_string(),
+           peers_count: 2,
+           log_level: "info".to_string(),
+           is_tls: false,
+           is_bft: false,
+           is_eth: true
+       }).unwrap()
+    }
+
+    #[test]
+    fn append_test() {
+        execute_append_dev(AppendDevOpts {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            log_level: "info".to_string()
+        }).unwrap()
+    }
+
+    #[test]
+    fn delete_test() {
+        execute_delete_dev(DeleteDevOpts {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+        }).unwrap()
+    }
+}
+

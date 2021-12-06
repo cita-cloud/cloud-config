@@ -16,6 +16,7 @@ use crate::error::Error;
 use crate::util::{key_pair, read_chain_config, write_file};
 use clap::Clap;
 use std::fs;
+use crate::constant::{KMS_DB, CHAIN_CONFIG_FILE, ACCOUNT_DIR, KEY_ID};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -36,7 +37,7 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String), Error>
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let _chain_config = read_chain_config(&file_name).unwrap();
 
@@ -44,28 +45,28 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String), Error>
     // Now only support kms_sm
 
     // new account in base folder
-    let base_path = format!("{}/{}/accounts", &opts.config_dir, &opts.chain_name);
+    let base_path = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
     let (key_id, address) = key_pair(base_path, opts.kms_password);
     let address = hex::encode(address);
 
     // gen a folder to store account info
     let path = format!(
-        "{}/{}/accounts/{}",
-        &opts.config_dir, &opts.chain_name, &address
+        "{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &address
     );
     fs::create_dir_all(&path).unwrap();
 
     // move account files info account folder
-    let from = format!("{}/{}/accounts/kms.db", &opts.config_dir, &opts.chain_name);
+    let from = format!("{}/{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, KMS_DB);
     let to = format!(
-        "{}/{}/accounts/{}/kms.db",
-        &opts.config_dir, &opts.chain_name, &address
+        "{}/{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &address, KMS_DB
     );
     fs::rename(from, to).unwrap();
     // store key_id
     let path = format!(
-        "{}/{}/accounts/{}/key_id",
-        &opts.config_dir, &opts.chain_name, &address
+        "{}/{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &address, KEY_ID
     );
     write_file(format!("{}", key_id).as_bytes(), path);
 

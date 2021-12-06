@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{KMS, KMS_SM};
+use crate::constant::{KMS, KMS_ETH};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct KmsSmConfig {
+pub struct KmsEthConfig {
     pub kms_port: u16,
     pub db_key: String,
     pub db_path: String,
     pub log_file: String,
 }
 
-impl KmsSmConfig {
+impl KmsEthConfig {
     pub fn new(kms_port: u16, db_key: String, db_path: String, log_file: String) -> Self {
         Self { kms_port, db_key, db_path, log_file }
     }
 }
-impl TomlWriter for KmsSmConfig {
+impl TomlWriter for KmsEthConfig {
     fn section(&self) -> String {
-        KMS_SM.to_string()
+        KMS_ETH.to_string()
     }
 }
 
@@ -47,7 +47,7 @@ impl crate::traits::Kms for Kms {
     }
 }
 
-impl YmlWriter for KmsSmConfig {
+impl YmlWriter for KmsEthConfig {
     fn service(&self) -> String {
         KMS.to_string()
     }
