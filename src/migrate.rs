@@ -643,7 +643,14 @@ mod migrate_impl {
                 let ent = ent.unwrap();
                 let dir_name = ent.file_name().into_string().unwrap();
                 let prefix = format!("{}-", chain_name);
-                if ent.file_type().unwrap().is_dir() && dir_name.starts_with(&prefix) {
+                if ent.file_type().unwrap().is_dir()
+                    && dir_name.starts_with(&prefix)
+                    && dir_name
+                        .strip_prefix(&prefix)
+                        .unwrap()
+                        .parse::<u64>()
+                        .is_ok()
+                {
                     Some(ent.path())
                 } else {
                     None
@@ -734,17 +741,7 @@ mod migrate_impl {
 
             let admin_config = {
                 let admin_address = first_node.system_config.admin.clone();
-                // let key_id = {
-                //     let admin_key_dir = chain_metadata_dir.join(&admin_address);
-                //     extract_text(admin_key_dir, "key_id")
-                //         .context("cannot load admin `key_id`")?
-                //         .parse()
-                //         .context("invalid admin `key_id`")?
-                // };
-                new::MetaAdminConfig {
-                    admin_address,
-                    // key_id,
-                }
+                new::MetaAdminConfig { admin_address }
             };
 
             new::MetaConfig {
@@ -772,16 +769,8 @@ mod migrate_impl {
             .context("cannot copy log4rs and kms_db config to meta config dir")?;
 
         // construct new node data
-        for (old_node_dir, mut node_config) in node_dirs.iter().zip(node_configs) {
-            let new_node_dir = new_chain_data_dir.join(format!(
-                "{}-{}",
-                chain_name,
-                node_config
-                    .controller
-                    .node_address
-                    .strip_prefix("0x")
-                    .context("invalid node address, must be a hex string with `0x` prefix")?
-            ));
+        for (i, (old_node_dir, mut node_config)) in node_dirs.iter().zip(node_configs).enumerate() {
+            let new_node_dir = new_chain_data_dir.join(format!("{}-{}", chain_name, i));
             fs::create_dir_all(&new_node_dir).with_context(|| {
                 format!("cannot create new node dir `{}`", new_node_dir.display())
             })?;
@@ -803,17 +792,16 @@ mod migrate_impl {
 
             migrate_log4rs(&old_node_dir, &new_node_dir).with_context(|| {
                 format!(
-                    "cannot migrate log4rs yamls and kms db for `{}`",
+                    "cannot migrate log4rs yamls for `{}`",
                     old_node_dir.display()
                 )
             })?;
-            // migrate_chain_data_and_storage_data_and_logs(&old_node_dir, &new_node_dir)
-            //     .with_context(|| {
-            //         format!(
-            //             "cannot migrate {{chain data, storage data, logs}} for `{}`",
-            //             old_node_dir.display()
-            //         )
-            //     })?;
+            migrate_runtime_data(&old_node_dir, &new_node_dir).with_context(|| {
+                format!(
+                    "cannot migrate runtime data for `{}`",
+                    old_node_dir.display()
+                )
+            })?;
         }
 
         Ok(())
@@ -845,6 +833,10 @@ mod migrate_impl {
         let old_dir = old_dir.as_ref();
         let new_dir = new_dir.as_ref();
 
+        if new_dir == old_dir {
+            return Ok(());
+        }
+
         let files = [
             "controller-log4rs.yaml",
             "storage-log4rs.yaml",
@@ -868,15 +860,17 @@ mod migrate_impl {
         Ok(())
     }
 
-    // We don't have access to runtime data
-    #[allow(unused)]
-    fn migrate_chain_data_and_storage_data_and_logs<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
+    fn migrate_runtime_data<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
     where
         P: AsRef<Path>,
         Q: AsRef<Path>,
     {
         let old_dir = old_dir.as_ref();
         let new_dir = new_dir.as_ref();
+
+        if new_dir == old_dir {
+            return Ok(());
+        }
 
         let dirs = ["chain_data", "data", "logs"];
 
@@ -888,14 +882,23 @@ mod migrate_impl {
         for d in dirs {
             let from = old_dir.join(d);
             let to = new_dir.join(d);
-            copy_dir(&from, &to, &opts).with_context(|| {
-                format!(
-                    "cannot copy dir from `{}` to `{}`",
-                    from.display(),
-                    to.display()
-                )
-            })?;
+
+            if from.exists() {
+                copy_dir(&from, &to, &opts).with_context(|| {
+                    format!(
+                        "cannot copy dir from `{}` to `{}`",
+                        from.display(),
+                        to.display()
+                    )
+                })?;
+            } else {
+                println!(
+                    "skip migration for `{}` since it doesn't exist.",
+                    from.display()
+                );
+            }
         }
+
         Ok(())
     }
 }
@@ -910,7 +913,11 @@ use anyhow::Result;
 
 use migrate_impl::{migrate, ConsensusType};
 
-/// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
+/// Migrate CITA-Cloud chain from 6.1.0 to 6.3.0
+/// WARNING:
+/// This is for a very specific use case, other cases may not work!
+/// DO NOT use it if you don't know what is it for.
+/// Back up your data before use it.
 #[derive(Clap, Debug, Clone)]
 pub struct MigrateOpts {
     /// The old chain dir
