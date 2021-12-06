@@ -727,6 +727,7 @@ FLAGS:
     -h, --help       Print help information
         --is-bft     is consensus bft
         --is-tls     is network tls
+        --is-eth     is kms eth
     -V, --version    Print version information
 
 OPTIONS:
