@@ -837,7 +837,6 @@ mod migrate_impl {
         Ok(key_id)
     }
 
-    // fn migrate_log4rs_and_kms_db<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
     fn migrate_log4rs<P, Q>(old_dir: P, new_dir: Q) -> Result<()>
     where
         P: AsRef<Path>,
@@ -851,7 +850,8 @@ mod migrate_impl {
             "storage-log4rs.yaml",
             "executor-log4rs.yaml",
             "kms-log4rs.yaml",
-            // "kms.db",
+            "network-log4rs.yaml",
+            "consensus-log4rs.yaml",
         ];
 
         for f in files {
