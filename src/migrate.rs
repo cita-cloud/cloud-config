@@ -631,9 +631,7 @@ mod migrate_impl {
         Q: AsRef<Path>,
     {
         let chain_data_dir = chain_data_dir.as_ref();
-        let chain_metadata_dir = chain_data_dir.join(chain_name);
         ensure!(chain_data_dir.is_dir(), "chain data folder not found");
-        ensure!(chain_metadata_dir.is_dir(), "metadata folder not found");
 
         let new_chain_data_dir = new_chain_data_dir.as_ref();
         let new_chain_metadata_dir = new_chain_data_dir.join(chain_name);
@@ -924,7 +922,7 @@ pub struct MigrateOpts {
     /// Name of the chain
     #[clap(short = 'n', long = "chain-name")]
     pub chain_name: String,
-    /// Consensus type, possible values are [`raft`, `bft`]
+    /// Consensus type, only `raft` or `bft` is supported
     #[clap(short = 'c', long = "consensus-type", default_value = "raft")]
     pub consensus_type: String,
 }
