@@ -106,11 +106,21 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
 }
 
 pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
-    let kms = crate::config::kms_sm::Kms::create_kms_db(
-        format!("{}/{}", node_dir, KMS_DB),
-        kms_password,
-    );
-    kms.generate_key_pair("create by cmd".to_string())
+    key_pair_option(node_dir, kms_password, false)
+}
+
+pub fn key_pair_option(node_dir: String, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
+    if is_eth {
+        crate::config::kms_eth::KmsEth::create_kms_db(
+            format!("{}/{}", node_dir, KMS_DB),
+            kms_password,
+        ).generate_key_pair("create by cmd".to_string())
+    } else {
+        crate::config::kms_sm::KmsSm::create_kms_db(
+            format!("{}/{}", node_dir, KMS_DB),
+            kms_password,
+        ).generate_key_pair("create by cmd".to_string())
+    }
 }
 
 pub fn ca_cert() -> (Certificate, String, String) {

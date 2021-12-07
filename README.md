@@ -741,6 +741,7 @@ OPTIONS:
 说明：
 1. `--is-tls`标识网络微服务是否选择了`network_tls`。
 2. `--is-bft`标识共识微服务是否选择了`consensus_bft`。
+3. `--is-eth`标识kms微服务是否选择了`kms_eth`。
 
 ```
 $ cloud-config create-dev  

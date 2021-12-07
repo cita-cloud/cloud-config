@@ -20,13 +20,11 @@ use serde::{Deserialize, Serialize};
 pub struct KmsEthConfig {
     pub kms_port: u16,
     pub db_key: String,
-    pub db_path: String,
-    pub log_file: String,
 }
 
 impl KmsEthConfig {
-    pub fn new(kms_port: u16, db_key: String, db_path: String, log_file: String) -> Self {
-        Self { kms_port, db_key, db_path, log_file }
+    pub fn new(kms_port: u16, db_key: String) -> Self {
+        Self { kms_port, db_key }
     }
 }
 impl TomlWriter for KmsEthConfig {
@@ -35,16 +33,17 @@ impl TomlWriter for KmsEthConfig {
     }
 }
 
-pub struct Kms(kms_sm::kms::Kms);
+pub struct KmsEth(kms_eth::kms::Kms);
 
-impl crate::traits::Kms for Kms {
+impl crate::traits::Kms for KmsEth {
     fn create_kms_db(db_path: String, password: String) -> Self {
-        Kms(kms_sm::kms::Kms::new(db_path, password))
+        KmsEth(kms_eth::kms::Kms::new(db_path, password))
     }
 
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>) {
         self.0.generate_key_pair(description).unwrap()
     }
+
 }
 
 impl YmlWriter for KmsEthConfig {

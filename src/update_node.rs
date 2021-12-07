@@ -211,11 +211,11 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // kms config file
     // if kms_sm
     if find_micro_service(&chain_config, KMS_SM) {
-        let kms_config = KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key, KMS_DB.to_string(), format!("{}-{}", KMS, LOG4RS_YAML));
+        let kms_config = KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
         kms_config.write(&config_file_name);
         kms_config.write_log4rs(&node_dir, opts.is_stdout);
     } else if find_micro_service(&chain_config, KMS_ETH) {
-        let kms_config = KmsEthConfig::new(node_config.grpc_ports.kms_port, node_config.db_key, KMS_DB.to_string(), format!("{}-{}", KMS, LOG4RS_YAML));
+        let kms_config = KmsEthConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
         kms_config.write(&config_file_name);
         kms_config.write_log4rs(&node_dir, opts.is_stdout);
     } else {

@@ -13,10 +13,11 @@
 // limitations under the License.
 
 use crate::error::Error;
-use crate::util::{key_pair, read_chain_config, write_file};
+use crate::util::{key_pair, read_chain_config, write_file, find_micro_service, key_pair_option};
 use clap::Clap;
 use std::fs;
-use crate::constant::{KMS_DB, CHAIN_CONFIG_FILE, ACCOUNT_DIR, KEY_ID};
+use crate::constant::{KMS_DB, CHAIN_CONFIG_FILE, ACCOUNT_DIR, KEY_ID, KMS_ETH};
+use crate::config::kms_sm::KmsSm;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -41,12 +42,12 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String), Error>
     );
     let _chain_config = read_chain_config(&file_name).unwrap();
 
-    // TODO : check kms micro service name and gen account
     // Now only support kms_sm
+    let is_eth = find_micro_service(&_chain_config, KMS_ETH);
 
     // new account in base folder
     let base_path = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
-    let (key_id, address) = key_pair(base_path, opts.kms_password);
+    let (key_id, address) = key_pair_option(base_path, opts.kms_password, is_eth);
     let address = hex::encode(address);
 
     // gen a folder to store account info
