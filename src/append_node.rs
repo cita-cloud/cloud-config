@@ -16,6 +16,7 @@ use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
 use clap::Clap;
+use crate::constant::CHAIN_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -35,8 +36,8 @@ pub struct AppendNodeOpts {
 pub fn execute_append_node(opts: AppendNodeOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 

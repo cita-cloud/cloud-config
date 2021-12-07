@@ -14,6 +14,7 @@ log = "0.4"
 serde = "1.0"
 serde_derive = "1.0"
 kms_sm = { git = "https://github.com/cita-cloud/kms_sm", branch = "v6.3.0", package = "kms" }
+kms_eth = { git = "https://github.com/cita-cloud/kms_eth", branch = "v6.3.0", package = "kms" }
 toml = "0.5"
 hex = "0.4"
 regex = "1"
