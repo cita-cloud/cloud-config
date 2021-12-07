@@ -105,9 +105,6 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
     libsm::sm3::hash::Sm3Hash::new(input).get_hash()
 }
 
-pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
-    key_pair_option(node_dir, kms_password, false)
-}
 
 pub fn key_pair_option(node_dir: String, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
     if is_eth {

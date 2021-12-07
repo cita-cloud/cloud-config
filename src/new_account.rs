@@ -13,11 +13,10 @@
 // limitations under the License.
 
 use crate::error::Error;
-use crate::util::{key_pair, read_chain_config, write_file, find_micro_service, key_pair_option};
+use crate::util::{read_chain_config, write_file, find_micro_service, key_pair_option};
 use clap::Clap;
 use std::fs;
 use crate::constant::{KMS_DB, CHAIN_CONFIG_FILE, ACCOUNT_DIR, KEY_ID, KMS_ETH};
-use crate::config::kms_sm::KmsSm;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]

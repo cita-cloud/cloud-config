@@ -21,7 +21,7 @@ use crate::config::kms_eth::KmsEthConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
 use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KMS_SM, NETWORK_P2P, NETWORK_TLS, STORAGE_ROCKSDB, KMS_ETH, KMS_DB, KMS, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE, ACCOUNT_DIR, CERTS_DIR, CA_CERT_DIR, KEY_PEM, CERT_PEM, LOG4RS_YAML};
+use crate::constant::{CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KMS_SM, NETWORK_P2P, NETWORK_TLS, STORAGE_ROCKSDB, KMS_ETH, KMS_DB, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE, ACCOUNT_DIR, CERTS_DIR, CA_CERT_DIR, KEY_PEM, CERT_PEM};
 use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
