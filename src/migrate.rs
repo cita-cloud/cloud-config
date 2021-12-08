@@ -766,7 +766,7 @@ mod migrate_impl {
 
         let sample_node = node_dirs.first().unwrap();
         migrate_log4rs(sample_node, new_chain_metadata_dir)
-            .context("cannot copy log4rs and kms_db config to meta config dir")?;
+            .context("cannot copy log4rs to meta config dir")?;
 
         // construct new node data
         for (i, (old_node_dir, mut node_config)) in node_dirs.iter().zip(node_configs).enumerate() {
@@ -807,6 +807,7 @@ mod migrate_impl {
         Ok(())
     }
 
+    // return key_id of the account
     fn generate_kms_db(
         new_dir: impl AsRef<Path>,
         kms_password: &str,
