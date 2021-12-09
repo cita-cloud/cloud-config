@@ -36,10 +36,10 @@ impl TomlWriter for KmsSmConfig {
 pub struct Kms(kms_sm::kms::Kms);
 
 impl Kms {
-    pub fn insert_privkey(&self, priv_key: Vec<u8>) -> u64 {
-        // will return account_id
+    // return (account_id, address)
+    pub fn import_privkey(&self, privkey: Vec<u8>) -> (u64, Vec<u8>) {
         self.0
-            .insert_privkey(priv_key, "node_key from migration".into())
+            .import_privkey(privkey, "node_key from migration".into())
             .unwrap()
     }
 }
