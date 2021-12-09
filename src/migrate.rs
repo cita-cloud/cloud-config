@@ -38,6 +38,7 @@ use crate::{
     set_validators::{execute_set_validators, SetValidatorsOpts},
     sign_csr::{execute_sign_csr, SignCSROpts},
     update_node::{execute_update_node, UpdateNodeOpts},
+    util::remove_0x,
 };
 
 const DEFAULT_PACKAGE_LIMIT: u64 = 30000;
@@ -335,15 +336,19 @@ fn generate_new_node_config(
         network_config,
         ..
     } = old_config;
+    let node_addr = remove_0x(&node_addr).to_string();
 
-    let (key_id, addr) = execute_import_account(ImportAccountOpts {
+    let (key_id, account_addr) = execute_import_account(ImportAccountOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
         kms_password: kms_password.clone(),
         privkey: node_key,
     })
     .context("cannot import account")?;
-    assert_eq!(node_addr, addr, "node address differs from account address");
+    assert_eq!(
+        node_addr, account_addr,
+        "node address differs from account address"
+    );
 
     execute_create_csr(CreateCSROpts {
         chain_name: chain_name.into(),
