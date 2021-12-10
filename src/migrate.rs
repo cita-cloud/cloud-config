@@ -42,6 +42,7 @@ use crate::{
 };
 
 const DEFAULT_PACKAGE_LIMIT: u64 = 30000;
+const DEFAULT_BLOCK_LIMIT: u64 = 100;
 
 mod old {
     use super::*;
@@ -448,7 +449,7 @@ where
         chain_id,
         block_interval,
         version,
-        block_limit: DEFAULT_PACKAGE_LIMIT,
+        block_limit: DEFAULT_BLOCK_LIMIT,
 
         controller_image: "controller".into(),
         controller_tag: "6.3.0".into(),
