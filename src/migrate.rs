@@ -23,7 +23,6 @@ use std::path::PathBuf;
 
 use serde::de::DeserializeOwned;
 
-use std::collections::HashSet;
 use std::fs;
 
 use crate::{
@@ -106,7 +105,6 @@ mod old {
         pub system_config: InitSysConfig,
 
         // kms
-        pub kms_password: String,
         pub node_key: String,
 
         // network
@@ -133,11 +131,6 @@ mod old {
             let genesis_block: Genesis = extract_toml(&data_dir, "genesis.toml")?;
 
             let node_key = extract_text(&data_dir, "node_key")?;
-            let kms_password = {
-                use rand::Rng;
-                let random: [u8; 32] = rand::thread_rng().gen();
-                hex::encode(&random)
-            };
 
             let this = Self {
                 controller_port,
@@ -153,7 +146,6 @@ mod old {
                 system_config,
 
                 // kms
-                kms_password,
                 node_key,
 
                 // network
@@ -186,86 +178,6 @@ mod old {
             .with_context(|| format!("cannot read data from {}", path.display()))?;
         Ok(buf)
     }
-}
-
-#[derive(Clone, Copy)]
-pub enum ConsensusType {
-    Raft,
-    Bft,
-}
-
-/// Migrate CITA-Cloud chain from 6.1.0 to 6.3.0
-/// WARNING:
-/// This is for a very specific use case, other cases may not work!
-/// DO NOT use it if you don't know what is it for.
-/// Back up your data before use it.
-#[derive(Clap, Debug, Clone)]
-pub struct MigrateOpts {
-    /// The old chain dir
-    #[clap(short = 'd', long = "chain-dir", value_hint = ValueHint::DirPath)]
-    pub chain_dir: String,
-    /// The output dir for the upgraded chain
-    #[clap(short = 'o', long = "out-dir", value_hint = ValueHint::DirPath)]
-    pub out_dir: String,
-    /// Name of the chain
-    #[clap(short = 'n', long = "chain-name")]
-    pub chain_name: String,
-    /// Consensus type, only `raft` or `bft` is supported
-    #[clap(short = 'c', long = "consensus-type", default_value = "raft")]
-    pub consensus_type: String,
-}
-
-pub fn execute_migrate(opts: MigrateOpts) -> Result<()> {
-    let chain_dir = opts.chain_dir;
-    let out_dir = opts.out_dir;
-    let chain_name = opts.chain_name;
-    let consensus_type = match opts.consensus_type.to_ascii_lowercase().as_str() {
-        "raft" => ConsensusType::Raft,
-        "bft" => ConsensusType::Bft,
-        _ => bail!("unkown consensus type, possible values are [`raft`, `bft`]"),
-    };
-
-    migrate(&chain_dir, &out_dir, &chain_name, consensus_type).context("cannot migrate chain")?;
-
-    println!("Finshed. new config write to `{}`", out_dir);
-    Ok(())
-}
-
-fn build_node_list(node_configs: &[old::NodeConfig]) -> Result<String> {
-    // Build unordered full node list.
-    let peer_views: Vec<HashSet<String>> = node_configs
-        .iter()
-        .map(|c| {
-            c.network_config
-                .peers
-                .iter()
-                .map(|p| format!("{}:{}", p.ip, p.port))
-                .collect()
-        })
-        .collect();
-
-    let unordered_full_peer_view: HashSet<String> =
-        peer_views.iter().fold(HashSet::new(), |acc, x| &acc | x);
-
-    let node_list = peer_views
-        .iter()
-        .map(|v| {
-            unordered_full_peer_view
-                .difference(v)
-                .next()
-                .cloned()
-                .context("cannot build ordered node list, please check old chain's network peers")
-        })
-        .collect::<Result<Vec<String>>>()?;
-
-    let node_list = node_list
-        .into_iter()
-        .zip(node_configs)
-        .map(|(n, c)| format!("{}:{}", n, c.node_addr))
-        .collect::<Vec<_>>()
-        .join(",");
-
-    Ok(node_list)
 }
 
 pub fn extract_old_node_configs(
@@ -320,6 +232,8 @@ pub fn extract_old_node_configs(
 fn generate_new_node_config(
     chain_name: &str,
     config_dir: &str,
+    domain: &str,
+    kms_password: &str,
     old_config: old::NodeConfig,
 ) -> Result<()> {
     let old::NodeConfig {
@@ -332,7 +246,6 @@ fn generate_new_node_config(
 
         node_addr,
         node_key,
-        kms_password,
 
         network_config,
         ..
@@ -342,7 +255,7 @@ fn generate_new_node_config(
     let (key_id, account_addr) = execute_import_account(ImportAccountOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
-        kms_password: kms_password.clone(),
+        kms_password: kms_password.into(),
         privkey: node_key,
     })
     .context("cannot import account")?;
@@ -354,13 +267,13 @@ fn generate_new_node_config(
     execute_create_csr(CreateCSROpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
-        domain: node_addr.clone(),
+        domain: domain.into(),
     })
     .unwrap();
     execute_sign_csr(SignCSROpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
-        domain: node_addr.clone(),
+        domain: domain.into(),
     })
     .unwrap();
 
@@ -378,10 +291,10 @@ fn generate_new_node_config(
         network_listen_port: network_config.port,
 
         key_id,
-        kms_password,
-        account: node_addr.clone(),
+        kms_password: kms_password.into(),
+        account: node_addr,
 
-        domain: node_addr.clone(),
+        domain: domain.into(),
         package_limit: DEFAULT_PACKAGE_LIMIT,
 
         log_level: "info".into(),
@@ -392,7 +305,7 @@ fn generate_new_node_config(
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
         config_name: "config.toml".into(),
-        domain: node_addr,
+        domain: domain.into(),
         is_stdout: false,
     })
     .unwrap();
@@ -405,6 +318,8 @@ pub fn migrate<P, Q>(
     new_chain_data_dir: Q,
     chain_name: &str,
     consensus_type: ConsensusType,
+    kms_password_list: Vec<String>,
+    node_list: Vec<(String, u16)>,
 ) -> Result<()>
 where
     P: AsRef<Path>,
@@ -413,6 +328,14 @@ where
     let node_configs = extract_old_node_configs(chain_data_dir.as_ref(), chain_name)
         .context("cannot extract node configs")?;
     ensure!(!node_configs.is_empty(), "No node config found",);
+    ensure!(
+        node_configs.len() == node_list.len(),
+        "The length of node configs and node list mismatched"
+    );
+    ensure!(
+        node_configs.len() == kms_password_list.len(),
+        "The length of node configs and kms password list mismatched"
+    );
 
     let config_dir = &new_chain_data_dir.as_ref().to_string_lossy().to_string();
 
@@ -486,7 +409,12 @@ where
     })
     .unwrap();
 
-    let node_list = build_node_list(&node_configs).context("cannot extract node list")?;
+    let node_list = node_list
+        .into_iter()
+        .zip(0..node_configs.len())
+        .map(|((ip, port), idx)| format!("{}:{}:{}", ip, port, idx))
+        .collect::<Vec<String>>()
+        .join(",");
     execute_set_nodelist(SetNodeListOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
@@ -500,10 +428,85 @@ where
     })
     .unwrap();
 
-    for old_config in node_configs {
-        generate_new_node_config(chain_name, config_dir, old_config)
+    for (i, (old_config, kms_password)) in
+        node_configs.into_iter().zip(kms_password_list).enumerate()
+    {
+        let domain = i.to_string();
+        generate_new_node_config(chain_name, config_dir, &domain, &kms_password, old_config)
             .context("cannot generate new node config")?;
     }
 
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+pub enum ConsensusType {
+    Raft,
+    Bft,
+}
+
+/// Migrate CITA-Cloud chain from 6.1.0 to 6.3.0
+/// WARNING:
+/// This is for a very specific use case, other cases may not work!
+/// DO NOT use it if you don't know what is it for.
+/// Back up your data before use it.
+#[derive(Clap, Debug, Clone)]
+pub struct MigrateOpts {
+    /// The old chain dir
+    #[clap(short = 'd', long = "chain-dir", value_hint = ValueHint::DirPath)]
+    pub chain_dir: String,
+    /// The output dir for the upgraded chain
+    #[clap(short = 'o', long = "out-dir", value_hint = ValueHint::DirPath)]
+    pub out_dir: String,
+    /// Name of the chain
+    #[clap(short = 'n', long = "chain-name")]
+    pub chain_name: String,
+    /// Consensus type, only `raft` or `bft` is supported
+    #[clap(short = 'c', long = "consensus-type", default_value = "raft")]
+    pub consensus_type: String,
+
+    #[clap(short = 'k', long = "kms-password-list")]
+    pub kms_password_list: String,
+    /// Node `ip:port` list
+    #[clap(short = 'l', long = "nodelist")]
+    pub node_list: String,
+}
+
+pub fn execute_migrate(opts: MigrateOpts) -> Result<()> {
+    let chain_dir = opts.chain_dir;
+    let out_dir = opts.out_dir;
+    let chain_name = opts.chain_name;
+    let consensus_type = match opts.consensus_type.to_ascii_lowercase().as_str() {
+        "raft" => ConsensusType::Raft,
+        "bft" => ConsensusType::Bft,
+        _ => bail!("unkown consensus type, possible values are [`raft`, `bft`]"),
+    };
+
+    let kms_password_list: Vec<String> = opts
+        .kms_password_list
+        .split(',')
+        .map(String::from)
+        .collect();
+    let node_list: Vec<(String, u16)> = opts
+        .node_list
+        .split(',')
+        .map(|s| {
+            let (ip, port) = s.split_once(":").context("cannot parse ip and port")?;
+            Ok((ip.to_string(), port.parse()?))
+        })
+        .collect::<Result<Vec<(String, u16)>>>()
+        .context("cannot parse node list")?;
+
+    migrate(
+        &chain_dir,
+        &out_dir,
+        &chain_name,
+        consensus_type,
+        kms_password_list,
+        node_list,
+    )
+    .context("cannot migrate chain")?;
+
+    println!("Finshed. new config write to `{}`", out_dir);
     Ok(())
 }
