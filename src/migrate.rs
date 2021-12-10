@@ -347,6 +347,13 @@ where
         block_interval,
         validators,
     } = sample.system_config.clone();
+    let admin = remove_0x(&admin).to_string();
+    let chain_id = remove_0x(&chain_id).to_string();
+    let validators = validators
+        .iter()
+        .map(|v| remove_0x(v))
+        .collect::<Vec<&str>>()
+        .join(",");
 
     let old::Genesis {
         timestamp,
@@ -401,7 +408,6 @@ where
     })
     .unwrap();
 
-    let validators = validators.join(",");
     execute_set_validators(SetValidatorsOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
@@ -465,9 +471,10 @@ pub struct MigrateOpts {
     #[clap(short = 'c', long = "consensus-type", default_value = "raft")]
     pub consensus_type: String,
 
+    /// KMS password list, e.g. "node1password,node2password"
     #[clap(short = 'k', long = "kms-password-list")]
     pub kms_password_list: String,
-    /// Node `ip:port` list
+    /// Node list, e.g. "127.0.0.1:40000,citacloud.org:40001"
     #[clap(short = 'l', long = "nodelist")]
     pub node_list: String,
 }
