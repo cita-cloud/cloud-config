@@ -28,6 +28,7 @@ use crate::env_k8s::{
     execute_append_k8s, execute_create_k8s, execute_delete_k8s, AppendK8sOpts, CreateK8sOpts,
     DeleteK8sOpts,
 };
+use crate::import_account::{execute_import_account, ImportAccountOpts};
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
@@ -50,6 +51,7 @@ mod delete_node;
 mod env_dev;
 mod env_k8s;
 mod error;
+mod import_account;
 mod init_chain;
 mod init_chain_config;
 mod init_node;
@@ -109,6 +111,9 @@ enum SubCommand {
     /// new account
     #[clap(name = "new-account")]
     NewAccount(NewAccountOpts),
+    /// import account
+    #[clap(name = "import-account")]
+    ImportAccount(ImportAccountOpts),
     /// create CA
     #[clap(name = "create-ca")]
     CreateCA(CreateCAOpts),
@@ -159,6 +164,7 @@ fn main() {
         SubCommand::UpdateNode(opts) => execute_update_node(opts).unwrap(),
         SubCommand::DeleteChain(opts) => execute_delete_chain(opts).unwrap(),
         SubCommand::NewAccount(opts) => execute_new_account(opts).map(|_| ()).unwrap(),
+        SubCommand::ImportAccount(opts) => execute_import_account(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCA(opts) => execute_create_ca(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCSR(opts) => execute_create_csr(opts).map(|_| ()).unwrap(),
         SubCommand::SignCSR(opts) => execute_sign_csr(opts).map(|_| ()).unwrap(),
