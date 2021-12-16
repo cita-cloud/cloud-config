@@ -16,6 +16,7 @@ use crate::error::Error;
 use crate::util::{create_csr, write_file};
 use clap::Clap;
 use std::fs;
+use crate::constant::{CERTS_DIR, KEY_PEM, CSR_PEM};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -39,15 +40,15 @@ pub fn execute_create_csr(opts: CreateCSROpts) -> Result<(String, String), Error
 
     // gen a folder to store cert info
     let path = format!(
-        "{}/{}/certs/{}",
-        &opts.config_dir, &opts.chain_name, &opts.domain
+        "{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain
     );
     fs::create_dir_all(&path).unwrap();
 
-    let csr_pem_path = format!("{}/csr.pem", &path);
+    let csr_pem_path = format!("{}/{}", &path, CSR_PEM);
     write_file(csr_pem.as_bytes(), csr_pem_path);
 
-    let key_pem_path = format!("{}/key.pem", &path);
+    let key_pem_path = format!("{}/{}", &path, KEY_PEM);
     write_file(key_pem.as_bytes(), key_pem_path);
 
     Ok((csr_pem, key_pem))

@@ -16,6 +16,7 @@ use crate::error::Error;
 use crate::util::{read_chain_config, read_node_config, write_toml};
 use clap::Clap;
 use std::fs;
+use crate::constant::{CHAIN_CONFIG_FILE, NODE_CONFIG_FILE, ACCOUNT_DIR, CERTS_DIR};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -37,8 +38,8 @@ pub struct DeleteNodeOpts {
 pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 
@@ -63,7 +64,7 @@ pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
     let node_dir = format!("{}/{}-{}", config_dir, chain_name, domain);
 
     // load node_config
-    let file_name = format!("{}/node_config.toml", &node_dir);
+    let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     let node_config = read_node_config(file_name).unwrap();
 
     // delete node folder
@@ -71,13 +72,13 @@ pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
 
     // delete account folder
     let account_path = format!(
-        "{}/{}/accounts/{}",
-        config_dir, chain_name, &node_config.account,
+        "{}/{}/{}/{}",
+        config_dir, chain_name, ACCOUNT_DIR, &node_config.account,
     );
     fs::remove_dir_all(&account_path).unwrap();
 
     // delete cert folder
     // ignore error because maybe cert folder doesn't exist
-    let cert_path = format!("{}/{}/certs/{}", config_dir, chain_name, domain);
+    let cert_path = format!("{}/{}/{}/{}", config_dir, chain_name, CERTS_DIR, domain);
     let _ = fs::remove_dir_all(&cert_path);
 }

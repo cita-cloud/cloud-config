@@ -17,6 +17,7 @@ use crate::util::{touch_file, write_file};
 use clap::Clap;
 use std::fs;
 use std::path::Path;
+use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, KEY_PEM};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -45,23 +46,23 @@ pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
         return Err(Error::DupChainName);
     }
 
-    let path = format!("{}/{}", &chain_path, "accounts");
+    let path = format!("{}/{}", &chain_path, ACCOUNT_DIR);
     fs::create_dir_all(&path).unwrap();
-    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, "accounts");
+    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, ACCOUNT_DIR);
     touch_file(gitkeep_path);
 
-    let path = format!("{}/{}", &chain_path, "certs");
+    let path = format!("{}/{}", &chain_path, CERTS_DIR);
     fs::create_dir_all(&path).unwrap();
-    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, "certs");
+    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, CERTS_DIR);
     touch_file(gitkeep_path);
 
-    let path = format!("{}/{}", &chain_path, "ca_cert");
+    let path = format!("{}/{}", &chain_path, CA_CERT_DIR);
     fs::create_dir_all(&path).unwrap();
-    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, "ca_cert");
+    let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, CA_CERT_DIR);
     touch_file(gitkeep_path);
 
     let git_ignore_path = format!("{}/.gitignore", &chain_path);
-    let git_ignore_content = "accounts/*/\nca_cert/key.pem\ncerts/*/key.pem\n";
+    let git_ignore_content = format!("{}/*/\n{}/{}\n{}/*/{}\n", ACCOUNT_DIR, CA_CERT_DIR, KEY_PEM, CERTS_DIR, KEY_PEM) ;
     write_file(git_ignore_content.as_bytes(), git_ignore_path);
     Ok(())
 }

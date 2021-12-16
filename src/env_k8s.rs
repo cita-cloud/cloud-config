@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
-use crate::constant::NETWORK_TLS;
+use crate::constant::{NETWORK_TLS, CHAIN_CONFIG_FILE};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -295,8 +295,8 @@ pub struct AppendK8sOpts {
 /// append a new node into chain
 pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
     let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
@@ -420,8 +420,8 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
 
     // load chain config after delete node
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
 
