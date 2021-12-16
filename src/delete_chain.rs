@@ -16,6 +16,7 @@ use crate::error::Error;
 use crate::util::read_chain_config;
 use clap::Clap;
 use std::fs;
+use crate::constant::CHAIN_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -36,7 +37,7 @@ pub fn execute_delete_chain(opts: DeleteChainOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, "chain_config.toml"
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
 

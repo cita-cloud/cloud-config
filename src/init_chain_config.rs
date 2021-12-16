@@ -17,6 +17,7 @@ use crate::config::controller::{GenesisBlockBuilder, SystemConfigBuilder};
 use crate::error::Error;
 use crate::util::{sm3_hash, unix_now, write_toml};
 use clap::Clap;
+use crate::constant::CHAIN_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -159,8 +160,8 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .build();
 
     let file_name = format!(
-        "{}/{}/chain_config.toml",
-        &opts.config_dir, &opts.chain_name
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     write_toml(&chain_config, file_name);
 

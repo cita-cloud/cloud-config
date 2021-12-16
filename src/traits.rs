@@ -22,6 +22,7 @@ use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
+use crate::constant::LOG4RS_YAML;
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
@@ -48,7 +49,7 @@ pub trait YmlWriter {
     {
         let service = self.service();
         fs::write(
-            format!("{}/{}-log4rs.yaml", path, service),
+            format!("{}/{}-{}", path, service, LOG4RS_YAML),
             format!(
                 r#"# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds

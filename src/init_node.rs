@@ -17,6 +17,7 @@ use crate::error::Error;
 use crate::util::write_toml;
 use clap::Clap;
 use std::fs;
+use crate::constant::NODE_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -91,7 +92,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
     fs::create_dir_all(&node_dir).unwrap();
 
-    let file_name = format!("{}/node_config.toml", &node_dir);
+    let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     write_toml(&node_config, file_name);
 
     Ok(())

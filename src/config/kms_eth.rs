@@ -11,53 +11,43 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use crate::constant::{KMS, KMS_SM};
+
+use crate::constant::{KMS, KMS_ETH};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct KmsSmConfig {
+pub struct KmsEthConfig {
     pub kms_port: u16,
     pub db_key: String,
 }
 
-impl KmsSmConfig {
+impl KmsEthConfig {
     pub fn new(kms_port: u16, db_key: String) -> Self {
         Self { kms_port, db_key }
     }
 }
-
-impl TomlWriter for KmsSmConfig {
+impl TomlWriter for KmsEthConfig {
     fn section(&self) -> String {
-        KMS_SM.to_string()
+        KMS_ETH.to_string()
     }
 }
 
-impl YmlWriter for KmsSmConfig {
-    fn service(&self) -> String {
-        KMS.to_string()
-    }
-}
+pub struct KmsEth(kms_eth::kms::Kms);
 
-
-pub struct KmsSm(kms_sm::kms::Kms);
-
-impl KmsSm {
-    // return (account_id, address)
-    pub fn import_privkey(&self, privkey: Vec<u8>) -> (u64, Vec<u8>) {
-        self.0
-            .import_privkey(privkey, "node_key from migration".into())
-            .unwrap()
-    }
-}
-
-impl crate::traits::Kms for KmsSm {
+impl crate::traits::Kms for KmsEth {
     fn create_kms_db(db_path: String, password: String) -> Self {
-        KmsSm(kms_sm::kms::Kms::new(db_path, password))
+        KmsEth(kms_eth::kms::Kms::new(db_path, password))
     }
 
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>) {
         self.0.generate_key_pair(description).unwrap()
     }
 
+}
+
+impl YmlWriter for KmsEthConfig {
+    fn service(&self) -> String {
+        KMS.to_string()
+    }
 }

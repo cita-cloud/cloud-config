@@ -15,6 +15,7 @@
 use crate::error::Error;
 use crate::util::{read_file, restore_ca_cert, sign_csr, write_file};
 use clap::Clap;
+use crate::constant::{CA_CERT_DIR, CERTS_DIR, KEY_PEM, CERT_PEM, CSR_PEM};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -33,17 +34,17 @@ pub struct SignCSROpts {
 /// execute sign cert
 pub fn execute_sign_csr(opts: SignCSROpts) -> Result<String, Error> {
     // load ca cert
-    let ca_cert_path = format!("{}/{}/ca_cert/cert.pem", &opts.config_dir, &opts.chain_name);
+    let ca_cert_path = format!("{}/{}/{}/{}", &opts.config_dir, &opts.chain_name, CA_CERT_DIR, CERT_PEM);
     let ca_cert_pem = read_file(ca_cert_path).unwrap();
 
-    let ca_key_path = format!("{}/{}/ca_cert/key.pem", &opts.config_dir, &opts.chain_name);
+    let ca_key_path = format!("{}/{}/{}/{}", &opts.config_dir, &opts.chain_name, CA_CERT_DIR, KEY_PEM);
     let ca_key_pem = read_file(ca_key_path).unwrap();
     let ca = restore_ca_cert(&ca_cert_pem, &ca_key_pem);
 
     // load csr
     let csr_pem_path = format!(
-        "{}/{}/certs/{}/csr.pem",
-        &opts.config_dir, &opts.chain_name, &opts.domain
+        "{}/{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CSR_PEM
     );
     let csr_pem = read_file(csr_pem_path).unwrap();
 
@@ -51,8 +52,8 @@ pub fn execute_sign_csr(opts: SignCSROpts) -> Result<String, Error> {
     let cert_pem = sign_csr(&csr_pem, &ca);
 
     let cert_pem_path = format!(
-        "{}/{}/certs/{}/cert.pem",
-        &opts.config_dir, &opts.chain_name, &opts.domain
+        "{}/{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CERT_PEM
     );
     write_file(cert_pem.as_bytes(), cert_pem_path);
 
