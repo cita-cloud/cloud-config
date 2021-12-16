@@ -60,7 +60,7 @@ fn import_account(
 
     use crate::traits::Kms;
     let db_path = account_dir.join("kms.db").to_string_lossy().into();
-    let kms = crate::config::kms_sm::Kms::create_kms_db(db_path, kms_password.into());
+    let kms = crate::config::kms_sm::KmsSm::create_kms_db(db_path, kms_password.into());
     let (key_id, addr) = kms.import_privkey(privkey);
 
     let key_id_path = account_dir.join("key_id");

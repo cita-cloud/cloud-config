@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CONSENSUS_BFT, NETWORK_TLS, KMS_ETH, CHAIN_CONFIG_FILE};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_BFT, KMS_ETH, NETWORK_TLS};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -358,15 +358,16 @@ mod dev_test {
 
     #[test]
     fn create_test() {
-       execute_create_dev(CreateDevOpts {
-           chain_name: "test-chain".to_string(),
-           config_dir: ".".to_string(),
-           peers_count: 2,
-           log_level: "info".to_string(),
-           is_tls: false,
-           is_bft: false,
-           is_eth: true
-       }).unwrap()
+        execute_create_dev(CreateDevOpts {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            peers_count: 2,
+            log_level: "info".to_string(),
+            is_tls: false,
+            is_bft: false,
+            is_eth: true,
+        })
+        .unwrap()
     }
 
     #[test]
@@ -374,8 +375,9 @@ mod dev_test {
         execute_append_dev(AppendDevOpts {
             chain_name: "test-chain".to_string(),
             config_dir: ".".to_string(),
-            log_level: "info".to_string()
-        }).unwrap()
+            log_level: "info".to_string(),
+        })
+        .unwrap()
     }
 
     #[test]
@@ -383,7 +385,7 @@ mod dev_test {
         execute_delete_dev(DeleteDevOpts {
             chain_name: "test-chain".to_string(),
             config_dir: ".".to_string(),
-        }).unwrap()
+        })
+        .unwrap()
     }
 }
-

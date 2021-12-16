@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::constant::{CERTS_DIR, CSR_PEM, KEY_PEM};
 use crate::error::Error;
 use crate::util::{create_csr, write_file};
 use clap::Clap;
 use std::fs;
-use crate::constant::{CERTS_DIR, KEY_PEM, CSR_PEM};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]

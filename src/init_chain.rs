@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, KEY_PEM};
 use crate::error::Error;
 use crate::util::{touch_file, write_file};
 use clap::Clap;
 use std::fs;
 use std::path::Path;
-use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, KEY_PEM};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -62,7 +62,10 @@ pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
     touch_file(gitkeep_path);
 
     let git_ignore_path = format!("{}/.gitignore", &chain_path);
-    let git_ignore_content = format!("{}/*/\n{}/{}\n{}/*/{}\n", ACCOUNT_DIR, CA_CERT_DIR, KEY_PEM, CERTS_DIR, KEY_PEM) ;
+    let git_ignore_content = format!(
+        "{}/*/\n{}/{}\n{}/*/{}\n",
+        ACCOUNT_DIR, CA_CERT_DIR, KEY_PEM, CERTS_DIR, KEY_PEM
+    );
     write_file(git_ignore_content.as_bytes(), git_ignore_path);
     Ok(())
 }

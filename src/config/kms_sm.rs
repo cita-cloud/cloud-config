@@ -39,7 +39,6 @@ impl YmlWriter for KmsSmConfig {
     }
 }
 
-
 pub struct KmsSm(kms_sm::kms::Kms);
 
 impl KmsSm {
@@ -59,5 +58,4 @@ impl crate::traits::Kms for KmsSm {
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>) {
         self.0.generate_key_pair(description).unwrap()
     }
-
 }

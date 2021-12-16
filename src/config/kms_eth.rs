@@ -43,7 +43,6 @@ impl crate::traits::Kms for KmsEth {
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>) {
         self.0.generate_key_pair(description).unwrap()
     }
-
 }
 
 impl YmlWriter for KmsEthConfig {

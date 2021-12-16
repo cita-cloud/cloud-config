@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::read_chain_config;
 use clap::Clap;
 use std::fs;
-use crate::constant::CHAIN_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]

@@ -19,10 +19,10 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::NetConfig;
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
+use crate::constant::LOG4RS_YAML;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
-use crate::constant::LOG4RS_YAML;
 
 pub trait Kms {
     fn create_kms_db(db_path: String, password: String) -> Self;
