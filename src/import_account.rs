@@ -19,10 +19,17 @@ use clap::Clap;
 
 use anyhow::Context;
 use anyhow::Result;
+use anyhow::bail;
 
-use kms_sm::crypto::sk2address;
+use crate::{
+    traits::Kms,
+    util::write_file,
+    config::{
+        kms_eth::KmsEth,
+        kms_sm::KmsSm,
+    },
+};
 
-use crate::util::write_file;
 
 /// A subcommand for import account, only kms_sm is supported
 #[derive(Clap, Debug, Clone)]
@@ -33,6 +40,9 @@ pub struct ImportAccountOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
+    /// kms type
+    #[clap(long = "kms-type", default_value = "kms_sm")]
+    pub(crate) kms_type: String,
     /// kms db password
     #[clap(long = "kms-password", default_value = "123456")]
     pub(crate) kms_password: String,
@@ -42,8 +52,8 @@ pub struct ImportAccountOpts {
 }
 
 // return key_id and address of the account
-fn import_account(
-    base_dir: impl AsRef<Path>,
+fn import_account<K: Kms, P: AsRef<Path>>(
+    base_dir: P,
     kms_password: &str,
     privkey: &str,
 ) -> Result<(u64, Vec<u8>)> {
@@ -53,15 +63,14 @@ fn import_account(
     };
 
     let account_dir = {
-        let addr = hex::encode(sk2address(&privkey));
+        let addr = hex::encode(K::sk2address(&privkey));
         base_dir.as_ref().join(&addr)
     };
     fs::create_dir_all(&account_dir).context("cannot create account dir")?;
 
-    use crate::traits::Kms;
     let db_path = account_dir.join("kms.db").to_string_lossy().into();
-    let kms = crate::config::kms_sm::KmsSm::create_kms_db(db_path, kms_password.into());
-    let (key_id, addr) = kms.import_privkey(privkey);
+    let kms = K::create_kms_db(db_path, kms_password.into());
+    let (key_id, addr) = kms.import_privkey(&privkey);
 
     let key_id_path = account_dir.join("key_id");
     write_file(key_id.to_string().as_bytes(), key_id_path);
@@ -71,8 +80,15 @@ fn import_account(
 
 pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(u64, String)> {
     let base_dir = format!("{}/{}/accounts", &opts.config_dir, &opts.chain_name);
-    let (key_id, addr) = import_account(base_dir, &opts.kms_password, &opts.privkey)
-        .context("cannot import account")?;
+    let (key_id, addr) = {
+        let import_account = match opts.kms_type.as_str() {
+            "kms_sm" => import_account::<KmsSm, _>,
+            "kms_eth" => import_account::<KmsEth, _>,
+            _ => bail!("unknown kms type"),
+        };
+        import_account(base_dir, &opts.kms_password, &opts.privkey)
+            .context("cannot import account")?
+    };
 
     let addr = hex::encode(addr);
     println!("key_id:{}, address:{}", key_id, addr);

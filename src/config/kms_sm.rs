@@ -41,21 +41,22 @@ impl YmlWriter for KmsSmConfig {
 
 pub struct KmsSm(kms_sm::kms::Kms);
 
-impl KmsSm {
-    // return (account_id, address)
-    pub fn import_privkey(&self, privkey: Vec<u8>) -> (u64, Vec<u8>) {
-        self.0
-            .import_privkey(privkey, "node_key from migration".into())
-            .unwrap()
-    }
-}
-
 impl crate::traits::Kms for KmsSm {
+    fn sk2address(sk: &[u8]) -> Vec<u8> {
+        kms_sm::crypto::sk2address(sk)
+    }
+
     fn create_kms_db(db_path: String, password: String) -> Self {
         KmsSm(kms_sm::kms::Kms::new(db_path, password))
     }
 
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>) {
         self.0.generate_key_pair(description).unwrap()
+    }
+
+    fn import_privkey(&self, privkey: &[u8]) -> (u64, Vec<u8>) {
+        self.0
+            .import_privkey(privkey, "imported privkey".into())
+            .unwrap()
     }
 }

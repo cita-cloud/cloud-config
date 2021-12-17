@@ -255,6 +255,7 @@ fn generate_new_node_config(
     let (key_id, account_addr) = execute_import_account(ImportAccountOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
+        kms_type: "kms_sm".into(),
         kms_password: kms_password.into(),
         privkey: node_key,
     })
