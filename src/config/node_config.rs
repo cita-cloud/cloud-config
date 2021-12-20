@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
@@ -150,7 +151,7 @@ impl NodeConfigBuilder {
     }
 
     pub fn account(&mut self, account: String) -> &mut NodeConfigBuilder {
-        self.account = account;
+        self.account = check_address(&account[..]).to_string();
         self
     }
 
