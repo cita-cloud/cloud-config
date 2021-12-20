@@ -12,8 +12,8 @@ clap = "=3.0.0-beta.4"
 clap_derive = "=3.0.0-beta.4"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-kms_sm = { git = "https://github.com/cita-cloud/kms_sm", package = "kms" }
-kms_eth = { git = "https://github.com/cita-cloud/kms_eth", package = "kms" }
+kms_sm = { git = "https://github.com/cita-cloud/kms_sm", branch = "v6.3.1-alpha.1", package = "kms" }
+kms_eth = { git = "https://github.com/cita-cloud/kms_eth", branch = "v6.3.1-alpha.1", package = "kms" }
 toml = "0.5"
 hex = "0.4"
 regex = "1"
