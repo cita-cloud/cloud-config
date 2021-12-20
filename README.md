@@ -1364,7 +1364,7 @@ $ cloud-config migrate \
     --chain-name test-chain \
     --out-dir new-test-chain \
     --consensus-type raft \
-    --kms-password-list 123456,123456,123456,123456,123456,123456 \
+    --kms-password-list 123456,123456,123456,123456 \
     --nodelist 127.0.0.1:40000,127.0.0.1:40001,127.0.0.1:40002,127.0.0.1:40003
 
 $ tree new-test-chain
