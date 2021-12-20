@@ -13,10 +13,10 @@
 // limitations under the License.
 
 use crate::config::chain_config::NodeNetworkAddressBuilder;
+use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
 use clap::Clap;
-use crate::constant::CHAIN_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]

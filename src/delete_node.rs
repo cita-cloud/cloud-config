@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::constant::{ACCOUNT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{read_chain_config, read_node_config, write_toml};
 use clap::Clap;
 use std::fs;
-use crate::constant::{CHAIN_CONFIG_FILE, NODE_CONFIG_FILE, ACCOUNT_DIR, CERTS_DIR};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]

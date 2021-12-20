@@ -28,9 +28,11 @@ use crate::env_k8s::{
     execute_append_k8s, execute_create_k8s, execute_delete_k8s, AppendK8sOpts, CreateK8sOpts,
     DeleteK8sOpts,
 };
+use crate::import_account::{execute_import_account, ImportAccountOpts};
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
+use crate::migrate::{execute_migrate, MigrateOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
@@ -49,9 +51,11 @@ mod delete_node;
 mod env_dev;
 mod env_k8s;
 mod error;
+mod import_account;
 mod init_chain;
 mod init_chain_config;
 mod init_node;
+mod migrate;
 mod new_account;
 mod set_admin;
 mod set_nodelist;
@@ -107,6 +111,9 @@ enum SubCommand {
     /// new account
     #[clap(name = "new-account")]
     NewAccount(NewAccountOpts),
+    /// import account
+    #[clap(name = "import-account")]
+    ImportAccount(ImportAccountOpts),
     /// create CA
     #[clap(name = "create-ca")]
     CreateCA(CreateCAOpts),
@@ -134,6 +141,9 @@ enum SubCommand {
     /// delete node in env k8s
     #[clap(name = "delete-k8s")]
     DeleteK8s(DeleteK8sOpts),
+    /// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
+    #[clap(name = "migrate")]
+    Migrate(MigrateOpts),
 }
 
 fn main() {
@@ -154,6 +164,7 @@ fn main() {
         SubCommand::UpdateNode(opts) => execute_update_node(opts).unwrap(),
         SubCommand::DeleteChain(opts) => execute_delete_chain(opts).unwrap(),
         SubCommand::NewAccount(opts) => execute_new_account(opts).map(|_| ()).unwrap(),
+        SubCommand::ImportAccount(opts) => execute_import_account(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCA(opts) => execute_create_ca(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCSR(opts) => execute_create_csr(opts).map(|_| ()).unwrap(),
         SubCommand::SignCSR(opts) => execute_sign_csr(opts).map(|_| ()).unwrap(),
@@ -163,5 +174,6 @@ fn main() {
         SubCommand::CreateK8s(opts) => execute_create_k8s(opts).unwrap(),
         SubCommand::AppendK8s(opts) => execute_append_k8s(opts).unwrap(),
         SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
+        SubCommand::Migrate(opts) => execute_migrate(opts).unwrap(),
     }
 }

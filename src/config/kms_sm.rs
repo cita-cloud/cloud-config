@@ -26,16 +26,26 @@ impl KmsSmConfig {
         Self { kms_port, db_key }
     }
 }
+
 impl TomlWriter for KmsSmConfig {
     fn section(&self) -> String {
         KMS_SM.to_string()
     }
 }
 
+impl YmlWriter for KmsSmConfig {
+    fn service(&self) -> String {
+        KMS.to_string()
+    }
+}
 
 pub struct KmsSm(kms_sm::kms::Kms);
 
 impl crate::traits::Kms for KmsSm {
+    fn sk2address(sk: &[u8]) -> Vec<u8> {
+        kms_sm::crypto::sk2address(sk)
+    }
+
     fn create_kms_db(db_path: String, password: String) -> Self {
         KmsSm(kms_sm::kms::Kms::new(db_path, password))
     }
@@ -44,10 +54,9 @@ impl crate::traits::Kms for KmsSm {
         self.0.generate_key_pair(description).unwrap()
     }
 
-}
-
-impl YmlWriter for KmsSmConfig {
-    fn service(&self) -> String {
-        KMS.to_string()
+    fn import_privkey(&self, privkey: &[u8]) -> (u64, Vec<u8>) {
+        self.0
+            .import_privkey(privkey, "imported privkey".into())
+            .unwrap()
     }
 }
