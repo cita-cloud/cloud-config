@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::Error;
-use crate::util::{read_chain_config, write_toml, remove_0x};
+use crate::util::{read_chain_config, write_toml, check_address};
 use clap::Clap;
 use crate::constant::CHAIN_CONFIG_FILE;
 
@@ -42,7 +42,7 @@ pub fn execute_append_validator(opts: AppendValidatorOpts) -> Result<(), Error> 
 
     let mut validators = chain_config.system_config.validators.clone();
 
-    validators.push(remove_0x(&opts.validator[..]).to_string());
+    validators.push(check_address(&opts.validator[..]).to_string());
 
     chain_config.set_validators(validators);
 

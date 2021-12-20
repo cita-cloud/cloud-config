@@ -16,7 +16,7 @@ use crate::constant::{
     CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, PRE_HASH, SYSTEM_CONFIG,
 };
 use crate::traits::{TomlWriter, YmlWriter};
-use crate::util::remove_0x;
+use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
@@ -65,7 +65,7 @@ pub struct SystemConfigFile {
 
 impl SystemConfigFile {
     pub fn set_admin(&mut self, admin: String) {
-        self.admin = remove_0x(&admin[..]).to_string();
+        self.admin = check_address(&admin[..]).to_string();
     }
 
     pub fn set_validators(&mut self, validators: Vec<String>) {

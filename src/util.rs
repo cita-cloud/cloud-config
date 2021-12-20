@@ -169,9 +169,10 @@ pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> boo
     false
 }
 
-pub fn remove_0x(s: &str) -> &str {
-    if s.strip_prefix("0x").unwrap_or(s).len() != 40 {
+pub fn check_address(s: &str) -> &str {
+    let addr = s.strip_prefix("0x").unwrap_or(s);
+    if addr.len() != 40 {
         panic!("wrong address, please check!")
     };
-    s.strip_prefix("0x").unwrap_or(s)
+    addr
 }
