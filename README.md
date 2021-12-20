@@ -41,9 +41,11 @@ SUBCOMMANDS:
     delete-k8s           delete node in env k8s
     delete-node          delete a node from chain
     help                 Print this message or the help of the given subcommand(s)
+    import-account       import account
     init-chain           init a chain
     init-chain-config    init chain config
     init-node            init node
+    migrate              migrate CITA-Cloud chain from 6.1.0 to 6.3.0
     new-account          new account
     set-admin            set admin of chain
     set-nodelist         set node list
@@ -299,6 +301,51 @@ test-chain
 ├── certs
 └── chain_config.toml
 ```
+
+#### import-account
+导入账户（私钥）
+
+参数：
+```
+--chain-name <CHAIN_NAME>
+    set chain name [default: test-chain]
+
+--config-dir <CONFIG_DIR>
+    set config file directory, default means current directory [default: .]
+
+--kms-password <KMS_PASSWORD>
+    kms db password [default: 123456]
+
+--privkey <PRIVKEY>
+    hex encoded private key
+```
+
+示例：
+
+```
+# 这里使用cloud-cli创建一个账户
+$ cldi account create test
+user: `test`
+account_addr: 0xf24aeda3a262e81507148d41a9eb9efd1489142c
+
+# 从cloud-cli中导出这个账户
+$ cldi account export test
+{
+  "account_addr": "0xf24aeda3a262e81507148d41a9eb9efd1489142c",
+  "private_key": "0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6",
+  "public_key": "0xc3813e5c5f33c099d0c8f31c727972fc937e318088dfe78c7f55b6aa1a82b3d3cba522eaceb8c4527aaa5670eabdb0fca4bdb09ea97f0e7fb617585c2d1347f6"
+}
+
+# 将这个账户导入链的配置
+$ cloud-config import-account --chain-name test-chain --config-dir . --km
+s-password 123456 --privkey 0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6
+key_id:1, address:f24aeda3a262e81507148d41a9eb9efd1489142c
+
+# 在链的配置中查看这个账户
+$ ls test-chain/accounts/f24aeda3a262e81507148d41a9eb9efd1489142c/
+key_id  kms.db
+```
+
 
 #### set-admin
 
@@ -1247,4 +1294,129 @@ test-chain-node1
 ├── network-log4rs.yaml
 ├── node_config.toml
 └── storage-log4rs.yaml
+```
+
+#### migrate
+从v6.1.0的链配置中读取数据，生成v6.3.0链的配置。生成的配置中不包含运行时产生的数据。
+
+```
+    -c, --consensus-type <CONSENSUS_TYPE>
+            Consensus type, only `raft` or `bft` is supported [default: raft]
+
+    -d, --chain-dir <CHAIN_DIR>
+            The old chain dir
+
+    -k, --kms-password-list <KMS_PASSWORD_LIST>
+            KMS password list, e.g. "node1password,node2password"
+
+    -l, --nodelist <NODE_LIST>
+            Node list, e.g. "127.0.0.1:40000,citacloud.org:40001"
+
+    -n, --chain-name <CHAIN_NAME>
+            Name of the chain
+
+    -o, --out-dir <OUT_DIR>
+            The output dir for the upgraded chain
+```
+
+示例
+
+```
+$ tree old-chain
+
+old-chain
+├── test-chain
+│
+├── test-chain-0
+│   ├── chain_data
+|   |       (omitted)
+│   ├── consensus-config.toml
+│   ├── consensus-log4rs.yaml
+│   ├── controller-config.toml
+│   ├── controller-log4rs.yaml
+│   ├── data
+|   |       (omitted)
+│   ├── executor-log4rs.yaml
+│   ├── genesis.toml
+│   ├── init_sys_config.toml
+│   ├── key_file
+│   ├── key_id
+│   ├── kms-log4rs.yaml
+│   ├── logs
+|   |       (omitted)
+│   ├── network-config.toml
+│   ├── network_key
+│   ├── network-log4rs.yaml
+│   ├── node_address
+│   ├── node_key
+│   ├── raft-data-dir
+|   |       (omitted)
+│   └── storage-log4rs.yaml
+|── test-chain-1
+|       (omitted)
+|── test-chain-2
+|       (omitted)
+└── test-chain-3
+        (omitted)
+
+$ cloud-config migrate \
+    --chain-dir test-chain \
+    --chain-name test-chain \
+    --out-dir new-test-chain \
+    --consensus-type raft \
+    --kms-password-list 123456,123456,123456,123456 \
+    --nodelist 127.0.0.1:40000,127.0.0.1:40001,127.0.0.1:40002,127.0.0.1:40003
+
+$ tree new-test-chain
+new-test-chain/
+├── test-chain
+│   ├── accounts
+│   │   ├── 1dc41ae9cd4eeebf12a053e0abba49a909530981
+│   │   │   ├── key_id
+│   │   │   └── kms.db
+│   │   ├── 287d70c1e4263ff38ad993cb2c18d01e3d5a151b
+│   │   │   ├── key_id
+│   │   │   └── kms.db
+│   │   ├── 2ac2df73fff75e5260a75f2c0df8c06b08aff09f
+│   │   │   ├── key_id
+│   │   │   └── kms.db
+│   │   └── 83b097e4f547bb49c51dc17b8821e6b0a91b31da
+│   │       ├── key_id
+│   │       └── kms.db
+│   ├── ca_cert
+│   │   ├── cert.pem
+│   │   └── key.pem
+│   ├── certs
+│   │   ├── 0
+│   │   │   ├── cert.pem
+│   │   │   ├── csr.pem
+│   │   │   └── key.pem
+│   │   ├── 1
+│   │   │   ├── cert.pem
+│   │   │   ├── csr.pem
+│   │   │   └── key.pem
+│   │   ├── 2
+│   │   │   ├── cert.pem
+│   │   │   ├── csr.pem
+│   │   │   └── key.pem
+│   │   └── 3
+│   │       ├── cert.pem
+│   │       ├── csr.pem
+│   │       └── key.pem
+│   └── chain_config.toml
+├── test-chain-0
+│   ├── config.toml
+│   ├── controller-log4rs.yaml
+│   ├── executor-log4rs.yaml
+│   ├── kms.db
+│   ├── kms-log4rs.yaml
+│   ├── network-log4rs.yaml
+│   ├── node_config.toml
+│   └── storage-log4rs.yaml
+├── test-chain-1
+|       (omitted)
+├── test-chain-2
+|       (omitted)
+└── test-chain-3
+        (omitted)
 ```

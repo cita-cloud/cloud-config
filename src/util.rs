@@ -14,6 +14,7 @@
 
 use crate::config::chain_config::ChainConfig;
 use crate::config::node_config::NodeConfig;
+use crate::constant::KMS_DB;
 use crate::traits::Kms;
 use rcgen::{
     BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, IsCa, KeyPair,
@@ -24,7 +25,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, path};
 use toml::de::Error;
 use toml::Value;
-use crate::constant::KMS_DB;
 
 pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>, name: String) {
     let value = Value::try_from(content).unwrap();
@@ -105,18 +105,19 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
     libsm::sm3::hash::Sm3Hash::new(input).get_hash()
 }
 
-
 pub fn key_pair_option(node_dir: String, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
     if is_eth {
         crate::config::kms_eth::KmsEth::create_kms_db(
             format!("{}/{}", node_dir, KMS_DB),
             kms_password,
-        ).generate_key_pair("create by cmd".to_string())
+        )
+        .generate_key_pair("create by cmd".to_string())
     } else {
         crate::config::kms_sm::KmsSm::create_kms_db(
             format!("{}/{}", node_dir, KMS_DB),
             kms_password,
-        ).generate_key_pair("create by cmd".to_string())
+        )
+        .generate_key_pair("create by cmd".to_string())
     }
 }
 

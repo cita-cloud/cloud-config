@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::constant::{ACCOUNT_DIR, CHAIN_CONFIG_FILE, KEY_ID, KMS_DB, KMS_ETH};
 use crate::error::Error;
-use crate::util::{read_chain_config, write_file, find_micro_service, key_pair_option};
+use crate::util::{find_micro_service, key_pair_option, read_chain_config, write_file};
 use clap::Clap;
 use std::fs;
-use crate::constant::{KMS_DB, CHAIN_CONFIG_FILE, ACCOUNT_DIR, KEY_ID, KMS_ETH};
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
@@ -57,7 +57,10 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String), Error>
     fs::create_dir_all(&path).unwrap();
 
     // move account files info account folder
-    let from = format!("{}/{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, KMS_DB);
+    let from = format!(
+        "{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, KMS_DB
+    );
     let to = format!(
         "{}/{}/{}/{}/{}",
         &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &address, KMS_DB

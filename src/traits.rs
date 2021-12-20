@@ -19,14 +19,19 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::NetConfig;
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
+use crate::constant::LOG4RS_YAML;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
-use crate::constant::LOG4RS_YAML;
 
 pub trait Kms {
+    fn sk2address(sk: &[u8]) -> Vec<u8>;
     fn create_kms_db(db_path: String, password: String) -> Self;
+
+    // return (account_id, address)
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>);
+    // return (account_id, address)
+    fn import_privkey(&self, privkey: &[u8]) -> (u64, Vec<u8>);
 }
 
 pub trait TomlWriter {

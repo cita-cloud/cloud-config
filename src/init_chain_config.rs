@@ -14,10 +14,10 @@
 
 use crate::config::chain_config::{ChainConfigBuilder, MicroService, MicroServiceBuilder};
 use crate::config::controller::{GenesisBlockBuilder, SystemConfigBuilder};
+use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::{sm3_hash, unix_now, write_toml};
 use clap::Clap;
-use crate::constant::CHAIN_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]

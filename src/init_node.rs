@@ -13,11 +13,11 @@
 // limitations under the License.
 
 use crate::config::node_config::{GrpcPortsBuilder, NodeConfigBuilder};
+use crate::constant::NODE_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::write_toml;
 use clap::Clap;
 use std::fs;
-use crate::constant::NODE_CONFIG_FILE;
 
 /// A subcommand for run
 #[derive(Clap, Debug, Clone)]
