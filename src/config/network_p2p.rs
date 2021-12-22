@@ -75,9 +75,6 @@ impl YmlWriter for NetConfig {
 
 #[cfg(test)]
 mod network_p2p_test {
-    use super::*;
-    use crate::util::write_to_file;
-    use toml::Value;
 
     #[test]
     fn basic_test() {
