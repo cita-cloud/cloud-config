@@ -14,7 +14,7 @@
 
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::{read_chain_config, write_toml, check_address};
+use crate::util::{check_address, read_chain_config, write_toml};
 use clap::Clap;
 
 /// A subcommand for run
