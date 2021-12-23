@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::admin::{AdminConfig, AdminParam, CurrentConfig};
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorEvmConfig;
@@ -20,14 +19,19 @@ use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::NetConfig;
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::error::Error;
+use crate::constant::LOG4RS_YAML;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
 
 pub trait Kms {
+    fn sk2address(sk: &[u8]) -> Vec<u8>;
     fn create_kms_db(db_path: String, password: String) -> Self;
+
+    // return (account_id, address)
     fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>);
+    // return (account_id, address)
+    fn import_privkey(&self, privkey: &[u8]) -> (u64, Vec<u8>);
 }
 
 pub trait TomlWriter {
@@ -44,13 +48,13 @@ pub trait TomlWriter {
 pub trait YmlWriter {
     fn service(&self) -> String;
 
-    fn write_log4rs(&self, path: &str)
+    fn write_log4rs(&self, path: &str, is_stdout: bool)
     where
         Self: Serialize,
     {
         let service = self.service();
         fs::write(
-            format!("{}/{}-log4rs.yaml", path, service),
+            format!("{}/{}-{}", path, service, LOG4RS_YAML),
             format!(
                 r#"# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds
@@ -84,7 +88,14 @@ root:
   appenders:
     - {}
 "#,
-                service, service, "info", "journey-service"
+                service,
+                service,
+                "info",
+                if is_stdout {
+                    "stdout"
+                } else {
+                    "journey-service"
+                }
             ),
         )
         .unwrap();
@@ -95,7 +106,6 @@ pub trait Writer: TomlWriter + YmlWriter {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AggregateConfig {
-    pub admin_config: Option<AdminConfig>,
     pub system_config: SystemConfigFile,
     pub genesis_block: GenesisBlock,
     pub network_p2p: Option<NetConfig>,
@@ -104,17 +114,5 @@ pub struct AggregateConfig {
     pub kms_sm: Option<KmsSmConfig>,
     pub storage_rocksdb: Option<StorageRocksdbConfig>,
     pub executor_evm: Option<ExecutorEvmConfig>,
-    pub current_config: Option<CurrentConfig>,
     pub consensus_raft: Option<Consensus>,
-}
-
-pub trait Opts {
-    fn init_admin(
-        &self,
-        peers_count: usize,
-        pair: &[String],
-        grpc_ports: Vec<u16>,
-    ) -> Result<AdminParam, Error>;
-
-    fn parse(&self, i: usize, admin: &AdminParam);
 }

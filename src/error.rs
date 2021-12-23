@@ -15,16 +15,6 @@
 /// The response status code
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
-    KmsNotDefaultOrKmsSm,
-    P2pPortsParamNotValid,
-    GrpcPortsParamNotValid,
-    ControllerNotExist,
-    ConsensusNotExist,
-    NetworkNotExist,
-    ExecutorNotExist,
-    StorageNotExist,
-    NodeCountNotExist,
-    ConfigDirNotExist,
-    DeleteParamNotValid,
-    DeleteIndexNotValid,
+    DupChainName,
+    ListLenNotMatch,
 }

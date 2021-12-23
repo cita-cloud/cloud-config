@@ -11,3 +11,50 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+use crate::constant::{CONSENSUS, CONSENSUS_BFT};
+use crate::traits::{TomlWriter, YmlWriter};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Clone, Deserialize)]
+pub struct ConsensusBft {
+    pub controller_port: u16,
+
+    pub consensus_port: u16,
+
+    pub network_port: u16,
+
+    pub kms_port: u16,
+
+    pub node_address: String,
+}
+
+impl ConsensusBft {
+    pub fn new(
+        controller_port: u16,
+        consensus_port: u16,
+        network_port: u16,
+        kms_port: u16,
+        node_address: String,
+    ) -> Self {
+        Self {
+            controller_port,
+            consensus_port,
+            network_port,
+            kms_port,
+            node_address,
+        }
+    }
+}
+
+impl YmlWriter for ConsensusBft {
+    fn service(&self) -> String {
+        CONSENSUS.to_string()
+    }
+}
+
+impl TomlWriter for ConsensusBft {
+    fn section(&self) -> String {
+        CONSENSUS_BFT.to_string()
+    }
+}

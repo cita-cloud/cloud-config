@@ -59,18 +59,6 @@ impl NetConfig {
             peers,
         }
     }
-
-    pub fn default(addresses: &[PeerConfig]) -> Self {
-        let mut peers = Vec::with_capacity(addresses.len());
-        for address in addresses {
-            peers.push(address.clone())
-        }
-        Self {
-            port: None,
-            grpc_port: None,
-            peers,
-        }
-    }
 }
 
 impl TomlWriter for NetConfig {
@@ -87,9 +75,6 @@ impl YmlWriter for NetConfig {
 
 #[cfg(test)]
 mod network_p2p_test {
-    use super::*;
-    use crate::util::write_to_file;
-    use toml::Value;
 
     #[test]
     fn basic_test() {

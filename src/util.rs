@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::traits::{AggregateConfig, Kms, TomlWriter};
+use crate::config::chain_config::ChainConfig;
+use crate::config::node_config::NodeConfig;
+use crate::constant::KMS_DB;
+use crate::traits::Kms;
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
+    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, IsCa, KeyPair,
+    PKCS_ECDSA_P256_SHA256,
 };
-use regex::Regex;
-use std::io::Write;
+use std::io::{Read, Write};
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, path};
 use toml::de::Error;
 use toml::Value;
@@ -32,72 +36,89 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
         .create(true)
         .append(true)
         .open(path.as_ref())
-        .unwrap();
+        .unwrap_or_else(|_| panic!("open file({:?}) failed.", path.as_ref().to_str()));
     file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
         .unwrap();
     file.write_all(b"\n").unwrap();
 }
 
-pub fn write_whole_to_file(content: AggregateConfig, path: impl AsRef<path::Path>) {
-    if let Some(t) = content.controller {
-        t.write(&path);
-    }
-    if let Some(t) = content.kms_sm {
-        t.write(&path);
-    }
-    if let Some(t) = content.storage_rocksdb {
-        t.write(&path);
-    }
-    if let Some(t) = content.executor_evm {
-        t.write(&path);
-    }
-    if let Some(t) = content.current_config {
-        t.write(&path);
-    }
-    if let Some(t) = content.admin_config {
-        t.write(&path);
-    }
-    if let Some(t) = content.consensus_raft {
-        t.write(&path);
-    }
-    content.system_config.write(&path);
-    content.genesis_block.write(&path);
-    if let Some(t) = content.network_p2p {
-        t.write(&path);
-    }
-
-    if let Some(t) = content.network_tls {
-        t.write(&path);
-    }
-}
-
-pub fn read_from_file(path: impl AsRef<path::Path>) -> Result<AggregateConfig, Error> {
+pub fn read_chain_config(path: impl AsRef<path::Path>) -> Result<ChainConfig, Error> {
     let buffer = std::fs::read_to_string(path)
         .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
-    toml::from_str::<AggregateConfig>(&buffer)
+    toml::from_str::<ChainConfig>(&buffer)
 }
 
-pub fn validate_p2p_ports(s: String) -> bool {
-    match s {
-        s if s.is_empty() => false,
-        s => {
-            let r = Regex::new(r"(^(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$)").unwrap();
-            for item in s.split(',') {
-                if !r.is_match(item) {
-                    return false;
-                }
-            }
-            true
-        }
+pub fn read_node_config(path: impl AsRef<path::Path>) -> Result<NodeConfig, Error> {
+    let buffer = std::fs::read_to_string(path)
+        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+    toml::from_str::<NodeConfig>(&buffer)
+}
+
+pub fn write_toml<T: serde::Serialize>(content: T, path: impl AsRef<path::Path>) {
+    let toml = Value::try_from(content).unwrap();
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(path.as_ref())
+        .unwrap_or_else(|_| panic!("open file({:?}) failed.", path.as_ref().to_str()));
+    file.write_all(toml::to_string_pretty(&toml).unwrap().as_bytes())
+        .unwrap();
+    file.write_all(b"\n").unwrap();
+}
+
+pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(path.as_ref())
+        .unwrap_or_else(|_| panic!("open file({:?}) failed.", path.as_ref().to_str()));
+    file.write_all(content).unwrap();
+}
+
+pub fn touch_file(path: impl AsRef<path::Path>) {
+    fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(path.as_ref())
+        .unwrap_or_else(|_| panic!("touch file({:?}) failed.", path.as_ref().to_str()));
+}
+
+pub fn read_file(path: impl AsRef<path::Path>) -> std::io::Result<String> {
+    let mut f = fs::File::open(path)?;
+    let mut s = String::new();
+    f.read_to_string(&mut s)?;
+    Ok(s)
+}
+
+pub fn unix_now() -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
+    since_the_epoch.as_millis() as u64
+}
+
+const HASH_BYTES_LEN: usize = 32;
+
+pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
+    libsm::sm3::hash::Sm3Hash::new(input).get_hash()
+}
+
+pub fn key_pair_option(node_dir: String, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
+    if is_eth {
+        crate::config::kms_eth::KmsEth::create_kms_db(
+            format!("{}/{}", node_dir, KMS_DB),
+            kms_password,
+        )
+        .generate_key_pair("create by cmd".to_string())
+    } else {
+        crate::config::kms_sm::KmsSm::create_kms_db(
+            format!("{}/{}", node_dir, KMS_DB),
+            kms_password,
+        )
+        .generate_key_pair("create by cmd".to_string())
     }
-}
-
-pub fn key_pair(node_dir: String, kms_password: String) -> (u64, Vec<u8>) {
-    let kms = crate::config::kms_sm::Kms::create_kms_db(
-        format!("{}/{}", node_dir, "kms.db"),
-        kms_password,
-    );
-    kms.generate_key_pair("create by cmd".to_string())
 }
 
 pub fn ca_cert() -> (Certificate, String, String) {
@@ -113,7 +134,14 @@ pub fn ca_cert() -> (Certificate, String, String) {
     (cert, cert_pem, key_pem)
 }
 
-pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String) {
+pub fn restore_ca_cert(ca_cert_pem: &str, ca_key_pem: &str) -> Certificate {
+    let ca_key_pair = KeyPair::from_pem(ca_key_pem).unwrap();
+    let ca_param = CertificateParams::from_ca_cert_pem(ca_cert_pem, ca_key_pair).unwrap();
+
+    Certificate::from_params(ca_param).unwrap()
+}
+
+pub fn create_csr(domain: &str) -> (String, String) {
     let subject_alt_names = vec![domain.into()];
     let mut params = CertificateParams::new(subject_alt_names);
 
@@ -121,28 +149,35 @@ pub fn cert(domain: &str, signer: &Certificate) -> (Certificate, String, String)
     params.key_pair.replace(keypair);
 
     let cert = Certificate::from_params(params).unwrap();
-    let cert_pem = cert.serialize_pem_with_signer(signer).unwrap();
+
+    let csr_pem = cert.serialize_request_pem().unwrap();
     let key_pem = cert.serialize_private_key_pem();
-    (cert, cert_pem, key_pem)
+
+    (csr_pem, key_pem)
 }
 
-#[cfg(test)]
-mod util_test {
-    use crate::util::read_from_file;
-    use rand::prelude::*;
-    use rcgen::{KeyPair, PKCS_ECDSA_P256_SHA256};
+pub fn sign_csr(csr_pem: &str, ca_cert: &Certificate) -> String {
+    let csr = CertificateSigningRequest::from_pem(csr_pem).unwrap();
+    csr.serialize_pem_with_signer(ca_cert).unwrap()
+}
 
-    // type Type = [u8, 32]
-
-    #[test]
-    fn util_test() {
-        let config = read_from_file("cita-chain/config.toml");
-        println!("{:?}", config)
+pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> bool {
+    for micro_service in &chain_config.micro_service_list {
+        if micro_service.image == service_name {
+            return true;
+        }
     }
+    false
+}
 
-    #[test]
-    fn random_address() {
-        let rand: [u8; 16] = thread_rng().gen();
-        println!("{}", hex::encode(rand));
-    }
+pub fn remove_0x(s: &str) -> &str {
+    s.strip_prefix("0x").unwrap_or(s)
+}
+
+pub fn check_address(s: &str) -> &str {
+    let addr = s.strip_prefix("0x").unwrap_or(s);
+    if addr.len() != 40 {
+        panic!("wrong address, please check!")
+    };
+    addr
 }
