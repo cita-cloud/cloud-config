@@ -353,8 +353,6 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
 #[cfg(test)]
 mod dev_test {
     use super::*;
-    use crate::util::write_to_file;
-    use toml::Value;
 
     #[test]
     fn create_test() {

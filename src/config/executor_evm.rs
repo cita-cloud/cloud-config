@@ -42,8 +42,6 @@ impl YmlWriter for ExecutorEvmConfig {
 #[cfg(test)]
 mod executor_test {
     use super::*;
-    use crate::util::write_to_file;
-    use toml::Value;
 
     #[test]
     fn basic_test() {

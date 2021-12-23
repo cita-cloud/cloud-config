@@ -14,7 +14,7 @@
 
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::{read_chain_config, write_toml, check_address};
+use crate::util::{check_address, read_chain_config, write_toml};
 use clap::Clap;
 
 /// A subcommand for run
@@ -42,7 +42,12 @@ pub fn execute_set_validators(opts: SetValidatorsOpts) -> Result<(), Error> {
 
     let validators: Vec<&str> = opts.validators.split(',').collect();
 
-    chain_config.set_validators(validators.iter().map(|x| check_address(&x[..]).to_string()).collect());
+    chain_config.set_validators(
+        validators
+            .iter()
+            .map(|x| check_address(&x[..]).to_string())
+            .collect(),
+    );
 
     // store chain_config
     write_toml(&chain_config, file_name);
