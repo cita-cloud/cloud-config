@@ -1,6 +1,6 @@
 [package]
 name = "cloud-config"
-version = "6.3.0"
+version = "6.3.1"
 authors = ["Yieazy <yuitta@163.com>"]
 license = "Apache-2.0"
 edition = "2018"
