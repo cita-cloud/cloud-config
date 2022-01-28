@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 use crate::constant::CONSENSUS_RAFT;
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
