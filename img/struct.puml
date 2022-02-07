@@ -1,0 +1,14 @@
+@startmindmap
++ 数据结构
+++ 链级配置
++++ 一比一按照配置来
+++ 节点配置
++++ 各个微服务的端口
++++ 监听端口
++++ 证书（可选）
++++ 日志等级
++++ kms密码（db_key）
++++ key_id
++++ package_limit
++++ account
+@endmindmap
