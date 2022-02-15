@@ -15,11 +15,11 @@
 use crate::constant::{ACCOUNT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{read_chain_config, read_node_config, write_toml};
-use clap::Clap;
+use clap::Parser;
 use std::fs;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct DeleteNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

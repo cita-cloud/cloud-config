@@ -15,12 +15,12 @@
 use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, KEY_PEM};
 use crate::error::Error;
 use crate::util::{touch_file, write_file};
-use clap::Clap;
+use clap::Parser;
 use std::fs;
 use std::path::Path;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct InitChainOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

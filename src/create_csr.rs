@@ -15,11 +15,11 @@
 use crate::constant::{CERTS_DIR, CSR_PEM, KEY_PEM};
 use crate::error::Error;
 use crate::util::{create_csr, write_file};
-use clap::Clap;
+use clap::Parser;
 use std::fs;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct CreateCSROpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
