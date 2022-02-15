@@ -30,11 +30,11 @@ use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
 use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
-use clap::Clap;
+use clap::Parser;
 use std::fs;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct UpdateNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

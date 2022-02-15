@@ -15,10 +15,10 @@
 use crate::constant::{CA_CERT_DIR, CERTS_DIR, CERT_PEM, CSR_PEM, KEY_PEM};
 use crate::error::Error;
 use crate::util::{read_file, restore_ca_cert, sign_csr, write_file};
-use clap::Clap;
+use clap::Parser;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct SignCSROpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

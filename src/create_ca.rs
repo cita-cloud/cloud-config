@@ -15,10 +15,10 @@
 use crate::constant::{CA_CERT_DIR, CERT_PEM, KEY_PEM};
 use crate::error::Error;
 use crate::util::{ca_cert, write_file};
-use clap::Clap;
+use clap::Parser;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct CreateCAOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::Clap;
+use clap::Parser;
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
@@ -65,7 +65,7 @@ mod traits;
 mod update_node;
 mod util;
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(version = "6.3.0", author = "Rivtower Technologies.")]
 struct Opts {
     #[clap(subcommand)]
@@ -73,7 +73,7 @@ struct Opts {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Clap)]
+#[derive(Parser)]
 enum SubCommand {
     /// init a chain
     #[clap(name = "init-chain")]

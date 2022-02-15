@@ -15,10 +15,10 @@
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
-use clap::Clap;
+use clap::Parser;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct SetAdminOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
