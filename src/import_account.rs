@@ -15,7 +15,7 @@
 use std::fs;
 use std::path::Path;
 
-use clap::Clap;
+use clap::Parser;
 
 use anyhow::bail;
 use anyhow::Context;
@@ -29,7 +29,7 @@ use crate::{
 };
 
 /// A subcommand for import account, only kms_sm is supported
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct ImportAccountOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

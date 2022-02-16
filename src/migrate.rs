@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use clap::{Clap, ValueHint};
+use clap::{Parser, ValueHint};
 
 use anyhow::{bail, ensure, Context, Result};
 
@@ -456,7 +456,7 @@ pub enum ConsensusType {
 /// This is for a very specific use case, other cases may not work!
 /// DO NOT use it if you don't know what is it for.
 /// Back up your data before use it.
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct MigrateOpts {
     /// The old chain dir
     #[clap(short = 'd', long = "chain-dir", value_hint = ValueHint::DirPath)]

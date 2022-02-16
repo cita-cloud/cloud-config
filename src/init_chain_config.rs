@@ -17,10 +17,10 @@ use crate::config::controller::{GenesisBlockBuilder, SystemConfigBuilder};
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::{sm3_hash, unix_now, write_toml};
-use clap::Clap;
+use clap::Parser;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct InitChainConfigOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

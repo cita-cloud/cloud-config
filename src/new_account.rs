@@ -15,11 +15,11 @@
 use crate::constant::{ACCOUNT_DIR, CHAIN_CONFIG_FILE, KEY_ID, KMS_DB, KMS_ETH};
 use crate::error::Error;
 use crate::util::{find_micro_service, key_pair_option, read_chain_config, write_file};
-use clap::Clap;
+use clap::Parser;
 use std::fs;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct NewAccountOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

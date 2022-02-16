@@ -29,10 +29,10 @@ use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, read_chain_config};
-use clap::Clap;
+use clap::Parser;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct CreateK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -273,7 +273,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct AppendK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -394,7 +394,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct DeleteK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]

@@ -27,10 +27,10 @@ use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, read_chain_config};
-use clap::Clap;
+use clap::Parser;
 
 /// A subcommand for run
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct CreateDevOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -195,7 +195,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct AppendDevOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -304,7 +304,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Clap, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct DeleteDevOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
