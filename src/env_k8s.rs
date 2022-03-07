@@ -332,8 +332,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
             .port(port)
             .domain(domain.clone())
             .build();
-        node_str =
-            host + &String::from(":") + &port.to_string() + &String::from(":") + &domain;
+        node_str = host + &String::from(":") + &port.to_string() + &String::from(":") + &domain;
     } else {
         let node_network_info: Vec<&str> = opts.node.split(':').collect();
         new_node = NodeNetworkAddressBuilder::new()
