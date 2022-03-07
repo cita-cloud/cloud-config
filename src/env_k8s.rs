@@ -30,9 +30,10 @@ use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, read_chain_config};
 use clap::Parser;
+use regex::{Captures, Regex};
 
 /// A subcommand for run
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Default, Clone)]
 pub struct CreateK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -273,7 +274,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Default, Clone)]
 pub struct AppendK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -288,8 +289,16 @@ pub struct AppendK8sOpts {
     #[clap(long = "kms-password")]
     pub(crate) kms_password: String,
     /// node network address looks like localhost:40002:node2
-    #[clap(long = "node")]
+    #[clap(long = "node", default_value = "")]
     pub(crate) node: String,
+}
+
+fn find_num_plus_one(s: String) -> String {
+    let r2 = Regex::new(r"(\d+)").unwrap();
+    r2.replace_all(&s, |c: &Captures| {
+        (c[0].to_string().parse::<u32>().unwrap() + 1).to_string()
+    })
+    .to_string()
 }
 
 /// append a new node into chain
@@ -310,18 +319,37 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     .unwrap();
 
     // parse node network info
-    let node_network_info: Vec<&str> = opts.node.split(':').collect();
-    let new_node = NodeNetworkAddressBuilder::new()
-        .host(node_network_info[0].to_string())
-        .port(node_network_info[1].parse::<u16>().unwrap())
-        .domain(node_network_info[2].to_string())
-        .build();
+    let new_node;
+    let mut node_str = String::new();
+    if opts.node == *"" {
+        let old_node_network_info = &chain_config.node_network_address_list
+            [chain_config.node_network_address_list.len() - 1];
+        let host = find_num_plus_one(old_node_network_info.host.clone());
+        let port = old_node_network_info.port + 1;
+        let domain = find_num_plus_one(old_node_network_info.domain.clone());
+        new_node = NodeNetworkAddressBuilder::new()
+            .host(host.clone())
+            .port(port)
+            .domain(domain.clone())
+            .build();
+        node_str = host + &String::from(":") + &port.to_string() + &String::from(":") + &domain;
+    } else {
+        let node_network_info: Vec<&str> = opts.node.split(':').collect();
+        new_node = NodeNetworkAddressBuilder::new()
+            .host(node_network_info[0].to_string())
+            .port(node_network_info[1].parse::<u16>().unwrap())
+            .domain(node_network_info[2].to_string())
+            .build();
+    }
 
     // append node
     execute_append_node(AppendNodeOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        node: opts.node.clone(),
+        node: match node_str {
+            node_str if node_str.is_empty() => opts.node.clone(),
+            _ => node_str,
+        },
     })
     .unwrap();
 
@@ -440,4 +468,51 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::env_k8s::{execute_append_k8s, execute_create_k8s, AppendK8sOpts, CreateK8sOpts};
+    use regex::{Captures, Regex};
+
+    #[test]
+    fn test_create() {
+        execute_create_k8s(CreateK8sOpts {
+            chain_name: "localcluster".to_string(),
+            config_dir: ".".to_string(),
+            admin: "0x74f1bf7351bf97d7217a9232aa0074e303018f7d".to_string(),
+            kms_password_list: "dasd,dsad".to_string(),
+            node_list: "node0:40000:node0,node1:40001:node1".to_string(),
+            network_image: "network_p2p".to_string(),
+            consensus_image: "consensus_raft".to_string(),
+            storage_image: "storage_rocksdb".to_string(),
+            executor_image: "executor_evm".to_string(),
+            controller_image: "controller".to_string(),
+            kms_image: "kms_sm".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn test_append() {
+        execute_append_k8s(AppendK8sOpts {
+            chain_name: "localcluster".to_string(),
+            config_dir: ".".to_string(),
+            log_level: "info".to_string(),
+            kms_password: "dasd".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn test_replace_num() {
+        let s = "node21-1";
+        let r2 = Regex::new(r"(\d+)").unwrap();
+        let s2 = r2.replace_all(s, |c: &Captures| {
+            (c[0].to_string().parse::<u32>().unwrap() + 1).to_string()
+        });
+        println!("{}", s2);
+    }
 }
