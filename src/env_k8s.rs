@@ -511,7 +511,7 @@ mod test {
     fn test_replace_num() {
         let s = "node21-1";
         let r2 = Regex::new(r"(\d+)").unwrap();
-        let s2 = r2.replace_all(&s, |c: &Captures| {
+        let s2 = r2.replace_all(s, |c: &Captures| {
             (c[0].to_string().parse::<u32>().unwrap() + 1).to_string()
         });
         println!("{}", s2);
