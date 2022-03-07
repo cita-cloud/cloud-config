@@ -321,7 +321,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     // parse node network info
     let new_node;
     let mut node_str = String::new();
-    if opts.node == String::from("") {
+    if opts.node == *"" {
         let old_node_network_info = &chain_config.node_network_address_list
             [chain_config.node_network_address_list.len() - 1];
         let host = find_num_plus_one(old_node_network_info.host.clone());
@@ -329,11 +329,11 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         let domain = find_num_plus_one(old_node_network_info.domain.clone());
         new_node = NodeNetworkAddressBuilder::new()
             .host(host.clone())
-            .port(port.clone())
+            .port(port)
             .domain(domain.clone())
             .build();
         node_str =
-            host.clone() + &String::from(":") + &port.to_string() + &String::from(":") + &domain;
+            host + &String::from(":") + &port.to_string() + &String::from(":") + &domain;
     } else {
         let node_network_info: Vec<&str> = opts.node.split(':').collect();
         new_node = NodeNetworkAddressBuilder::new()
