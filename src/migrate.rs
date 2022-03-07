@@ -498,7 +498,7 @@ pub fn execute_migrate(opts: MigrateOpts) -> Result<()> {
         .node_list
         .split(',')
         .map(|s| {
-            let (ip, port) = s.split_once(":").context("cannot parse ip and port")?;
+            let (ip, port) = s.split_once(':').context("cannot parse ip and port")?;
             Ok((ip.to_string(), port.parse()?))
         })
         .collect::<Result<Vec<(String, u16)>>>()
