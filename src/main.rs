@@ -66,7 +66,7 @@ mod update_node;
 mod util;
 
 #[derive(Parser)]
-#[clap(version = "6.3.0", author = "Rivtower Technologies.")]
+#[clap(version, author)]
 struct Opts {
     #[clap(subcommand)]
     sub_cmd: SubCommand,
