@@ -307,6 +307,7 @@ fn generate_new_node_config(
         config_name: "config.toml".into(),
         domain: domain.into(),
         is_stdout: false,
+        is_old: false,
     })
     .unwrap();
 
