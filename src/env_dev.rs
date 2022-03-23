@@ -188,6 +188,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             domain,
             is_stdout: false,
             config_name: "config.toml".to_string(),
+            is_old: false,
         })
         .unwrap();
     }
@@ -264,6 +265,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
             domain,
             is_stdout: false,
             config_name: "config.toml".to_string(),
+            is_old: true,
         })
         .unwrap();
     }
@@ -298,6 +300,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         domain,
         is_stdout: false,
         config_name: "config.toml".to_string(),
+        is_old: false,
     })
     .unwrap();
 
@@ -343,6 +346,7 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
             domain,
             is_stdout: false,
             config_name: "config.toml".to_string(),
+            is_old: true,
         })
         .unwrap();
     }
