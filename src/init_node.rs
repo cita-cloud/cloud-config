@@ -15,9 +15,8 @@
 use crate::config::node_config::{GrpcPortsBuilder, NodeConfigBuilder};
 use crate::constant::NODE_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::write_toml;
+use crate::util::{copy_dir_all, write_toml};
 use clap::Parser;
-use std::fs;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -90,7 +89,8 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
-    fs::create_dir_all(&node_dir).unwrap();
+    let from = format!("{}/{}", &opts.config_dir, &opts.chain_name);
+    copy_dir_all(&from, &node_dir).unwrap();
 
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     write_toml(&node_config, file_name);

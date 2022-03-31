@@ -59,29 +59,27 @@ pub struct UpdateNodeOpts {
 /// generate node config files by chain_config and node_config
 pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let is_old = opts.is_old;
-    // load chain_config
-    let file_name = format!(
-        "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
-    );
-    let chain_config = read_chain_config(&file_name).unwrap();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
-    let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
-
-    // delete old config file
-    let _ = fs::remove_file(&config_file_name);
 
     // load node_config
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     let node_config = read_node_config(file_name).unwrap();
 
-    // move account files info node folder
+    // load chain_config
+    let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+    let chain_config = read_chain_config(&file_name).unwrap();
+
+    // delete old config file
+    let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
+    let _ = fs::remove_file(&config_file_name);
+
+    // copy account files
     // only for new node
     if !is_old {
         let from = format!(
-            "{}/{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &node_config.account, KMS_DB
+            "{}/{}/{}/{}",
+            &node_dir, ACCOUNT_DIR, &node_config.account, KMS_DB
         );
         let to = format!("{}/{}", &node_dir, KMS_DB);
         fs::copy(from, to).unwrap();
@@ -124,19 +122,15 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             }
         }
         // load cert
-        let ca_cert = read_file(format!(
-            "{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, CA_CERT_DIR, CERT_PEM
-        ))
-        .unwrap();
+        let ca_cert = read_file(format!("{}/{}/{}", &node_dir, CA_CERT_DIR, CERT_PEM)).unwrap();
         let cert = read_file(format!(
-            "{}/{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CERT_PEM
+            "{}/{}/{}/{}",
+            &node_dir, CERTS_DIR, &opts.domain, CERT_PEM
         ))
         .unwrap();
         let key = read_file(format!(
-            "{}/{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, KEY_PEM
+            "{}/{}/{}/{}",
+            &node_dir, CERTS_DIR, &opts.domain, KEY_PEM
         ))
         .unwrap();
 
