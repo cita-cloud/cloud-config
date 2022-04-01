@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::config::chain_config::{ChainConfigBuilder, MicroService, MicroServiceBuilder};
 use crate::config::controller::{GenesisBlockBuilder, SystemConfigBuilder};
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::{sm3_hash, unix_now, write_toml};
+use crate::util::{read_chain_config, sm3_hash, unix_now, write_toml};
 use clap::Parser;
+use std::path::Path;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -92,6 +94,19 @@ pub struct InitChainConfigOpts {
 /// --  $(chain_name)
 /// ------  chain_config.toml
 pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error> {
+    let file_name = format!(
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+    );
+
+    if Path::new(&file_name).exists() {
+        let chain_config = read_chain_config(&file_name).unwrap();
+        // rewrite chain config only when stage is Init
+        if chain_config.stage != ConfigStage::Init {
+            return Err(Error::InvalidStage);
+        }
+    }
+
     // pre proc timestamp and chain_id
     let timestamp = if opts.timestamp == 0 {
         unix_now()
@@ -159,10 +174,6 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .micro_service_list(micro_service_list)
         .build();
 
-    let file_name = format!(
-        "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
-    );
     write_toml(&chain_config, file_name);
 
     Ok(())

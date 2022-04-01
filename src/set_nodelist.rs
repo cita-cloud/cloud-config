@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
@@ -40,6 +41,11 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
+
+    // public and finalize is ok
+    if chain_config.stage == ConfigStage::Init {
+        return Err(Error::InvalidStage);
+    }
 
     let node_list_str: Vec<&str> = opts.node_list.split(',').collect();
     let node_list = node_list_str

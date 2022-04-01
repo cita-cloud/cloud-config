@@ -36,6 +36,7 @@ use crate::migrate::{execute_migrate, MigrateOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
+use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
@@ -59,6 +60,7 @@ mod migrate;
 mod new_account;
 mod set_admin;
 mod set_nodelist;
+mod set_stage;
 mod set_validators;
 mod sign_csr;
 mod traits;
@@ -144,6 +146,9 @@ enum SubCommand {
     /// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
     #[clap(name = "migrate")]
     Migrate(MigrateOpts),
+    // set stage
+    #[clap(name = "set-stage")]
+    SetStage(SetStageOpts),
 }
 
 fn main() {
@@ -175,5 +180,6 @@ fn main() {
         SubCommand::AppendK8s(opts) => execute_append_k8s(opts).unwrap(),
         SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
         SubCommand::Migrate(opts) => execute_migrate(opts).unwrap(),
+        SubCommand::SetStage(opts) => execute_set_stage(opts).unwrap(),
     }
 }

@@ -70,7 +70,9 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
     let chain_config = read_chain_config(&file_name).unwrap();
 
-    // delete old config file
+    // because this file write by one and one section
+    // so write mode must be append
+    // so if you want rewrite, delete old config file at first
     let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
     let _ = fs::remove_file(&config_file_name);
 
