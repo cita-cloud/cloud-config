@@ -16,7 +16,7 @@ use crate::config::chain_config::ConfigStage;
 use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::{read_chain_config, write_toml};
+use crate::util::{rand_string, read_chain_config, write_toml};
 use clap::Parser;
 
 /// A subcommand for run
@@ -28,7 +28,8 @@ pub struct SetNodeListOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// node list looks like localhost:40000:node0,localhost:40001:node1
+    /// node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000
+    /// last two slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
     pub(crate) node_list: String,
 }
@@ -52,10 +53,24 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
+            let cluster = if node_network_info.len() == 3 {
+                rand_string()
+            } else {
+                node_network_info[3].to_string()
+            };
+
+            let svc_port = if node_network_info.len() == 3 {
+                40000
+            } else {
+                node_network_info[4].parse::<u16>().unwrap()
+            };
+
             NodeNetworkAddressBuilder::new()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())
+                .cluster(cluster)
+                .svc_port(svc_port)
                 .build()
         })
         .collect();

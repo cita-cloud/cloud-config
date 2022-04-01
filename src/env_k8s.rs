@@ -26,6 +26,7 @@ use crate::init_node::{execute_init_node, InitNodeOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
+use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, read_chain_config};
@@ -234,6 +235,13 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         }
     }
 
+    execute_set_stage(SetStageOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        stage: "finalize".to_string(),
+    })
+    .unwrap();
+
     // init node and update node
     for (i, node) in node_list.iter().enumerate() {
         let network_port = 50000;
@@ -258,6 +266,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             log_level: opts.log_level.clone(),
             account: node_account.1,
             package_limit: 30000,
+            cluster: "".to_string(),
         })
         .unwrap();
 
@@ -409,6 +418,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         log_level: opts.log_level.clone(),
         account: addr,
         package_limit: 30000,
+        cluster: "".to_string(),
     })
     .unwrap();
 

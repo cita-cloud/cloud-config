@@ -29,7 +29,7 @@ use crate::constant::{
 use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
-use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
+use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config, svc_name};
 use clap::Parser;
 use std::fs;
 
@@ -89,15 +89,24 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // network config file
     // if network_p2p
+    let local_cluster = &node_config.cluster;
     if find_micro_service(&chain_config, NETWORK_P2P) {
         let mut uris: Vec<P2P_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
+                let node_cluster = &node_network_address.cluster;
+                let host = if local_cluster.eq(node_cluster) {
+                    svc_name(&opts.chain_name, &opts.domain)
+                } else {
+                    node_network_address.host.clone()
+                };
+                let port = if local_cluster.eq(node_cluster) {
+                    node_network_address.svc_port
+                } else {
+                    node_network_address.port
+                };
                 uris.push(P2P_PeerConfig {
-                    address: format!(
-                        "/{}/{}/tcp/{}",
-                        DNS4, node_network_address.host, node_network_address.port
-                    ),
+                    address: format!("/{}/{}/tcp/{}", DNS4, host, port),
                 });
             }
         }
@@ -116,9 +125,20 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
                 let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
+                let node_cluster = &node_network_address.cluster;
+                let host = if local_cluster == node_cluster {
+                    svc_name(&opts.chain_name, &opts.domain)
+                } else {
+                    node_network_address.host.clone()
+                };
+                let port = if local_cluster == node_cluster {
+                    node_network_address.svc_port
+                } else {
+                    node_network_address.port
+                };
                 tls_peers.push(crate::config::network_tls::PeerConfig {
-                    host: node_network_address.host.clone(),
-                    port: node_network_address.port,
+                    host,
+                    port,
                     domain: real_domain,
                 });
             }

@@ -34,6 +34,7 @@ use crate::{
     init_node::{execute_init_node, InitNodeOpts},
     set_admin::{execute_set_admin, SetAdminOpts},
     set_nodelist::{execute_set_nodelist, SetNodeListOpts},
+    set_stage::{execute_set_stage, SetStageOpts},
     set_validators::{execute_set_validators, SetValidatorsOpts},
     sign_csr::{execute_sign_csr, SignCSROpts},
     update_node::{execute_update_node, UpdateNodeOpts},
@@ -298,6 +299,8 @@ fn generate_new_node_config(
         package_limit: DEFAULT_PACKAGE_LIMIT,
 
         log_level: "info".into(),
+
+        cluster: "".to_string(),
     })
     .unwrap();
 
@@ -432,6 +435,13 @@ where
     execute_create_ca(CreateCAOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
+    })
+    .unwrap();
+
+    execute_set_stage(SetStageOpts {
+        chain_name: chain_name.into(),
+        config_dir: config_dir.into(),
+        stage: "finalize".into(),
     })
     .unwrap();
 

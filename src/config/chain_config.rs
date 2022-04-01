@@ -23,6 +23,8 @@ pub struct NodeNetworkAddress {
     pub host: String,
     pub port: u16,
     pub domain: String,
+    pub cluster: String,
+    pub svc_port: u16,
 }
 
 impl PartialEq for NodeNetworkAddress {
@@ -43,6 +45,8 @@ pub struct NodeNetworkAddressBuilder {
     pub host: String,
     pub port: u16,
     pub domain: String,
+    pub cluster: String,
+    pub svc_port: u16,
 }
 
 impl NodeNetworkAddressBuilder {
@@ -51,6 +55,8 @@ impl NodeNetworkAddressBuilder {
             host: "localhost".to_string(),
             port: 0,
             domain: "".to_string(),
+            cluster: "".to_string(),
+            svc_port: 40000,
         }
     }
 
@@ -69,11 +75,23 @@ impl NodeNetworkAddressBuilder {
         self
     }
 
+    pub fn cluster(&mut self, cluster: String) -> &mut NodeNetworkAddressBuilder {
+        self.cluster = cluster;
+        self
+    }
+
+    pub fn svc_port(&mut self, svc_port: u16) -> &mut NodeNetworkAddressBuilder {
+        self.svc_port = svc_port;
+        self
+    }
+
     pub fn build(&self) -> NodeNetworkAddress {
         NodeNetworkAddress {
             host: self.host.clone(),
             port: self.port,
             domain: self.domain.clone(),
+            cluster: self.cluster.clone(),
+            svc_port: self.svc_port,
         }
     }
 }

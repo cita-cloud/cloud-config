@@ -16,7 +16,7 @@ use crate::config::chain_config::ConfigStage;
 use crate::config::node_config::{GrpcPortsBuilder, NodeConfigBuilder};
 use crate::constant::{CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
-use crate::util::{copy_dir_all, read_chain_config, write_toml};
+use crate::util::{copy_dir_all, rand_string, read_chain_config, write_toml};
 use clap::Parser;
 use std::path::Path;
 
@@ -68,6 +68,9 @@ pub struct InitNodeOpts {
     /// account of node
     #[clap(long = "account")]
     pub(crate) account: String,
+    /// cluster name
+    #[clap(long = "cluster", default_value = "")]
+    pub(crate) cluster: String,
 }
 
 /// execute set validators
@@ -87,6 +90,12 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         return Err(Error::InvalidStage);
     }
 
+    let cluster = if opts.cluster.is_empty() {
+        rand_string()
+    } else {
+        opts.cluster
+    };
+
     let grpc_ports = GrpcPortsBuilder::new()
         .network_port(opts.network_port)
         .consensus_port(opts.consensus_port)
@@ -103,6 +112,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .package_limit(opts.package_limit)
         .log_level(opts.log_level)
         .account(opts.account)
+        .cluster(cluster)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);

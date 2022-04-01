@@ -24,6 +24,7 @@ use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
+use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, read_chain_config};
@@ -156,6 +157,13 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
         }
     }
 
+    execute_set_stage(SetStageOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        stage: "finalize".to_string(),
+    })
+    .unwrap();
+
     #[allow(clippy::needless_range_loop)]
     for i in 0..peers_count {
         let network_port = (50000 + i * 1000) as u16;
@@ -179,6 +187,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             log_level: opts.log_level.clone(),
             account: node.1,
             package_limit: 30000,
+            cluster: "".to_string(),
         })
         .unwrap();
 
@@ -291,6 +300,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         log_level: opts.log_level.clone(),
         account: addr,
         package_limit: 30000,
+        cluster: "".to_string(),
     })
     .unwrap();
 
