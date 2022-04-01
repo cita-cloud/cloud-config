@@ -107,7 +107,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         network_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout);
+            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, NETWORK_TLS) {
         let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
@@ -145,7 +145,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         network_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout);
+            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport network service");
@@ -172,7 +172,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         consensus_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            consensus_config.write_log4rs(&node_dir, opts.is_stdout);
+            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport consensus service");
@@ -185,7 +185,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         executor_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            executor_config.write_log4rs(&node_dir, opts.is_stdout);
+            executor_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport executor service");
@@ -201,7 +201,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         storage_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            storage_config.write_log4rs(&node_dir, opts.is_stdout);
+            storage_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport storage service");
@@ -225,7 +225,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         controller_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            controller_config.write_log4rs(&node_dir, opts.is_stdout);
+            controller_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport controller service");
@@ -238,14 +238,14 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         kms_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            kms_config.write_log4rs(&node_dir, opts.is_stdout);
+            kms_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, KMS_ETH) {
         let kms_config = KmsEthConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
         kms_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            kms_config.write_log4rs(&node_dir, opts.is_stdout);
+            kms_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport kms service");

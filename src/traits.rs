@@ -48,7 +48,7 @@ pub trait TomlWriter {
 pub trait YmlWriter {
     fn service(&self) -> String;
 
-    fn write_log4rs(&self, path: &str, _is_stdout: bool)
+    fn write_log4rs(&self, path: &str, _is_stdout: bool, log_level: &str)
     where
         Self: Serialize,
     {
@@ -89,7 +89,7 @@ root:
     - stdout
     - journey-service
 "#,
-                service, service, "info"
+                service, service, log_level
             ),
         )
         .unwrap();
