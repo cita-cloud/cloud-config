@@ -29,6 +29,8 @@ use crate::env_k8s::{
     DeleteK8sOpts,
 };
 use crate::import_account::{execute_import_account, ImportAccountOpts};
+use crate::import_ca::{execute_import_ca, ImportCAOpts};
+use crate::import_cert::{execute_import_cert, ImportCertOpts};
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
@@ -53,6 +55,8 @@ mod env_dev;
 mod env_k8s;
 mod error;
 mod import_account;
+mod import_ca;
+mod import_cert;
 mod init_chain;
 mod init_chain_config;
 mod init_node;
@@ -149,6 +153,12 @@ enum SubCommand {
     // set stage
     #[clap(name = "set-stage")]
     SetStage(SetStageOpts),
+    // import ca
+    #[clap(name = "import-ca")]
+    ImportCA(ImportCAOpts),
+    // import node cert
+    #[clap(name = "import-cert")]
+    ImportCert(ImportCertOpts),
 }
 
 fn main() {
@@ -181,5 +191,7 @@ fn main() {
         SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
         SubCommand::Migrate(opts) => execute_migrate(opts).unwrap(),
         SubCommand::SetStage(opts) => execute_set_stage(opts).unwrap(),
+        SubCommand::ImportCA(opts) => execute_import_ca(opts).map(|_| ()).unwrap(),
+        SubCommand::ImportCert(opts) => execute_import_cert(opts).map(|_| ()).unwrap(),
     }
 }

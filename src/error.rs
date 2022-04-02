@@ -18,4 +18,5 @@ pub enum Error {
     DupChainName,
     ListLenNotMatch,
     InvalidStage,
+    FileNoFound,
 }
