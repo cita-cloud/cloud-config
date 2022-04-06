@@ -42,6 +42,7 @@ use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
+use crate::update_yaml::{execute_update_yaml, UpdateYamlOpts};
 
 mod append_node;
 mod append_validator;
@@ -69,6 +70,7 @@ mod set_validators;
 mod sign_csr;
 mod traits;
 mod update_node;
+mod update_yaml;
 mod util;
 
 #[derive(Parser)]
@@ -159,6 +161,9 @@ enum SubCommand {
     // import node cert
     #[clap(name = "import-cert")]
     ImportCert(ImportCertOpts),
+    // update k8s yaml
+    #[clap(name = "update-yaml")]
+    UpdateYaml(UpdateYamlOpts),
 }
 
 fn main() {
@@ -193,5 +198,6 @@ fn main() {
         SubCommand::SetStage(opts) => execute_set_stage(opts).unwrap(),
         SubCommand::ImportCA(opts) => execute_import_ca(opts).map(|_| ()).unwrap(),
         SubCommand::ImportCert(opts) => execute_import_cert(opts).map(|_| ()).unwrap(),
+        SubCommand::UpdateYaml(opts) => execute_update_yaml(opts).unwrap(),
     }
 }

@@ -96,7 +96,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             if node_network_address.domain != opts.domain {
                 let node_cluster = &node_network_address.cluster;
                 let host = if local_cluster.eq(node_cluster) {
-                    svc_name(&opts.chain_name, &opts.domain)
+                    svc_name(&opts.chain_name, &node_network_address.domain)
                 } else {
                     node_network_address.host.clone()
                 };
@@ -127,7 +127,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
                 let node_cluster = &node_network_address.cluster;
                 let host = if local_cluster == node_cluster {
-                    svc_name(&opts.chain_name, &opts.domain)
+                    svc_name(&opts.chain_name, &node_network_address.domain)
                 } else {
                     node_network_address.host.clone()
                 };
@@ -183,6 +183,10 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.consensus_port,
         );
         consensus_config.write(&config_file_name);
+        // only for new node
+        if !is_old {
+            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+        }
     } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
         let consensus_config = ConsensusBft::new(
             node_config.grpc_ports.controller_port,

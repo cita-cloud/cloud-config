@@ -22,3 +22,5 @@ rand = "0.8.4"
 libsm = "0.4.0"
 anyhow = "1"
 fs_extra = "1.2"
+k8s-openapi = { version = "0.14.0", features = ["v1_23"] }
+serde_yaml = "0.8"
