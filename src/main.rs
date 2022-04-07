@@ -20,6 +20,7 @@ use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_chain::{execute_delete_chain, DeleteChainOpts};
 use crate::delete_node::{execute_delete_node, DeleteNodeOpts};
+use crate::delete_validator::{execute_delete_validator, DeleteValidatorOpts};
 use crate::env_dev::{
     execute_append_dev, execute_create_dev, execute_delete_dev, AppendDevOpts, CreateDevOpts,
     DeleteDevOpts,
@@ -52,6 +53,7 @@ mod create_ca;
 mod create_csr;
 mod delete_chain;
 mod delete_node;
+mod delete_validator;
 mod env_dev;
 mod env_k8s;
 mod error;
@@ -152,18 +154,21 @@ enum SubCommand {
     /// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
     #[clap(name = "migrate")]
     Migrate(MigrateOpts),
-    // set stage
+    /// set stage
     #[clap(name = "set-stage")]
     SetStage(SetStageOpts),
-    // import ca
+    /// import ca
     #[clap(name = "import-ca")]
     ImportCA(ImportCAOpts),
-    // import node cert
+    /// import node cert
     #[clap(name = "import-cert")]
     ImportCert(ImportCertOpts),
-    // update k8s yaml
+    /// update k8s yaml
     #[clap(name = "update-yaml")]
     UpdateYaml(UpdateYamlOpts),
+    /// delete a validator from chain
+    #[clap(name = "delete-validator")]
+    DeleteValidator(DeleteValidatorOpts),
 }
 
 fn main() {
@@ -199,5 +204,6 @@ fn main() {
         SubCommand::ImportCA(opts) => execute_import_ca(opts).map(|_| ()).unwrap(),
         SubCommand::ImportCert(opts) => execute_import_cert(opts).map(|_| ()).unwrap(),
         SubCommand::UpdateYaml(opts) => execute_update_yaml(opts).unwrap(),
+        SubCommand::DeleteValidator(opts) => execute_delete_validator(opts).unwrap(),
     }
 }

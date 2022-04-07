@@ -299,8 +299,6 @@ fn generate_new_node_config(
         package_limit: DEFAULT_PACKAGE_LIMIT,
 
         log_level: "info".into(),
-
-        cluster: "".to_string(),
     })
     .unwrap();
 

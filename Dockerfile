@@ -3,7 +3,7 @@ WORKDIR /build
 RUN /bin/sh -c set -eux;\
     rustup component add rustfmt;\
     apt-get update;\
-    apt-get install -y --no-install-recommends libsqlite3-dev git;\
+    apt-get install -y --no-install-recommends libsqlite3-dev;\
     rm -rf /var/lib/apt/lists/*;
 COPY . /build/
 RUN cargo build --release

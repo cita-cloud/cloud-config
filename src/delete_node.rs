@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::constant::{ACCOUNT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{read_chain_config, read_node_config, write_toml};
@@ -42,6 +43,10 @@ pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
+
+    if chain_config.stage == ConfigStage::Init {
+        return Err(Error::InvalidStage);
+    }
 
     let mut node_list = chain_config.node_network_address_list.clone();
 

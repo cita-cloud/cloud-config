@@ -80,6 +80,7 @@ impl NodeNetworkAddressBuilder {
         self
     }
 
+    #[allow(dead_code)]
     pub fn svc_port(&mut self, svc_port: u16) -> &mut NodeNetworkAddressBuilder {
         self.svc_port = svc_port;
         self

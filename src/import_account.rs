@@ -28,7 +28,7 @@ use crate::{
     util::{find_micro_service, read_chain_config, write_file},
 };
 
-/// A subcommand for import account, only kms_sm is supported
+/// A subcommand for import account
 #[derive(Parser, Debug, Clone)]
 pub struct ImportAccountOpts {
     /// set chain name

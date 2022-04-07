@@ -14,10 +14,11 @@
 
 use crate::config::chain_config::ConfigStage;
 use crate::config::node_config::{GrpcPortsBuilder, NodeConfigBuilder};
-use crate::constant::{CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
+use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
-use crate::util::{copy_dir_all, rand_string, read_chain_config, write_toml};
+use crate::util::{copy_dir_all, read_chain_config, write_toml};
 use clap::Parser;
+use std::fs;
 use std::path::Path;
 
 /// A subcommand for run
@@ -68,12 +69,9 @@ pub struct InitNodeOpts {
     /// account of node
     #[clap(long = "account")]
     pub(crate) account: String,
-    /// cluster name
-    #[clap(long = "cluster", default_value = "")]
-    pub(crate) cluster: String,
 }
 
-/// execute set validators
+/// execute init node
 pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     let file_name = format!(
         "{}/{}/{}",
@@ -89,12 +87,6 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     } else {
         return Err(Error::InvalidStage);
     }
-
-    let cluster = if opts.cluster.is_empty() {
-        rand_string()
-    } else {
-        opts.cluster
-    };
 
     let grpc_ports = GrpcPortsBuilder::new()
         .network_port(opts.network_port)
@@ -112,12 +104,30 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .package_limit(opts.package_limit)
         .log_level(opts.log_level)
         .account(opts.account)
-        .cluster(cluster)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
-    let from = format!("{}/{}", &opts.config_dir, &opts.chain_name);
-    copy_dir_all(&from, &node_dir).unwrap();
+    fs::create_dir_all(&node_dir).unwrap();
+
+    // copy  accounts  ca_cert  certs and  chain_config.toml
+    let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
+    let to = format!("{}/{}", &node_dir, ACCOUNT_DIR);
+    copy_dir_all(&from, &to).unwrap();
+
+    let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, CA_CERT_DIR);
+    let to = format!("{}/{}", &node_dir, CA_CERT_DIR);
+    copy_dir_all(&from, &to).unwrap();
+
+    let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, CERTS_DIR);
+    let to = format!("{}/{}", &node_dir, CERTS_DIR);
+    copy_dir_all(&from, &to).unwrap();
+
+    let from = format!(
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+    );
+    let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+    fs::copy(&from, &to).unwrap();
 
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     write_toml(&node_config, file_name);

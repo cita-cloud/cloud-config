@@ -31,7 +31,7 @@ pub struct SignCSROpts {
     pub(crate) domain: String,
 }
 
-/// execute sign cert
+/// execute sign csr
 pub fn execute_sign_csr(opts: SignCSROpts) -> Result<String, Error> {
     // load ca cert
     let ca_cert_path = format!(

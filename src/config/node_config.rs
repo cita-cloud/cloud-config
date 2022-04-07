@@ -96,7 +96,6 @@ pub struct NodeConfig {
     pub package_limit: u64,
     pub log_level: String,
     pub account: String,
-    pub cluster: String,
 }
 
 pub struct NodeConfigBuilder {
@@ -107,7 +106,6 @@ pub struct NodeConfigBuilder {
     pub package_limit: u64,
     pub log_level: String,
     pub account: String,
-    pub cluster: String,
 }
 
 impl NodeConfigBuilder {
@@ -120,7 +118,6 @@ impl NodeConfigBuilder {
             package_limit: 30000,
             log_level: "info".to_string(),
             account: "".to_string(),
-            cluster: "".to_string(),
         }
     }
     pub fn grpc_ports(&mut self, grpc_ports: GrpcPorts) -> &mut NodeConfigBuilder {
@@ -158,11 +155,6 @@ impl NodeConfigBuilder {
         self
     }
 
-    pub fn cluster(&mut self, cluster: String) -> &mut NodeConfigBuilder {
-        self.cluster = cluster;
-        self
-    }
-
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
@@ -172,7 +164,6 @@ impl NodeConfigBuilder {
             package_limit: self.package_limit,
             log_level: self.log_level.clone(),
             account: self.account.clone(),
-            cluster: self.cluster.clone(),
         }
     }
 }

@@ -39,7 +39,7 @@ pub struct ImportCertOpts {
     pub(crate) key_path: String,
 }
 
-/// execute create csr
+/// execute import cert
 pub fn execute_import_cert(opts: ImportCertOpts) -> Result<(String, String), Error> {
     if !Path::new(&opts.cert_path).exists() {
         return Err(Error::FileNoFound);

@@ -73,9 +73,12 @@ pub struct UpdateYamlOpts {
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
     pub(crate) storage_capacity: String,
+    /// is enable debug
+    #[clap(long = "enable-debug")]
+    pub(crate) enable_debug: bool,
 }
 
-/// generate node config files by chain_config and node_config
+/// generate k8s yaml by chain_config and node_config
 pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
     let node_name = format!("{}-{}", &opts.chain_name, &opts.domain);
     let node_dir = format!("{}/{}", &opts.config_dir, &node_name);
@@ -441,7 +444,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                     &micro_service.tag
                 ));
                 consensus_container.command = Some(vec![
-                    "network".to_string(),
+                    "consensus".to_string(),
                     "run".to_string(),
                     "-c".to_string(),
                     "/etc/cita-cloud/config/config.toml".to_string(),
@@ -665,6 +668,48 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         }
 
         containers.push(kms_container);
+
+        // debug
+        if opts.enable_debug {
+            let mut debug_container = Container {
+                name: "debug".to_string(),
+                image_pull_policy: Some(opts.pull_policy.clone()),
+                ports: Some(vec![ContainerPort {
+                    container_port: 9999,
+                    name: Some("debug".to_string()),
+                    protocol: Some("TCP".to_string()),
+                    ..Default::default()
+                }]),
+                volume_mounts: Some(vec![
+                    VolumeMount {
+                        mount_path: "/data".to_string(),
+                        name: "datadir".to_string(),
+                        ..Default::default()
+                    },
+                    VolumeMount {
+                        mount_path: "/etc/cita-cloud/config".to_string(),
+                        name: "node-config".to_string(),
+                        ..Default::default()
+                    },
+                    VolumeMount {
+                        mount_path: "/etc/cita-cloud/log".to_string(),
+                        name: "node-log".to_string(),
+                        ..Default::default()
+                    },
+                    VolumeMount {
+                        mount_path: "/mnt".to_string(),
+                        name: "node-account".to_string(),
+                        ..Default::default()
+                    },
+                ]),
+                working_dir: Some("/data".to_string()),
+                ..Default::default()
+            };
+
+            debug_container.image = Some("praqma/network-multitool:latest".to_string());
+
+            containers.push(debug_container);
+        }
 
         template_spec.containers = containers;
 

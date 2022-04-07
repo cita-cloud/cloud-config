@@ -187,7 +187,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             log_level: opts.log_level.clone(),
             account: node.1,
             package_limit: 30000,
-            cluster: "".to_string(),
         })
         .unwrap();
 
@@ -300,7 +299,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         log_level: opts.log_level.clone(),
         account: addr,
         package_limit: 30000,
-        cluster: "".to_string(),
     })
     .unwrap();
 

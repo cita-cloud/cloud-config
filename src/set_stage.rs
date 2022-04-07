@@ -27,12 +27,12 @@ pub struct SetStageOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// set stage public or finalize
-    #[clap(long = "stage")]
+    /// set stage init/public/finalize
+    #[clap(long = "stage", default_value = "finalize")]
     pub(crate) stage: String,
 }
 
-/// execute set admin
+/// execute set stage
 pub fn execute_set_stage(opts: SetStageOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
@@ -41,7 +41,9 @@ pub fn execute_set_stage(opts: SetStageOpts) -> Result<(), Error> {
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 
-    if opts.stage == "public" {
+    if opts.stage == "init" {
+        chain_config.stage = ConfigStage::Init;
+    } else if opts.stage == "public" {
         chain_config.stage = ConfigStage::Public;
     } else if opts.stage == "finalize" {
         chain_config.stage = ConfigStage::Finalize;

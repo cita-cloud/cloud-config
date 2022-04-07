@@ -70,6 +70,13 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
     let chain_config = read_chain_config(&file_name).unwrap();
 
+    let mut local_cluster = "";
+    for node_network_address in &chain_config.node_network_address_list {
+        if node_network_address.domain == opts.domain {
+            local_cluster = &node_network_address.cluster;
+        }
+    }
+
     // because this file write by one and one section
     // so write mode must be append
     // so if you want rewrite, delete old config file at first
@@ -89,7 +96,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // network config file
     // if network_p2p
-    let local_cluster = &node_config.cluster;
     if find_micro_service(&chain_config, NETWORK_P2P) {
         let mut uris: Vec<P2P_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {

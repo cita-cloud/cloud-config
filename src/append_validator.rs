@@ -32,7 +32,7 @@ pub struct AppendValidatorOpts {
     pub(crate) validator: String,
 }
 
-/// execute set validators
+/// execute append validator
 pub fn execute_append_validator(opts: AppendValidatorOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
