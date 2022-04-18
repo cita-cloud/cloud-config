@@ -1,10 +1,11 @@
 # cloud-config
 
-创建链的配置文件。
+创建链的配置文件和部署文件。
 
 ### 依赖
 
-* rust: 1.56.1
+* rust: 1.59
+* libsqlite3
 
 ### 安装
 
@@ -16,14 +17,13 @@ cargo install --path .
 
 ```
 $ cloud-config -h
-cloud-config 6.3.0
-
-Rivtower Technologies.
+cloud-config 6.4.0
+Rivtower Technologies <contact@rivtower.com>
 
 USAGE:
     cloud-config <SUBCOMMAND>
 
-FLAGS:
+OPTIONS:
     -h, --help       Print help information
     -V, --version    Print version information
 
@@ -40,8 +40,11 @@ SUBCOMMANDS:
     delete-dev           delete node in env dev
     delete-k8s           delete node in env k8s
     delete-node          delete a node from chain
+    delete-validator     delete a validator from chain
     help                 Print this message or the help of the given subcommand(s)
     import-account       import account
+    import-ca            import ca
+    import-cert          import node cert
     init-chain           init a chain
     init-chain-config    init chain config
     init-node            init node
@@ -49,9 +52,11 @@ SUBCOMMANDS:
     new-account          new account
     set-admin            set admin of chain
     set-nodelist         set node list
+    set-stage            set stage
     set-validators       set validators of chain
     sign-csr             sign csr
     update-node          update node
+    update-yaml          update k8s yaml
 ```
 
 ### 设计
@@ -78,16 +83,19 @@ SUBCOMMANDS:
 
 #### 流程
 
-将创建链配置的过程拆分成8个子命令和4个辅助的子命令，以实现最正规的去中心化配置流程。
+将创建链配置的过程拆分成10个子命令和7个辅助的子命令，以实现最正规的去中心化配置流程。
 
-3个辅助子命令为：
+7个辅助子命令为：
 
 1. [create-ca](/src/create_ca.rs)创建链的根证书。会在`$(config-dir)/$(chain-name)/ca_cert/`下生成`cert.pem`和`key.pem`两个文件。
 2. [create-csr](/src/create_csr.rs)为各个节点创建证书和签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`csr.pem`和`key.pem`两个文件。
 3. [sign-csr](/src/sign_csr.rs)处理节点的签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`。
 4. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`key_id`和`kms.db`两个文件。
+5. [import-account](/src/import_account.rs)导入私钥的方式创建账户。
+6. [import-ca](/src/import_ca.rs)导入已有的`CA`证书。要求证书格式为`pem`，`key`的格式为`pkcs8`。
+7. [import-cert](/src/import_cert.rs)导入已有的节点证书。要求证书格式为`pem`，`key`的格式为`pkcs8`。
 
-8个子命令分别为：
+10个子命令分别为：
 1. [init-chain](/src/init_chain.rs)。根据指定的`config-dir`和`chan-name`,初始化一个链的文件目录结构。
     ```
     $(config_dir)
@@ -104,13 +112,23 @@ SUBCOMMANDS:
 3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
 4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令，由各个共识节点分别创建，然后将账户地址集中到一起进行设置。
 5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。如果网络微服务选择了`network_tls`，则需要通过`create-csr`根据节点的`domain`为各个节点创建证书和签名请求。然后请求`CA`通过`sign-crs`处理签名请求，并下发生成的`cert.pem`到各个节点。
-6. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
-7. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
-8. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
+6. [set-stage](/src/set_stage.rs)设置链配置进行到的阶段。将链的配置过程分为三个阶段，分别为`init`，`public`和`finalize`，一些子命令会根据当前所处的阶段，来判断是否可以进行操作，以避免一些误操作。`init-chain-config`初始化链的配置时，默认设置阶段为`init`，该阶段可以重复进行`init-chain-config`以修改链的基础配置；`set-admin`只能在`init`阶段执行，并且会自动将阶段修改为`public`；`append-validator`，`delete-validator`和`set-validators`只能在`public`阶段进行；此后需要本子命令将阶段修改为`finalize`，此时链的配置完成，不能再修改除`节点网络地址列表`之外的配置，并且此后才可以进行`init-node`操作。辅助命令和`delete-chain`不受阶段的限制。
+7. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
+8. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
+9. [update-yaml](/src/update_yaml.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点部署到`k8s`环境所需的资源文件。
+10. [delete-chain](/src/delete_chain.rs)删除链。删除属于该链的所有文件夹以及其中的文件，`使用时要慎重`。
+
+此外还有一些其他操作的子命令。
+
+比如增加单个共识节点的`append-validator`，删除单个共识节点的`delete-validator`；增加单个网络节点的`append-node`，删除单个网络节点的`delete-node`。
 
 在前述流程的基础上，封装了更高级更方便使用的子命令。
+
 比如针对开发环境，有`create-dev`，`append-dev`和`delete-dev`，使用开发环境约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以生成和操作一条链的配置。
+
 针对演示或者生产阶段的`k8s`环境，有`create-k8s`，`append-k8s`和`delete-k8s`。
+
+针对版本升级时迁移配置文件的`migrate`。
 
 
 ### 使用示例
@@ -156,7 +174,7 @@ test-chain
 
         --consensus_image <CONSENSUS_IMAGE>
             set consensus micro service image name (consensus_bft/consensus_raft) [default:
-            consensus_raft]
+            consensus_bft]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -180,7 +198,7 @@ test-chain
             set kms micro service image tag [default: latest]
 
         --network_image <NETWORK_IMAGE>
-            set network micro service image name (network_tls/network_p2p) [default: network_p2p]
+            set network micro service image name (network_tls/network_p2p) [default: network_tls]
 
         --network_tag <NETWORK_TAG>
             set network micro service image tag [default: latest]
@@ -216,15 +234,16 @@ test-chain
 ├── certs
 └── chain_config.toml
 
-$ cat test-chain/chain_config.toml 
+$ cat test-chain/chain_config.toml
 node_network_address_list = []
+stage = 'Init'
 
 [[micro_service_list]]
-image = 'network_p2p'
+image = 'network_tls'
 tag = 'latest'
 
 [[micro_service_list]]
-image = 'consensus_raft'
+image = 'consensus_bft'
 tag = 'latest'
 
 [[micro_service_list]]
@@ -245,7 +264,7 @@ tag = 'latest'
 
 [genesis_block]
 prevhash = '0x0000000000000000000000000000000000000000000000000000000000000000'
-timestamp = 1637647692548
+timestamp = 1649418157966
 
 [system_config]
 admin = ''
@@ -323,20 +342,7 @@ test-chain
 示例：
 
 ```
-# 这里使用cloud-cli创建一个账户
-$ cldi account create test
-user: `test`
-account_addr: 0xf24aeda3a262e81507148d41a9eb9efd1489142c
-
-# 从cloud-cli中导出这个账户
-$ cldi account export test
-{
-  "account_addr": "0xf24aeda3a262e81507148d41a9eb9efd1489142c",
-  "private_key": "0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6",
-  "public_key": "0xc3813e5c5f33c099d0c8f31c727972fc937e318088dfe78c7f55b6aa1a82b3d3cba522eaceb8c4527aaa5670eabdb0fca4bdb09ea97f0e7fb617585c2d1347f6"
-}
-
-# 将这个账户导入链的配置
+# 将账户私钥导入链的配置
 $ cloud-config import-account --chain-name test-chain --config-dir . --km
 s-password 123456 --privkey 0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6
 key_id:1, address:f24aeda3a262e81507148d41a9eb9efd1489142c
@@ -345,7 +351,6 @@ key_id:1, address:f24aeda3a262e81507148d41a9eb9efd1489142c
 $ ls test-chain/accounts/f24aeda3a262e81507148d41a9eb9efd1489142c/
 key_id  kms.db
 ```
-
 
 #### set-admin
 
@@ -411,6 +416,46 @@ validators = [
 1. `validator`为必选参数。值为之前用`new-account`创建的地址。
 2. 功能与`set-validators`相似，只不过是每次添加一个地址。
 
+#### delete-validator
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --validator <VALIDATOR>      validator account
+```
+
+说明：
+
+1. `validator`为必选参数。要删除的共识账户地址。
+2. 功能与`append-validator`相反，删除一个共识账户。
+
+#### set-stage
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --stage <STAGE>              set stage init/public/finalize [default: finalize]
+```
+
+说明：
+
+1. `stage`为要设置的阶段名称。默认值为`finalize`，因为其他两个阶段会随着子命令自动变迁，正常情况下只有`finalize`需要手工设置。各阶段的详细含义参见设计部分的描述。
+2. 只有确定过了某个阶段才发现前一个阶段的信息还需要修改，才需要回溯阶段。随意回溯阶段，可能会导致配置被不合理的修改，请谨慎操作。
+
+```
+$ cat test-chain/chain_config.toml | grep stage
+stage = 'Public'
+$ cloud-config set-stage
+$ cat test-chain/chain_config.toml | grep stage
+stage = 'Finalize'
+```
+
 #### set-nodelist
 
 参数：
@@ -420,27 +465,51 @@ validators = [
         --config-dir <CONFIG_DIR>    set config file directory, default means current directory
                                      [default: .]
         --nodelist <NODE_LIST>       node list looks like
-                                     localhost:40000:node0,localhost:40001:node1
+                                     localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2
+                                     last slice is optional, none means not k8s env
 ```
 
 说明：
 
-1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
-2. `domain`为任意字符串，只需要确保节点之间不重复即可。
+1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，该项可以省略。
+3. `domain`为任意字符串，只需要确保节点之间不重复即可。
 
 ```
 $ cloud-config set-nodelist --nodelist localhost:40000:node0,localhost:40001:node1 
 
-$ cat test-chain/chain_config.toml | grep -A3 node_network                                       
+$ cat test-chain/chain_config.toml | grep -A5 node_network
 [[node_network_address_list]]
+cluster = 'aaIOppLx'
 domain = 'node0'
 host = 'localhost'
 port = 40000
+svc_port = 40000
 --
 [[node_network_address_list]]
+cluster = 'xwIaqkcX'
 domain = 'node1'
 host = 'localhost'
 port = 40001
+svc_port = 40000
+```
+
+```
+$ cloud-config set-nodelist --nodelist localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
+$ cat test-chain/chain_config.toml | grep -A5 node_network
+[[node_network_address_list]]
+cluster = 'k8s_cluster1'
+domain = 'node0'
+host = 'localhost'
+port = 40000
+svc_port = 40000
+--
+[[node_network_address_list]]
+cluster = 'k8s_cluster2'
+domain = 'node1'
+host = 'localhost'
+port = 40001
+svc_port = 40000
 ```
 
 #### append-node
@@ -451,12 +520,14 @@ port = 40001
         --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>    set config file directory, default means current directory
                                      [default: .]
-        --node <NODE>                node network address looks like localhost:40002:node2
+        --node <NODE>                node network address looks like
+                                     localhost:40002:node2:k8s_cluster1 last slice is optional, none
+                                     means not k8s env
 ```
 
-1. `node`为必选参数。值为节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
-2. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
-
+1. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，该项可以省略。
+3. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
 
 #### delete-node
 
@@ -506,6 +577,40 @@ test-chain
 
 说明：
 1. 该命令生成文件形式的根证书，存放在`ca_cert`目录下。
+
+#### import-ca
+
+参数：
+
+```
+        --ca-cert <CA_CERT_PATH>     set path of ca cert file(pem)
+        --ca-key <CA_KEY_PATH>       set path of ca key file(pem)
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+```
+
+说明：
+1. `ca-cert`为必选参数。为要导入的`CA`证书文件路径，格式为`pem`。
+2. `ca-key`为必选参数。为要导入的`CA`证书`key`文件路径，格式为`pem`，并且编码格式为`pkcs8`。
+
+#### import-cert
+
+参数：
+
+```
+        --cert <CERT_PATH>           set path of cert file(pem)
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --domain <DOMAIN>            domain of node
+        --key <KEY_PATH>             set path of key file(pem)
+```
+
+说明：
+1. `domain`为必选参数。值为前面`set-nodelist`或者`append-node`时传递的节点的网络地址中的`domain`。
+2. `cert`为必选参数。为要导入的节点证书文件路径，格式为`pem`。
+4. `key`为必选参数。为要导入的节点证书`key`文件路径，格式为`pem`，并且编码格式为`pkcs8`。
 
 #### create-csr
 
@@ -642,7 +747,7 @@ test-chain
             grpc kms_port of node [default: 50005]
 
         --log-level <LOG_LEVEL>
-            key id of account in kms db [default: info]
+            log level [default: info]
 
         --network-listen-port <NETWORK_LISTEN_PORT>
             network listen port of node [default: 40000]
@@ -669,9 +774,36 @@ $ cloud-config init-node --domain node1 --account 344a9d7c390ea5f884e7c0ebf30abb
 
 $ tree test-chain-node* 
 test-chain-node0
+├── accounts
+│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+├── chain_config.toml
 └── node_config.toml
 test-chain-node1
+├── accounts
+│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── key_id
+│   │   └── kms.db
+│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── key_id
+│   │   └── kms.db
+│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│       ├── key_id
+│       └── kms.db
+├── ca_cert
+├── certs
+├── chain_config.toml
 └── node_config.toml
+
 
 $ cat test-chain-node0/node_config.toml
 account = '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa'
@@ -700,10 +832,13 @@ storage_port = 50003
                                        [default: .]
         --config-name <CONFIG_NAME>    set config file name [default: config.toml]
         --domain <DOMAIN>              domain of node
+        --is-old                       is old node
+        --is-stdout                    is output to stdout
 ```
 
 说明：
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
+2. `is-old`用于区别是刷新已有的节点，还是新节点初次生成配置。
 
 ```
 $ cloud-config update-node --domain node0
@@ -729,6 +864,52 @@ test-chain-node1
 ├── network-log4rs.yaml
 ├── node_config.toml
 └── storage-log4rs.yaml
+```
+
+#### update-yaml
+
+参数：
+
+```
+        --chain-name <CHAIN_NAME>
+            set chain name [default: test-chain]
+
+        --config-dir <CONFIG_DIR>
+            set config file directory, default means current directory [default: .]
+
+        --config-name <CONFIG_NAME>
+            set config file name [default: config.toml]
+
+        --docker-registry <DOCKER_REGISTRY>
+            docker registry [default: docker.io]
+
+        --docker-repo <DOCKER_REPO>
+            docker repo [default: citacloud]
+
+        --domain <DOMAIN>
+            domain of node
+
+        --enable-debug
+            is enable debug
+
+        --pull-policy <PULL_POLICY>
+            image pull policy: IfNotPresent or Always [default: IfNotPresent]
+
+        --storage-capacity <STORAGE_CAPACITY>
+            storage capacity [default: 10Gi]
+
+        --storage-class <STORAGE_CLASS>
+            storage class
+```
+
+说明：
+1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
+2. `storage-class`为必选参数，指定节点在`k8s`集群中的持久化存储使用的存储类。
+
+```
+$ cloud-config update-yaml --domain node0 --storage-class nfs-client
+$ ls test-chain-node0/yamls
+test-chain-node0-cm-account.yaml  test-chain-node0-cm-config.yaml  test-chain-node0-cm-log.yaml  test-chain-node0-svc.yaml  test-chain-node0.yaml
 ```
 
 #### delete-chain

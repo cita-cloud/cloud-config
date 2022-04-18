@@ -12,56 +12,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CA_CERT_DIR, CERTS_DIR, CERT_PEM, CSR_PEM, KEY_PEM};
+use crate::constant::{CA_CERT_DIR, CERT_PEM, KEY_PEM};
 use crate::error::Error;
-use crate::util::{read_file, restore_ca_cert, sign_csr, write_file};
+use crate::util::read_file;
 use clap::Parser;
+use std::fs;
+use std::path::Path;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
-pub struct SignCSROpts {
+pub struct ImportCAOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
     pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// domain of node
-    #[clap(long = "domain")]
-    pub(crate) domain: String,
+    /// set path of ca cert file(pem)
+    #[clap(long = "ca-cert")]
+    pub(crate) ca_cert_path: String,
+    /// set path of ca key file(pem)
+    #[clap(long = "ca-key")]
+    pub(crate) ca_key_path: String,
 }
 
-/// execute sign csr
-pub fn execute_sign_csr(opts: SignCSROpts) -> Result<String, Error> {
-    // load ca cert
-    let ca_cert_path = format!(
+/// execute import ca
+pub fn execute_import_ca(opts: ImportCAOpts) -> Result<(String, String), Error> {
+    if !Path::new(&opts.ca_cert_path).exists() {
+        return Err(Error::FileNoFound);
+    }
+
+    if !Path::new(&opts.ca_key_path).exists() {
+        return Err(Error::FileNoFound);
+    }
+
+    let cert_path = format!(
         "{}/{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CA_CERT_DIR, CERT_PEM
     );
-    let ca_cert_pem = read_file(ca_cert_path).unwrap();
 
-    let ca_key_path = format!(
+    fs::copy(&opts.ca_cert_path, &cert_path).unwrap();
+
+    let key_path = format!(
         "{}/{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CA_CERT_DIR, KEY_PEM
     );
-    let ca_key_pem = read_file(ca_key_path).unwrap();
-    let ca = restore_ca_cert(&ca_cert_pem, &ca_key_pem);
 
-    // load csr
-    let csr_pem_path = format!(
-        "{}/{}/{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CSR_PEM
-    );
-    let csr_pem = read_file(csr_pem_path).unwrap();
+    fs::copy(&opts.ca_key_path, &key_path).unwrap();
 
-    // sign csr
-    let cert_pem = sign_csr(&csr_pem, &ca);
+    let ca_cert_pem = read_file(cert_path).unwrap();
+    let ca_key_pem = read_file(key_path).unwrap();
 
-    let cert_pem_path = format!(
-        "{}/{}/{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CERT_PEM
-    );
-    write_file(cert_pem.as_bytes(), cert_pem_path);
-
-    Ok(cert_pem)
+    Ok((ca_cert_pem, ca_key_pem))
 }

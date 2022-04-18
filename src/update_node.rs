@@ -29,7 +29,7 @@ use crate::constant::{
 use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
-use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
+use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config, svc_name};
 use clap::Parser;
 use std::fs;
 
@@ -59,29 +59,36 @@ pub struct UpdateNodeOpts {
 /// generate node config files by chain_config and node_config
 pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let is_old = opts.is_old;
-    // load chain_config
-    let file_name = format!(
-        "{}/{}/{}",
-        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
-    );
-    let chain_config = read_chain_config(&file_name).unwrap();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
-    let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
-
-    // delete old config file
-    let _ = fs::remove_file(&config_file_name);
 
     // load node_config
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
     let node_config = read_node_config(file_name).unwrap();
 
-    // move account files info node folder
+    // load chain_config
+    let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+    let chain_config = read_chain_config(&file_name).unwrap();
+
+    let mut local_cluster = "";
+    for node_network_address in &chain_config.node_network_address_list {
+        if node_network_address.domain == opts.domain {
+            local_cluster = &node_network_address.cluster;
+        }
+    }
+
+    // because this file write by one and one section
+    // so write mode must be append
+    // so if you want rewrite, delete old config file at first
+    let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
+    let _ = fs::remove_file(&config_file_name);
+
+    // copy account files
     // only for new node
     if !is_old {
         let from = format!(
-            "{}/{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, &node_config.account, KMS_DB
+            "{}/{}/{}/{}",
+            &node_dir, ACCOUNT_DIR, &node_config.account, KMS_DB
         );
         let to = format!("{}/{}", &node_dir, KMS_DB);
         fs::copy(from, to).unwrap();
@@ -93,11 +100,19 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         let mut uris: Vec<P2P_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
+                let node_cluster = &node_network_address.cluster;
+                let host = if local_cluster.eq(node_cluster) {
+                    svc_name(&opts.chain_name, &node_network_address.domain)
+                } else {
+                    node_network_address.host.clone()
+                };
+                let port = if local_cluster.eq(node_cluster) {
+                    node_network_address.svc_port
+                } else {
+                    node_network_address.port
+                };
                 uris.push(P2P_PeerConfig {
-                    address: format!(
-                        "/{}/{}/tcp/{}",
-                        DNS4, node_network_address.host, node_network_address.port
-                    ),
+                    address: format!("/{}/{}/tcp/{}", DNS4, host, port),
                 });
             }
         }
@@ -109,34 +124,41 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         network_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout);
+            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, NETWORK_TLS) {
         let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
                 let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
+                let node_cluster = &node_network_address.cluster;
+                let host = if local_cluster == node_cluster {
+                    svc_name(&opts.chain_name, &node_network_address.domain)
+                } else {
+                    node_network_address.host.clone()
+                };
+                let port = if local_cluster == node_cluster {
+                    node_network_address.svc_port
+                } else {
+                    node_network_address.port
+                };
                 tls_peers.push(crate::config::network_tls::PeerConfig {
-                    host: node_network_address.host.clone(),
-                    port: node_network_address.port,
+                    host,
+                    port,
                     domain: real_domain,
                 });
             }
         }
         // load cert
-        let ca_cert = read_file(format!(
-            "{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, CA_CERT_DIR, CERT_PEM
-        ))
-        .unwrap();
+        let ca_cert = read_file(format!("{}/{}/{}", &node_dir, CA_CERT_DIR, CERT_PEM)).unwrap();
         let cert = read_file(format!(
-            "{}/{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, CERT_PEM
+            "{}/{}/{}/{}",
+            &node_dir, CERTS_DIR, &opts.domain, CERT_PEM
         ))
         .unwrap();
         let key = read_file(format!(
-            "{}/{}/{}/{}/{}",
-            &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain, KEY_PEM
+            "{}/{}/{}/{}",
+            &node_dir, CERTS_DIR, &opts.domain, KEY_PEM
         ))
         .unwrap();
 
@@ -151,7 +173,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         network_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout);
+            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport network service");
@@ -167,6 +189,10 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.consensus_port,
         );
         consensus_config.write(&config_file_name);
+        // only for new node
+        if !is_old {
+            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+        }
     } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
         let consensus_config = ConsensusBft::new(
             node_config.grpc_ports.controller_port,
@@ -178,7 +204,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         consensus_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            consensus_config.write_log4rs(&node_dir, opts.is_stdout);
+            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport consensus service");
@@ -191,7 +217,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         executor_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            executor_config.write_log4rs(&node_dir, opts.is_stdout);
+            executor_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport executor service");
@@ -207,7 +233,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         storage_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            storage_config.write_log4rs(&node_dir, opts.is_stdout);
+            storage_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport storage service");
@@ -231,7 +257,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         controller_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            controller_config.write_log4rs(&node_dir, opts.is_stdout);
+            controller_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport controller service");
@@ -244,14 +270,14 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         kms_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            kms_config.write_log4rs(&node_dir, opts.is_stdout);
+            kms_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, KMS_ETH) {
         let kms_config = KmsEthConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
         kms_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            kms_config.write_log4rs(&node_dir, opts.is_stdout);
+            kms_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport kms service");

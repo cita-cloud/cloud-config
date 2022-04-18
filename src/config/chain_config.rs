@@ -23,6 +23,8 @@ pub struct NodeNetworkAddress {
     pub host: String,
     pub port: u16,
     pub domain: String,
+    pub cluster: String,
+    pub svc_port: u16,
 }
 
 impl PartialEq for NodeNetworkAddress {
@@ -43,6 +45,8 @@ pub struct NodeNetworkAddressBuilder {
     pub host: String,
     pub port: u16,
     pub domain: String,
+    pub cluster: String,
+    pub svc_port: u16,
 }
 
 impl NodeNetworkAddressBuilder {
@@ -51,6 +55,8 @@ impl NodeNetworkAddressBuilder {
             host: "localhost".to_string(),
             port: 0,
             domain: "".to_string(),
+            cluster: "".to_string(),
+            svc_port: 40000,
         }
     }
 
@@ -69,11 +75,24 @@ impl NodeNetworkAddressBuilder {
         self
     }
 
+    pub fn cluster(&mut self, cluster: String) -> &mut NodeNetworkAddressBuilder {
+        self.cluster = cluster;
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn svc_port(&mut self, svc_port: u16) -> &mut NodeNetworkAddressBuilder {
+        self.svc_port = svc_port;
+        self
+    }
+
     pub fn build(&self) -> NodeNetworkAddress {
         NodeNetworkAddress {
             host: self.host.clone(),
             port: self.port,
             domain: self.domain.clone(),
+            cluster: self.cluster.clone(),
+            svc_port: self.svc_port,
         }
     }
 }
@@ -115,12 +134,20 @@ impl MicroServiceBuilder {
     }
 }
 
+#[derive(Debug, Serialize, Clone, Deserialize, PartialEq)]
+pub enum ConfigStage {
+    Init,
+    Public,
+    Finalize,
+}
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ChainConfig {
     pub system_config: SystemConfigFile,
     pub genesis_block: GenesisBlock,
     pub node_network_address_list: Vec<NodeNetworkAddress>,
     pub micro_service_list: Vec<MicroService>,
+    pub stage: ConfigStage,
 }
 
 impl ChainConfig {
@@ -135,6 +162,10 @@ impl ChainConfig {
     pub fn set_node_network_address_list(&mut self, node_list: Vec<NodeNetworkAddress>) {
         self.node_network_address_list = node_list;
     }
+
+    pub fn set_stage(&mut self, stage: ConfigStage) {
+        self.stage = stage;
+    }
 }
 
 pub struct ChainConfigBuilder {
@@ -142,6 +173,7 @@ pub struct ChainConfigBuilder {
     pub genesis_block: GenesisBlock,
     pub node_network_address_list: Vec<NodeNetworkAddress>,
     pub micro_service_list: Vec<MicroService>,
+    pub stage: ConfigStage,
 }
 
 impl ChainConfigBuilder {
@@ -151,6 +183,7 @@ impl ChainConfigBuilder {
             genesis_block: GenesisBlockBuilder::new().build(),
             node_network_address_list: Vec::new(),
             micro_service_list: Vec::new(),
+            stage: ConfigStage::Init,
         }
     }
     pub fn system_config(&mut self, system_config: SystemConfigFile) -> &mut ChainConfigBuilder {
@@ -186,6 +219,7 @@ impl ChainConfigBuilder {
             genesis_block: self.genesis_block.clone(),
             node_network_address_list: self.node_network_address_list.clone(),
             micro_service_list: self.micro_service_list.clone(),
+            stage: self.stage.clone(),
         }
     }
 }

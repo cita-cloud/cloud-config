@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::{read_chain_config, write_toml};
@@ -40,9 +41,14 @@ pub fn execute_set_admin(opts: SetAdminOpts) -> Result<(), Error> {
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 
+    if chain_config.stage != ConfigStage::Init {
+        return Err(Error::InvalidStage);
+    }
+
     let admin = opts.admin;
 
     chain_config.set_admin(admin);
+    chain_config.set_stage(ConfigStage::Public);
 
     // store chain_config
     write_toml(&chain_config, file_name);

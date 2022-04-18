@@ -41,7 +41,6 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String), Error>
     );
     let _chain_config = read_chain_config(&file_name).unwrap();
 
-    // Now only support kms_sm
     let is_eth = find_micro_service(&_chain_config, KMS_ETH);
 
     // new account in base folder
