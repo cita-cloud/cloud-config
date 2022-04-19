@@ -25,10 +25,12 @@ use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::api::core::v1::ConfigMapVolumeSource;
 use k8s_openapi::api::core::v1::Container;
 use k8s_openapi::api::core::v1::ContainerPort;
+use k8s_openapi::api::core::v1::ExecAction;
 use k8s_openapi::api::core::v1::PersistentVolumeClaim;
 use k8s_openapi::api::core::v1::PersistentVolumeClaimSpec;
 use k8s_openapi::api::core::v1::PodSpec;
 use k8s_openapi::api::core::v1::PodTemplateSpec;
+use k8s_openapi::api::core::v1::Probe;
 use k8s_openapi::api::core::v1::ResourceRequirements;
 use k8s_openapi::api::core::v1::Service;
 use k8s_openapi::api::core::v1::ServicePort;
@@ -348,6 +350,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 },
             ]),
             working_dir: Some("/data".to_string()),
+            liveness_probe: Some(Probe {
+                exec: Some(ExecAction {
+                    command: Some(vec![
+                        "grpc_health_probe".to_string(),
+                        "-addr=127.0.0.1:50000".to_string(),
+                    ]),
+                }),
+                initial_delay_seconds: Some(15),
+                period_seconds: Some(10),
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
@@ -416,6 +429,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 },
             ]),
             working_dir: Some("/data".to_string()),
+            liveness_probe: Some(Probe {
+                exec: Some(ExecAction {
+                    command: Some(vec![
+                        "grpc_health_probe".to_string(),
+                        "-addr=127.0.0.1:50001".to_string(),
+                    ]),
+                }),
+                initial_delay_seconds: Some(15),
+                period_seconds: Some(10),
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
@@ -484,6 +508,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 },
             ]),
             working_dir: Some("/data".to_string()),
+            liveness_probe: Some(Probe {
+                exec: Some(ExecAction {
+                    command: Some(vec![
+                        "grpc_health_probe".to_string(),
+                        "-addr=127.0.0.1:50002".to_string(),
+                    ]),
+                }),
+                initial_delay_seconds: Some(15),
+                period_seconds: Some(10),
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
@@ -537,6 +572,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 },
             ]),
             working_dir: Some("/data".to_string()),
+            liveness_probe: Some(Probe {
+                exec: Some(ExecAction {
+                    command: Some(vec![
+                        "grpc_health_probe".to_string(),
+                        "-addr=127.0.0.1:50003".to_string(),
+                    ]),
+                }),
+                initial_delay_seconds: Some(15),
+                period_seconds: Some(10),
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
@@ -590,6 +636,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 },
             ]),
             working_dir: Some("/data".to_string()),
+            liveness_probe: Some(Probe {
+                exec: Some(ExecAction {
+                    command: Some(vec![
+                        "grpc_health_probe".to_string(),
+                        "-addr=127.0.0.1:50004".to_string(),
+                    ]),
+                }),
+                initial_delay_seconds: Some(30),
+                period_seconds: Some(10),
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
@@ -648,6 +705,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 },
             ]),
             working_dir: Some("/data".to_string()),
+            liveness_probe: Some(Probe {
+                exec: Some(ExecAction {
+                    command: Some(vec![
+                        "grpc_health_probe".to_string(),
+                        "-addr=127.0.0.1:50005".to_string(),
+                    ]),
+                }),
+                initial_delay_seconds: Some(15),
+                period_seconds: Some(10),
+                ..Default::default()
+            }),
             ..Default::default()
         };
 
