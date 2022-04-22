@@ -892,19 +892,33 @@ test-chain-node1
         --enable-debug
             is enable debug
 
+        --limits-cpu <LIMITS_CPU>
+            container resource requirements -- limits cpu [default: 4000m]
+
+        --limits-memory <LIMITS_MEMORY>
+            container resource requirements -- limits memory [default: 8192Mi]
+
         --pull-policy <PULL_POLICY>
             image pull policy: IfNotPresent or Always [default: IfNotPresent]
+
+        --requests-cpu <REQUESTS_CPU>
+            container resource requirements -- requests cpu [default: 10m]
+
+        --requests-memory <REQUESTS_MEMORY>
+            container resource requirements -- requests memory [default: 32Mi]
 
         --storage-capacity <STORAGE_CAPACITY>
             storage capacity [default: 10Gi]
 
         --storage-class <STORAGE_CLASS>
             storage class
+
 ```
 
 说明：
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
 2. `storage-class`为必选参数，指定节点在`k8s`集群中的持久化存储使用的存储类。
+3. `limits-cpu`,`limits-memory`,`requests-cpu`,`requests-memory`用于设定微服务的硬件资源需求。请根据实际运行环境的硬件配置进行调整，以获得最佳性能体验。
 
 ```
 $ cloud-config update-yaml --domain node0 --storage-class nfs-client
