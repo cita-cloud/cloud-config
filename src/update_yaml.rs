@@ -75,6 +75,18 @@ pub struct UpdateYamlOpts {
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
     pub(crate) storage_capacity: String,
+    /// container resource requirements -- requests cpu
+    #[clap(long = "requests-cpu", default_value = "10m")]
+    pub(crate) requests_cpu: String,
+    /// container resource requirements -- requests memory
+    #[clap(long = "requests-memory", default_value = "32Mi")]
+    pub(crate) requests_memory: String,
+    /// container resource requirements -- limits cpu
+    #[clap(long = "limits-cpu", default_value = "4000m")]
+    pub(crate) limits_cpu: String,
+    /// container resource requirements -- limits memory
+    #[clap(long = "limits-memory", default_value = "8192Mi")]
+    pub(crate) limits_memory: String,
     /// is enable debug
     #[clap(long = "enable-debug")]
     pub(crate) enable_debug: bool,
@@ -314,6 +326,17 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
 
         let mut template_spec = PodSpec::default();
         let mut containers = Vec::new();
+
+        let mut container_resources_requirements = ResourceRequirements::default();
+        let mut requests = BTreeMap::new();
+        requests.insert("cpu".to_string(), Quantity(opts.requests_cpu.clone()));
+        requests.insert("memory".to_string(), Quantity(opts.requests_memory.clone()));
+        container_resources_requirements.requests = Some(requests);
+        let mut limits = BTreeMap::new();
+        limits.insert("cpu".to_string(), Quantity(opts.limits_cpu.clone()));
+        limits.insert("memory".to_string(), Quantity(opts.limits_memory.clone()));
+        container_resources_requirements.limits = Some(limits);
+
         // network
         let mut network_container = Container {
             name: "network".to_string(),
@@ -361,6 +384,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 period_seconds: Some(10),
                 ..Default::default()
             }),
+            resources: Some(container_resources_requirements.clone()),
             ..Default::default()
         };
 
@@ -440,6 +464,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 period_seconds: Some(10),
                 ..Default::default()
             }),
+            resources: Some(container_resources_requirements.clone()),
             ..Default::default()
         };
 
@@ -519,6 +544,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 period_seconds: Some(10),
                 ..Default::default()
             }),
+            resources: Some(container_resources_requirements.clone()),
             ..Default::default()
         };
 
@@ -583,6 +609,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 period_seconds: Some(10),
                 ..Default::default()
             }),
+            resources: Some(container_resources_requirements.clone()),
             ..Default::default()
         };
 
@@ -647,6 +674,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 period_seconds: Some(10),
                 ..Default::default()
             }),
+            resources: Some(container_resources_requirements.clone()),
             ..Default::default()
         };
 
@@ -716,6 +744,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 period_seconds: Some(10),
                 ..Default::default()
             }),
+            resources: Some(container_resources_requirements),
             ..Default::default()
         };
 
