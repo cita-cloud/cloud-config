@@ -195,8 +195,6 @@ mod controller_test {
 
     #[test]
     fn basic_test() {
-        let _ = std::fs::remove_file("example/config.toml");
-
         let config = ControllerConfig {
             network_port: 51230,
             consensus_port: 51231,
@@ -218,5 +216,7 @@ mod controller_test {
         };
 
         genesis.write("example");
+
+        let _ = std::fs::remove_file("example");
     }
 }

@@ -474,3 +474,90 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod k8s_test {
+    use super::*;
+    use crate::util::rand_string;
+
+    #[test]
+    fn k8s_test() {
+        let name = rand_string();
+        let name1 = rand_string();
+        execute_create_k8s(CreateK8sOpts {
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: "".to_string(),
+            block_interval: 3,
+            block_limit: 100,
+            network_image: "network_tls".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_bft".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_rocksdb".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            kms_image: "kms_sm".to_string(),
+            kms_tag: "latest".to_string(),
+            admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
+            kms_password_list: "123,123".to_string(),
+            node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
+                .to_string(),
+            log_level: "info".to_string(),
+        })
+        .unwrap();
+
+        execute_create_k8s(CreateK8sOpts {
+            chain_name: name1,
+            config_dir: "/tmp".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: "".to_string(),
+            block_interval: 3,
+            block_limit: 100,
+            network_image: "network_p2p".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_raft".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_rocksdb".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            kms_image: "kms_eth".to_string(),
+            kms_tag: "latest".to_string(),
+            admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
+            kms_password_list: "123,123".to_string(),
+            node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
+                .to_string(),
+            log_level: "info".to_string(),
+        })
+        .unwrap();
+
+        execute_append_k8s(AppendK8sOpts {
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
+            log_level: "info".to_string(),
+            kms_password: "123".to_string(),
+            node: "localhost:40002:node2:k8s:40000".to_string(),
+        })
+        .unwrap();
+
+        execute_delete_k8s(DeleteK8sOpts {
+            chain_name: name,
+            config_dir: "/tmp".to_string(),
+            domain: "node2".to_string(),
+        })
+        .unwrap();
+    }
+}
