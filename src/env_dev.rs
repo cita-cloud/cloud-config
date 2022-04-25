@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_BFT, KMS_ETH, NETWORK_TLS};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT, KMS_ETH, NETWORK_P2P, NETWORK_TLS};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -78,11 +78,11 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let mut init_chain_config_opts = InitChainConfigOpts::parse_from(vec![""]);
     init_chain_config_opts.chain_name = opts.chain_name.clone();
     init_chain_config_opts.config_dir = opts.config_dir.clone();
-    if is_tls {
-        init_chain_config_opts.network_image = NETWORK_TLS.to_string();
+    if !is_tls {
+        init_chain_config_opts.network_image = NETWORK_P2P.to_string();
     }
-    if opts.is_bft {
-        init_chain_config_opts.consensus_image = CONSENSUS_BFT.to_string();
+    if !opts.is_bft {
+        init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
     }
     if opts.is_eth {
         init_chain_config_opts.kms_image = KMS_ETH.to_string();
@@ -365,37 +365,45 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
 #[cfg(test)]
 mod dev_test {
     use super::*;
+    use crate::util::rand_string;
 
     #[test]
-    fn create_test() {
+    fn dev_test() {
+        let name = rand_string();
+        let name1 = rand_string();
         execute_create_dev(CreateDevOpts {
-            chain_name: "test-chain".to_string(),
-            config_dir: ".".to_string(),
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
             is_tls: false,
             is_bft: false,
+            is_eth: false,
+        })
+        .unwrap();
+
+        execute_create_dev(CreateDevOpts {
+            chain_name: name1,
+            config_dir: "/tmp".to_string(),
+            peers_count: 2,
+            log_level: "info".to_string(),
+            is_tls: true,
+            is_bft: true,
             is_eth: true,
         })
-        .unwrap()
-    }
+        .unwrap();
 
-    #[test]
-    fn append_test() {
         execute_append_dev(AppendDevOpts {
-            chain_name: "test-chain".to_string(),
-            config_dir: ".".to_string(),
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
             log_level: "info".to_string(),
         })
-        .unwrap()
-    }
+        .unwrap();
 
-    #[test]
-    fn delete_test() {
         execute_delete_dev(DeleteDevOpts {
-            chain_name: "test-chain".to_string(),
-            config_dir: ".".to_string(),
+            chain_name: name,
+            config_dir: "/tmp".to_string(),
         })
-        .unwrap()
+        .unwrap();
     }
 }
