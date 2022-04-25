@@ -11,8 +11,8 @@ edition = "2021"
 clap = { version = "3.1", features = ["derive"] }
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-kms_sm = { git = "https://github.com/cita-cloud/kms_sm", package = "kms" }
-kms_eth = { git = "https://github.com/cita-cloud/kms_eth", package = "kms" }
+kms_sm = { git = "https://github.com/cita-cloud/kms_sm", package = "kms", branch = "v6.4.0" }
+kms_eth = { git = "https://github.com/cita-cloud/kms_eth", package = "kms", branch = "v6.4.0" }
 toml = "0.5"
 hex = "0.4"
 rcgen = { version = "0.9", features = ["pem", "x509-parser"] }
