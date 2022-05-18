@@ -14,6 +14,7 @@
 
 pub(crate) mod chain_config;
 pub(crate) mod consensus_bft;
+pub(crate) mod consensus_overlord;
 pub(crate) mod consensus_raft;
 pub(crate) mod controller;
 pub(crate) mod executor_evm;

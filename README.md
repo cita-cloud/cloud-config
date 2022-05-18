@@ -173,7 +173,7 @@ test-chain
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft) [default:
+            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord) [default:
             consensus_bft]
 
         --consensus_tag <CONSENSUS_TAG>
@@ -296,13 +296,13 @@ version = 0
 
 ```
 $ cloud-config new-account   
-key_id:1, address:aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+key_id: 1 node address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5 validator address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5
 
 $ cloud-config new-account
-key_id:1, address:1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+key_id: 1 node address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa validator address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
 
 $ cloud-config new-account
-key_id:1, address:344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+key_id: 1 node address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd validator address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
 
 $ tree test-chain 
 test-chain
@@ -320,6 +320,10 @@ test-chain
 ├── certs
 └── chain_config.toml
 ```
+
+说明：
+1. 这里会创建两个地址，一个用于标识节点的`node address`，一个用于共识`validator`的`validator address`。
+2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
 
 #### import-account
 导入账户（私钥）
@@ -343,14 +347,17 @@ test-chain
 
 ```
 # 将账户私钥导入链的配置
-$ cloud-config import-account --chain-name test-chain --config-dir . --km
-s-password 123456 --privkey 0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6
-key_id:1, address:f24aeda3a262e81507148d41a9eb9efd1489142c
+$ cloud-config import-account --chain-name test-chain --config-dir . --kms-password 123456 --privkey 0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6
+key_id: 1 node address: f24aeda3a262e81507148d41a9eb9efd1489142c validator address: f24aeda3a262e81507148d41a9eb9efd1489142c
 
 # 在链的配置中查看这个账户
 $ ls test-chain/accounts/f24aeda3a262e81507148d41a9eb9efd1489142c/
 key_id  kms.db
 ```
+
+说明：
+1. 这里会创建两个地址，一个用于标识节点的`node address`，一个用于共识`validator`的`validator address`。
+2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
 
 #### set-admin
 
@@ -365,7 +372,7 @@ key_id  kms.db
 
 说明：
 
-1. `admin`为必选参数。值为之前用`new-account`创建的地址。
+1. `admin`为必选参数。值为之前用`new-account`创建的`node address`地址。
 
 
 ```
@@ -388,7 +395,7 @@ admin = 'aeaa6e333b8ed911f89acd01e88e3d9892da87b5'
 
 说明：
 
-1. `validators`为必选参数。值为多个之前用`new-account`创建的地址,用逗号分隔。
+1. `validators`为必选参数。值为多个之前用`new-account`创建的`validator address`地址,用逗号分隔。
 
 ```
 $ cloud-config set-validators --validators 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa,344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
@@ -413,7 +420,7 @@ validators = [
 
 说明：
 
-1. `validator`为必选参数。值为之前用`new-account`创建的地址。
+1. `validator`为必选参数。值为之前用`new-account`创建的`validator address`地址。
 2. 功能与`set-validators`相似，只不过是每次添加一个地址。
 
 #### delete-validator
@@ -472,7 +479,7 @@ stage = 'Finalize'
 说明：
 
 1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，该项可以省略。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
 3. `domain`为任意字符串，只需要确保节点之间不重复即可。
 
 ```
@@ -526,7 +533,7 @@ svc_port = 40000
 ```
 
 1. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，该项可以省略。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
 3. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
 
 #### delete-node
@@ -1271,7 +1278,7 @@ test-chain-3
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft) [default:
+            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord) [default:
             consensus_raft]
 
         --consensus_tag <CONSENSUS_TAG>
@@ -1308,7 +1315,9 @@ test-chain-3
             set network micro service image tag [default: latest]
 
         --nodelist <NODE_LIST>
-            node list looks like localhost:40000:node0,localhost:40001:node1
+            node list looks like
+            localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000 last
+            two slice is optional, none means not k8s env
 
         --prevhash <PREVHASH>
             set genesis prevhash [default:
@@ -1330,8 +1339,8 @@ test-chain-3
 说明:
 1. `admin`为必选参数。使用用户事先创建好的超级管理员账户地址。
 2. `kms-password-list`为必选参数。用逗号隔开的多个节点的`kms`数据库密码。
-3. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
-4. `kms-password-list`和`nodelist`的数量必须相同。
+3. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。`cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
+5. `kms-password-list`和`nodelist`的数量必须相同。
 
 ```
 $ cloud-config create-k8s --admin 8f81961f263f45f88230375623394c9301c033e7 --kms-password-list 123456,123456 --nodelist localhost:40000:node0,localhost:40001:node1
@@ -1387,12 +1396,14 @@ test-chain-node1
             log level [default: info]
 
         --node <NODE>
-            node network address looks like localhost:40002:node2
+            node network address looks like localhost:40002:node2:k8s_cluster1 last slice is
+            optional, none means not k8s env
 ```
 
 说明：
 1. `kms-password`为必选参数。值为新增节点的`kms`数据库密码。
-2. `node`为必选参数。值为新增节点的网络地址包含`ip`,`port`和`domain`，之间用分号分隔。
+2. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
+3. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
 
 
 ```

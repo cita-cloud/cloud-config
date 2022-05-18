@@ -68,7 +68,7 @@ pub struct CreateK8sOpts {
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
     pub(crate) network_tag: String,
-    /// set consensus micro service image name (consensus_bft/consensus_raft)
+    /// set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
     #[clap(long = "consensus_image", default_value = "consensus_bft")]
     pub(crate) consensus_image: String,
     /// set consensus micro service image tag
@@ -107,7 +107,8 @@ pub struct CreateK8sOpts {
     #[clap(long = "kms-password-list")]
     pub(crate) kms_password_list: String,
 
-    /// node list looks like localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000
+    /// node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000
+    /// last slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
     pub(crate) node_list: String,
 
@@ -190,7 +191,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     // gen validator addr and append validator
     let mut node_accounts = Vec::new();
     for kms_password in kms_password_list.iter() {
-        let (key_id, addr) = execute_new_account(NewAccountOpts {
+        let (key_id, addr, validator_addr) = execute_new_account(NewAccountOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             kms_password: kms_password.to_string(),
@@ -199,7 +200,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         execute_append_validator(AppendValidatorOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            validator: addr.clone(),
+            validator: validator_addr.clone(),
         })
         .unwrap();
         node_accounts.push((key_id, addr));
@@ -310,7 +311,8 @@ pub struct AppendK8sOpts {
     /// kms db password
     #[clap(long = "kms-password")]
     pub(crate) kms_password: String,
-    /// node network address looks like localhost:40002:node2:k8s:40000
+    /// node network address looks like localhost:40002:node2:k8s_cluster1
+    /// last slice is optional, none means not k8s env.
     #[clap(long = "node")]
     pub(crate) node: String,
 }
@@ -325,7 +327,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
 
     // create account for new node
-    let (key_id, addr) = execute_new_account(NewAccountOpts {
+    let (key_id, addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
         kms_password: opts.kms_password.clone(),

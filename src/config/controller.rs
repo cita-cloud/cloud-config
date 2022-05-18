@@ -38,6 +38,8 @@ pub struct ControllerConfig {
     pub node_address: String,
 
     pub package_limit: u64,
+
+    pub validator_address_len: u32,
 }
 
 impl TomlWriter for ControllerConfig {
@@ -205,6 +207,7 @@ mod controller_test {
             key_id: 1,
             node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".into(),
             package_limit: 30000,
+            validator_address_len: 20,
         };
 
         config.write("example");

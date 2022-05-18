@@ -253,7 +253,7 @@ fn generate_new_node_config(
     } = old_config;
     let node_addr = remove_0x(&node_addr).to_string();
 
-    let (key_id, account_addr) = execute_import_account(ImportAccountOpts {
+    let (key_id, account_addr, _) = execute_import_account(ImportAccountOpts {
         chain_name: chain_name.into(),
         config_dir: config_dir.into(),
         kms_password: kms_password.into(),
