@@ -13,11 +13,14 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM, KMS_DB, KMS_ETH,
-    KMS_SM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, STORAGE_ROCKSDB,
+    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM,
+    KMS_DB, KMS_ETH, KMS_SM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY,
+    STORAGE_ROCKSDB,
 };
 use crate::error::Error;
-use crate::util::{read_chain_config, read_file, read_node_config, svc_name, write_file};
+use crate::util::{
+    find_micro_service, read_chain_config, read_file, read_node_config, svc_name, write_file,
+};
 use clap::Parser;
 use k8s_openapi::api::apps::v1::StatefulSet;
 use k8s_openapi::api::apps::v1::StatefulSetSpec;
@@ -234,6 +237,12 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             KMS_DB.to_string(),
             ByteString(fs::read(&format!("{}/{}", &node_dir, KMS_DB)).unwrap()),
         );
+        if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
+            binary_data.insert(
+                PRIVATE_KEY.to_string(),
+                ByteString(fs::read(&format!("{}/{}", &node_dir, PRIVATE_KEY)).unwrap()),
+            );
+        }
         cm_account.binary_data = Some(binary_data);
 
         let yaml_file_name = format!("{}/{}-cm-account.yaml", &yamls_path, &node_name);
@@ -380,7 +389,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "-addr=127.0.0.1:50000".to_string(),
                     ]),
                 }),
-                initial_delay_seconds: Some(15),
+                initial_delay_seconds: Some(30),
                 period_seconds: Some(10),
                 ..Default::default()
             }),
@@ -389,37 +398,41 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         };
 
         for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == NETWORK_TLS {
-                network_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                network_container.command = Some(vec![
-                    "network".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "--stdout".to_string(),
-                ]);
-            } else if micro_service.image == NETWORK_P2P {
-                network_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                network_container.command = Some(vec![
-                    "network".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-l".to_string(),
-                    "/etc/cita-cloud/log/network-log4rs.yaml".to_string(),
-                ]);
+            if micro_service.image.starts_with("network") {
+                if micro_service.image == NETWORK_TLS {
+                    network_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    network_container.command = Some(vec![
+                        "network".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "--stdout".to_string(),
+                    ]);
+                } else if micro_service.image == NETWORK_P2P {
+                    network_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    network_container.command = Some(vec![
+                        "network".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-l".to_string(),
+                        "/etc/cita-cloud/log/network-log4rs.yaml".to_string(),
+                    ]);
+                } else {
+                    panic!("Unkonwn network service!");
+                }
             }
         }
 
@@ -451,6 +464,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                     name: "node-log".to_string(),
                     ..Default::default()
                 },
+                VolumeMount {
+                    mount_path: "/mnt".to_string(),
+                    name: "node-account".to_string(),
+                    ..Default::default()
+                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: Some(Probe {
@@ -460,7 +478,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "-addr=127.0.0.1:50001".to_string(),
                     ]),
                 }),
-                initial_delay_seconds: Some(15),
+                initial_delay_seconds: Some(30),
                 period_seconds: Some(10),
                 ..Default::default()
             }),
@@ -469,37 +487,53 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         };
 
         for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == CONSENSUS_RAFT {
-                consensus_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                consensus_container.command = Some(vec![
-                    "consensus".to_string(),
-                    "run".to_string(),
+            if micro_service.image.starts_with("consensus") {
+                if micro_service.image == CONSENSUS_RAFT {
+                    consensus_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    consensus_container.command = Some(vec![
+                        "consensus".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "--stdout".to_string(),
+                    ]);
+                } else if micro_service.image == CONSENSUS_BFT {
+                    consensus_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    consensus_container.command = Some(vec![
+                        "consensus".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-l".to_string(),
+                        "/etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
+                    ]);
+                } else if micro_service.image == CONSENSUS_OVERLORD {
+                    consensus_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    consensus_container.command = Some(vec!["/bin/sh".to_string(),
                     "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "--stdout".to_string(),
-                ]);
-            } else if micro_service.image == CONSENSUS_BFT {
-                consensus_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                consensus_container.command = Some(vec![
-                    "consensus".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-l".to_string(),
-                    "/etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
-                ]);
+                    "if [ ! -f \"/data/private_key\" ]; then cp /mnt/private_key /data;fi; consensus run -c /etc/cita-cloud/config/config.toml -l /etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
+                    ]);
+                } else {
+                    panic!("Unkonwn consensus service!");
+                }
             }
         }
 
@@ -540,7 +574,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "-addr=127.0.0.1:50002".to_string(),
                     ]),
                 }),
-                initial_delay_seconds: Some(15),
+                initial_delay_seconds: Some(30),
                 period_seconds: Some(10),
                 ..Default::default()
             }),
@@ -549,22 +583,26 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         };
 
         for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == EXECUTOR_EVM {
-                executor_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                executor_container.command = Some(vec![
-                    "executor".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-l".to_string(),
-                    "/etc/cita-cloud/log/executor-log4rs.yaml".to_string(),
-                ]);
+            if micro_service.image.starts_with("executor") {
+                if micro_service.image == EXECUTOR_EVM {
+                    executor_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    executor_container.command = Some(vec![
+                        "executor".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-l".to_string(),
+                        "/etc/cita-cloud/log/executor-log4rs.yaml".to_string(),
+                    ]);
+                } else {
+                    panic!("Unkonwn executor service!");
+                }
             }
         }
 
@@ -605,7 +643,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "-addr=127.0.0.1:50003".to_string(),
                     ]),
                 }),
-                initial_delay_seconds: Some(15),
+                initial_delay_seconds: Some(30),
                 period_seconds: Some(10),
                 ..Default::default()
             }),
@@ -614,22 +652,26 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         };
 
         for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == STORAGE_ROCKSDB {
-                storage_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                storage_container.command = Some(vec![
-                    "storage".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-l".to_string(),
-                    "/etc/cita-cloud/log/storage-log4rs.yaml".to_string(),
-                ]);
+            if micro_service.image.starts_with("storage") {
+                if micro_service.image == STORAGE_ROCKSDB {
+                    storage_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    storage_container.command = Some(vec![
+                        "storage".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-l".to_string(),
+                        "/etc/cita-cloud/log/storage-log4rs.yaml".to_string(),
+                    ]);
+                } else {
+                    panic!("Unkonwn storage service!");
+                }
             }
         }
 
@@ -670,7 +712,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "-addr=127.0.0.1:50004".to_string(),
                     ]),
                 }),
-                initial_delay_seconds: Some(30),
+                initial_delay_seconds: Some(60),
                 period_seconds: Some(10),
                 ..Default::default()
             }),
@@ -679,22 +721,26 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         };
 
         for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == CONTROLLER {
-                controller_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                controller_container.command = Some(vec![
-                    "controller".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-l".to_string(),
-                    "/etc/cita-cloud/log/controller-log4rs.yaml".to_string(),
-                ]);
+            if micro_service.image.starts_with("controller") {
+                if micro_service.image == CONTROLLER {
+                    controller_container.image = Some(format!(
+                        "{}/{}/{}:{}",
+                        &opts.docker_registry,
+                        &opts.docker_repo,
+                        &micro_service.image,
+                        &micro_service.tag
+                    ));
+                    controller_container.command = Some(vec![
+                        "controller".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-l".to_string(),
+                        "/etc/cita-cloud/log/controller-log4rs.yaml".to_string(),
+                    ]);
+                } else {
+                    panic!("Unkonwn controller service!");
+                }
             }
         }
 
@@ -740,7 +786,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "-addr=127.0.0.1:50005".to_string(),
                     ]),
                 }),
-                initial_delay_seconds: Some(15),
+                initial_delay_seconds: Some(30),
                 period_seconds: Some(10),
                 ..Default::default()
             }),

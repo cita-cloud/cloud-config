@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::config::consensus_bft::ConsensusBft;
+use crate::config::consensus_overlord::ConsensusOverlord;
 use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
@@ -23,8 +24,9 @@ use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
-    CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KEY_PEM, KMS_DB, KMS_ETH, KMS_SM, NETWORK_P2P,
-    NETWORK_TLS, NODE_CONFIG_FILE, STORAGE_ROCKSDB,
+    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KEY_PEM, KMS_DB, KMS_ETH,
+    KMS_SM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
+    VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
@@ -83,6 +85,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
     let _ = fs::remove_file(&config_file_name);
 
+    let is_overlord = find_micro_service(&chain_config, CONSENSUS_OVERLORD);
+
     // copy account files
     // only for new node
     if !is_old {
@@ -92,6 +96,15 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         );
         let to = format!("{}/{}", &node_dir, KMS_DB);
         fs::copy(from, to).unwrap();
+
+        if is_overlord {
+            let from = format!(
+                "{}/{}/{}/{}",
+                &node_dir, ACCOUNT_DIR, &node_config.account, PRIVATE_KEY
+            );
+            let to = format!("{}/{}", &node_dir, PRIVATE_KEY);
+            fs::copy(from, to).unwrap();
+        }
     }
 
     // network config file
@@ -206,6 +219,24 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         if !is_old {
             consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
+    } else if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
+        let validator_address_path = format!(
+            "{}/{}/{}/{}",
+            &node_dir, ACCOUNT_DIR, &node_config.account, VALIDATOR_ADDRESS
+        );
+        let validator_address = read_file(&validator_address_path).unwrap();
+        let consensus_config = ConsensusOverlord::new(
+            node_config.grpc_ports.controller_port,
+            node_config.grpc_ports.consensus_port,
+            node_config.grpc_ports.network_port,
+            node_config.grpc_ports.kms_port,
+            validator_address,
+        );
+        consensus_config.write(&config_file_name);
+        // only for new node
+        if !is_old {
+            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+        }
     } else {
         panic!("unsupport consensus service");
     }
@@ -253,6 +284,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             key_id: node_config.key_id,
             node_address: node_config.account.clone(),
             package_limit: node_config.package_limit,
+            validator_address_len: if is_overlord { 48 } else { 20 },
         };
         controller_config.write(&config_file_name);
         // only for new node

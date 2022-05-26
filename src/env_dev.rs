@@ -90,7 +90,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
     // gen admin addr and set admin
-    let (_admin_key_id, admin_addr) = execute_new_account(NewAccountOpts {
+    let (_admin_key_id, admin_addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
         kms_password: "123456".to_string(),
@@ -106,7 +106,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     // gen validator addr and append validator
     let mut node_accounts = Vec::new();
     for _ in 0..peers_count {
-        let (key_id, addr) = execute_new_account(NewAccountOpts {
+        let (key_id, addr, validator_addr) = execute_new_account(NewAccountOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             kms_password: "123456".to_string(),
@@ -115,7 +115,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
         execute_append_validator(AppendValidatorOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            validator: addr.clone(),
+            validator: validator_addr.clone(),
         })
         .unwrap();
         node_accounts.push((key_id, addr));
@@ -229,7 +229,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     let new_node_id = peers_count;
 
     // create account for new node
-    let (key_id, addr) = execute_new_account(NewAccountOpts {
+    let (key_id, addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
         kms_password: "123456".to_string(),

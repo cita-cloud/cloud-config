@@ -28,8 +28,8 @@ pub struct SetNodeListOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000
-    /// last two slice is optional, none means not k8s env.
+    /// node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
+    /// last slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
     pub(crate) node_list: String,
 }

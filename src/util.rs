@@ -107,7 +107,7 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
     libsm::sm3::hash::Sm3Hash::new(input).get_hash()
 }
 
-pub fn key_pair_option(node_dir: String, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
+pub fn key_pair_option(node_dir: &str, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
     if is_eth {
         crate::config::kms_eth::KmsEth::create_kms_db(
             format!("{}/{}", node_dir, KMS_DB),
@@ -178,7 +178,7 @@ pub fn remove_0x(s: &str) -> &str {
 
 pub fn check_address(s: &str) -> &str {
     let addr = s.strip_prefix("0x").unwrap_or(s);
-    if addr.len() != 40 {
+    if addr.len() != 40 && addr.len() != 96 {
         panic!("wrong address, please check!")
     };
     addr
