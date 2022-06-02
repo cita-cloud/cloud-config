@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
-use crate::constant::{CHAIN_CONFIG_FILE, NETWORK_TLS};
+use crate::constant::{CHAIN_CONFIG_FILE, DEFAULT_QUOTA_LIMIT, NETWORK_TLS};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -23,7 +23,6 @@ use crate::error::Error;
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
-use crate::migrate::DEFAULT_QUOTA_LIMIT;
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
@@ -93,20 +92,16 @@ pub struct CreateK8sOpts {
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
     pub(crate) controller_tag: String,
-    /// set kms micro service image name (kms_eth/kms_sm)
-    #[clap(long = "kms_image", default_value = "kms_sm")]
-    pub(crate) kms_image: String,
-    /// set kms micro service image tag
-    #[clap(long = "kms_tag", default_value = "latest")]
-    pub(crate) kms_tag: String,
+    /// set crypto micro service image name (crypto_eth/crypto_sm)
+    #[clap(long = "crypto_image", default_value = "crypto_sm")]
+    pub(crate) crypto_image: String,
+    /// set crypto micro service image tag
+    #[clap(long = "crypto_tag", default_value = "latest")]
+    pub(crate) crypto_tag: String,
 
     /// set admin
     #[clap(long = "admin")]
     pub(crate) admin: String,
-
-    /// kms db password list, splited by ,
-    #[clap(long = "kms-password-list")]
-    pub(crate) kms_password_list: String,
 
     /// node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000
     /// last slice is optional, none means not k8s env.
@@ -119,7 +114,6 @@ pub struct CreateK8sOpts {
 }
 
 /// admin set by args
-/// kms password set by args
 /// grpc ports start from 50000
 /// node network listen port is 40000
 /// is stdout is true
@@ -151,8 +145,8 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         storage_tag: opts.storage_tag.clone(),
         controller_image: opts.controller_image.clone(),
         controller_tag: opts.controller_tag.clone(),
-        kms_image: opts.kms_image.clone(),
-        kms_tag: opts.kms_tag.clone(),
+        crypto_image: opts.crypto_image.clone(),
+        crypto_tag: opts.crypto_tag.clone(),
     })
     .unwrap();
 
@@ -164,8 +158,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    // parse kms password list and node list
-    let kms_password_list: Vec<&str> = opts.kms_password_list.split(',').collect();
+    // parse node list
     let node_list_str: Vec<&str> = opts.node_list.split(',').collect();
     let node_list: Vec<NodeNetworkAddress> = node_list_str
         .iter()
@@ -185,17 +178,12 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         })
         .collect();
 
-    if node_list.len() != kms_password_list.len() {
-        return Err(Error::ListLenNotMatch);
-    }
-
     // gen validator addr and append validator
     let mut node_accounts = Vec::new();
-    for kms_password in kms_password_list.iter() {
-        let (key_id, addr, validator_addr) = execute_new_account(NewAccountOpts {
+    for _ in 0..node_list.len() {
+        let (addr, validator_addr) = execute_new_account(NewAccountOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            kms_password: kms_password.to_string(),
         })
         .unwrap();
         execute_append_validator(AppendValidatorOpts {
@@ -204,7 +192,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             validator: validator_addr.clone(),
         })
         .unwrap();
-        node_accounts.push((key_id, addr));
+        node_accounts.push(addr);
     }
 
     // set node list
@@ -263,7 +251,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         let domain = node.domain.to_string();
         let network_listen_port = 40000;
         let node_account = node_accounts[i].clone();
-        let kms_password = kms_password_list[i].to_string();
 
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -274,12 +261,10 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            kms_port: network_port + 5,
+            crypto_port: network_port + 5,
             network_listen_port,
-            kms_password,
-            key_id: node_account.0,
             log_level: opts.log_level.clone(),
-            account: node_account.1,
+            account: node_account,
             quota_limit: DEFAULT_QUOTA_LIMIT,
         })
         .unwrap();
@@ -309,9 +294,6 @@ pub struct AppendK8sOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
-    /// kms db password
-    #[clap(long = "kms-password")]
-    pub(crate) kms_password: String,
     /// node network address looks like localhost:40002:node2:k8s_cluster1
     /// last slice is optional, none means not k8s env.
     #[clap(long = "node")]
@@ -328,10 +310,9 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
 
     // create account for new node
-    let (key_id, addr, _) = execute_new_account(NewAccountOpts {
+    let (addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        kms_password: opts.kms_password.clone(),
     })
     .unwrap();
 
@@ -406,10 +387,8 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        kms_port: network_port + 5,
+        crypto_port: network_port + 5,
         network_listen_port,
-        kms_password: opts.kms_password.clone(),
-        key_id,
         log_level: opts.log_level.clone(),
         account: addr,
         quota_limit: DEFAULT_QUOTA_LIMIT,
@@ -507,10 +486,9 @@ mod k8s_test {
             storage_tag: "latest".to_string(),
             controller_image: "controller".to_string(),
             controller_tag: "latest".to_string(),
-            kms_image: "kms_sm".to_string(),
-            kms_tag: "latest".to_string(),
+            crypto_image: "crypto_sm".to_string(),
+            crypto_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
-            kms_password_list: "123,123".to_string(),
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
                 .to_string(),
             log_level: "info".to_string(),
@@ -537,10 +515,9 @@ mod k8s_test {
             storage_tag: "latest".to_string(),
             controller_image: "controller".to_string(),
             controller_tag: "latest".to_string(),
-            kms_image: "kms_eth".to_string(),
-            kms_tag: "latest".to_string(),
+            crypto_image: "crypto_eth".to_string(),
+            crypto_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
-            kms_password_list: "123,123".to_string(),
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
                 .to_string(),
             log_level: "info".to_string(),
@@ -551,7 +528,6 @@ mod k8s_test {
             chain_name: name.clone(),
             config_dir: "/tmp".to_string(),
             log_level: "info".to_string(),
-            kms_password: "123".to_string(),
             node: "localhost:40002:node2:k8s:40000".to_string(),
         })
         .unwrap();

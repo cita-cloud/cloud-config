@@ -13,14 +13,12 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM,
-    KMS_DB, KMS_ETH, KMS_SM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY,
+    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH,
+    CRYPTO_SM, EXECUTOR_EVM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY,
     STORAGE_ROCKSDB,
 };
 use crate::error::Error;
-use crate::util::{
-    find_micro_service, read_chain_config, read_file, read_node_config, svc_name, write_file,
-};
+use crate::util::{read_chain_config, read_file, read_node_config, svc_name, write_file};
 use clap::Parser;
 use k8s_openapi::api::apps::v1::StatefulSet;
 use k8s_openapi::api::apps::v1::StatefulSetSpec;
@@ -187,8 +185,8 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             read_file(&format!("{}/executor-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
-            "kms-log4rs.yaml".to_string(),
-            read_file(&format!("{}/kms-log4rs.yaml", &node_dir)).unwrap(),
+            "crypto-log4rs.yaml".to_string(),
+            read_file(&format!("{}/crypto-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
             "network-log4rs.yaml".to_string(),
@@ -228,21 +226,14 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             ..Default::default()
         };
         let mut data = BTreeMap::new();
-        data.insert("address".to_string(), node_config.account.clone());
-        data.insert("keyId".to_string(), format!("{}", node_config.key_id));
+        data.insert("address".to_string(), node_config.account);
         cm_account.data = Some(data);
 
         let mut binary_data = BTreeMap::new();
         binary_data.insert(
-            KMS_DB.to_string(),
-            ByteString(fs::read(&format!("{}/{}", &node_dir, KMS_DB)).unwrap()),
+            PRIVATE_KEY.to_string(),
+            ByteString(fs::read(&format!("{}/{}", &node_dir, PRIVATE_KEY)).unwrap()),
         );
-        if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
-            binary_data.insert(
-                PRIVATE_KEY.to_string(),
-                ByteString(fs::read(&format!("{}/{}", &node_dir, PRIVATE_KEY)).unwrap()),
-            );
-        }
         cm_account.binary_data = Some(binary_data);
 
         let yaml_file_name = format!("{}/{}-cm-account.yaml", &yamls_path, &node_name);
@@ -746,9 +737,9 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
 
         containers.push(controller_container);
 
-        // kms
-        let mut kms_container = Container {
-            name: "kms".to_string(),
+        // crypto
+        let mut crypto_container = Container {
+            name: "crypto".to_string(),
             image_pull_policy: Some(opts.pull_policy.clone()),
             ports: Some(vec![ContainerPort {
                 container_port: 50005,
@@ -795,22 +786,22 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         };
 
         for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == KMS_ETH || micro_service.image == KMS_SM {
-                kms_container.image = Some(format!(
+            if micro_service.image == CRYPTO_ETH || micro_service.image == CRYPTO_SM {
+                crypto_container.image = Some(format!(
                     "{}/{}/{}:{}",
                     &opts.docker_registry,
                     &opts.docker_repo,
                     &micro_service.image,
                     &micro_service.tag
                 ));
-                kms_container.command = Some(vec!["/bin/sh".to_string(),
+                crypto_container.command = Some(vec!["/bin/sh".to_string(),
           "-c".to_string(),
-          "if [ ! -f \"/data/kms.db\" ]; then cp /mnt/kms.db /data;fi; kms run -c /etc/cita-cloud/config/config.toml -l /etc/cita-cloud/log/kms-log4rs.yaml".to_string(),
+          "if [ ! -f \"/data/private_key\" ]; then cp /mnt/private_key /data;fi; crypto run -c /etc/cita-cloud/config/config.toml -l /etc/cita-cloud/log/crypto-log4rs.yaml".to_string(),
           ]);
             }
         }
 
-        containers.push(kms_container);
+        containers.push(crypto_container);
 
         // debug
         if opts.enable_debug {

@@ -14,7 +14,9 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT, KMS_ETH, NETWORK_P2P, NETWORK_TLS};
+use crate::constant::{
+    CHAIN_CONFIG_FILE, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT, NETWORK_P2P, NETWORK_TLS,
+};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -22,7 +24,6 @@ use crate::error::Error;
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
-use crate::migrate::DEFAULT_QUOTA_LIMIT;
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_stage::{execute_set_stage, SetStageOpts};
@@ -52,7 +53,7 @@ pub struct CreateDevOpts {
     /// is consensus bft
     #[clap(long = "is-bft")]
     is_bft: bool,
-    /// is kms eth
+    /// is crypto eth
     #[clap(long = "is-eth")]
     is_eth: bool,
 }
@@ -60,7 +61,6 @@ pub struct CreateDevOpts {
 /// node network ip is 127.0.0.1
 /// node network port is 40000 + i
 /// node domain is i
-/// kms password is 123456
 /// grpc ports start from 50000 + i*1000
 /// node network listen port is 40000 + i
 /// is stdout is false
@@ -86,15 +86,14 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
         init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
     }
     if opts.is_eth {
-        init_chain_config_opts.kms_image = KMS_ETH.to_string();
+        init_chain_config_opts.crypto_image = CRYPTO_ETH.to_string();
     }
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
     // gen admin addr and set admin
-    let (_admin_key_id, admin_addr, _) = execute_new_account(NewAccountOpts {
+    let (admin_addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        kms_password: "123456".to_string(),
     })
     .unwrap();
     execute_set_admin(SetAdminOpts {
@@ -107,10 +106,9 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     // gen validator addr and append validator
     let mut node_accounts = Vec::new();
     for _ in 0..peers_count {
-        let (key_id, addr, validator_addr) = execute_new_account(NewAccountOpts {
+        let (addr, validator_addr) = execute_new_account(NewAccountOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            kms_password: "123456".to_string(),
         })
         .unwrap();
         execute_append_validator(AppendValidatorOpts {
@@ -119,7 +117,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             validator: validator_addr.clone(),
         })
         .unwrap();
-        node_accounts.push((key_id, addr));
+        node_accounts.push(addr);
     }
 
     // append node
@@ -170,7 +168,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
         let network_port = (50000 + i * 1000) as u16;
         let domain = format!("{}", i);
         let listen_port = (40000 + i) as u16;
-        let node = node_accounts[i].clone();
+        let node_addr = node_accounts[i].clone();
 
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -181,12 +179,10 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            kms_port: network_port + 5,
+            crypto_port: network_port + 5,
             network_listen_port: listen_port,
-            kms_password: "123456".to_string(),
-            key_id: node.0,
             log_level: opts.log_level.clone(),
-            account: node.1,
+            account: node_addr,
             quota_limit: DEFAULT_QUOTA_LIMIT,
         })
         .unwrap();
@@ -230,10 +226,9 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     let new_node_id = peers_count;
 
     // create account for new node
-    let (key_id, addr, _) = execute_new_account(NewAccountOpts {
+    let (addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        kms_password: "123456".to_string(),
     })
     .unwrap();
 
@@ -293,10 +288,8 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        kms_port: network_port + 5,
+        crypto_port: network_port + 5,
         network_listen_port: listen_port,
-        kms_password: "123456".to_string(),
-        key_id,
         log_level: opts.log_level.clone(),
         account: addr,
         quota_limit: DEFAULT_QUOTA_LIMIT,

@@ -48,18 +48,12 @@ pub struct InitNodeOpts {
     /// grpc controller_port of node
     #[clap(long = "controller-port", default_value = "50004")]
     pub(crate) controller_port: u16,
-    /// grpc kms_port of node
-    #[clap(long = "kms-port", default_value = "50005")]
-    pub(crate) kms_port: u16,
+    /// grpc crypto_port of node
+    #[clap(long = "crypto-port", default_value = "50005")]
+    pub(crate) crypto_port: u16,
     /// network listen port of node
     #[clap(long = "network-listen-port", default_value = "40000")]
     pub(crate) network_listen_port: u16,
-    /// kms db password
-    #[clap(long = "kms-password", default_value = "123456")]
-    pub(crate) kms_password: String,
-    /// key id of account in kms db
-    #[clap(long = "key-id", default_value = "1")]
-    pub(crate) key_id: u64,
     /// set one block contains tx limit, default 30000
     #[clap(long = "quota-limit", default_value = "30000000")]
     pub(crate) quota_limit: u64,
@@ -94,13 +88,11 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .executor_port(opts.executor_port)
         .storage_port(opts.storage_port)
         .controller_port(opts.controller_port)
-        .kms_port(opts.kms_port)
+        .crypto_port(opts.crypto_port)
         .build();
     let node_config = NodeConfigBuilder::new()
         .grpc_ports(grpc_ports)
         .network_listen_port(opts.network_listen_port)
-        .db_key(opts.kms_password)
-        .key_id(opts.key_id)
         .quota_limit(opts.quota_limit)
         .log_level(opts.log_level)
         .account(opts.account)

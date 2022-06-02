@@ -81,12 +81,12 @@ pub struct InitChainConfigOpts {
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
     pub(crate) controller_tag: String,
-    /// set kms micro service image name (kms_eth/kms_sm)
-    #[clap(long = "kms_image", default_value = "kms_sm")]
-    pub(crate) kms_image: String,
-    /// set kms micro service image tag
-    #[clap(long = "kms_tag", default_value = "latest")]
-    pub(crate) kms_tag: String,
+    /// set crypto micro service image name (crypto_eth/crypto_sm)
+    #[clap(long = "crypto_image", default_value = "crypto_sm")]
+    pub(crate) crypto_image: String,
+    /// set crypto micro service image tag
+    #[clap(long = "crypto_tag", default_value = "latest")]
+    pub(crate) crypto_tag: String,
 }
 
 /// init chain config
@@ -141,9 +141,9 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .image(opts.controller_image)
         .tag(opts.controller_tag)
         .build();
-    let kms_micro_service = MicroServiceBuilder::new()
-        .image(opts.kms_image)
-        .tag(opts.kms_tag)
+    let crypto_micro_service = MicroServiceBuilder::new()
+        .image(opts.crypto_image)
+        .tag(opts.crypto_tag)
         .build();
     let micro_service_list: Vec<MicroService> = vec![
         network_micro_service,
@@ -151,7 +151,7 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         executor_micro_service,
         storage_micro_service,
         controller_micro_service,
-        kms_micro_service,
+        crypto_micro_service,
     ];
 
     // genesis block
