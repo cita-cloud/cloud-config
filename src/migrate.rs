@@ -41,7 +41,7 @@ use crate::{
     util::remove_0x,
 };
 
-const DEFAULT_PACKAGE_LIMIT: u64 = 30000;
+pub const DEFAULT_QUOTA_LIMIT: u64 = 1073741824;
 const DEFAULT_BLOCK_LIMIT: u64 = 100;
 
 mod old {
@@ -296,7 +296,7 @@ fn generate_new_node_config(
         account: node_addr,
 
         domain: domain.into(),
-        package_limit: DEFAULT_PACKAGE_LIMIT,
+        quota_limit: DEFAULT_QUOTA_LIMIT,
 
         log_level: "info".into(),
     })

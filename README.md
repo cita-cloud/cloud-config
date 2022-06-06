@@ -762,7 +762,7 @@ test-chain
         --network-port <NETWORK_PORT>
             grpc network_port of node [default: 50000]
 
-        --package-limit <PACKAGE_LIMIT>
+        --quota-limit <QUOTA_LIMIT>
             set one block contains tx limit, default 30000 [default: 30000]
 
         --storage-port <STORAGE_PORT>
@@ -818,7 +818,7 @@ db_key = '123456'
 key_id = 1
 log_level = 'info'
 network_listen_port = 40000
-package_limit = 30000
+quota_limit = 1073741824
 
 [grpc_ports]
 consensus_port = 50001

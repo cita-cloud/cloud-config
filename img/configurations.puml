@@ -29,7 +29,7 @@
 ++++ kms_port
 ++++ key_id
 ++++ node_address
-++++ package_limit
+++++ quota_limit
 +++ network
 ++++ network_p2p
 +++++ port

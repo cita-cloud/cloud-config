@@ -283,7 +283,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             kms_port: node_config.grpc_ports.kms_port,
             key_id: node_config.key_id,
             node_address: node_config.account.clone(),
-            package_limit: node_config.package_limit,
+            quota_limit: node_config.quota_limit,
             validator_address_len: if is_overlord { 48 } else { 20 },
         };
         controller_config.write(&config_file_name);

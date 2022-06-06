@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::migrate::DEFAULT_QUOTA_LIMIT;
 use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
@@ -93,7 +94,7 @@ pub struct NodeConfig {
     pub network_listen_port: u16,
     pub db_key: String,
     pub key_id: u64,
-    pub package_limit: u64,
+    pub quota_limit: u64,
     pub log_level: String,
     pub account: String,
 }
@@ -103,7 +104,7 @@ pub struct NodeConfigBuilder {
     pub network_listen_port: u16,
     pub db_key: String,
     pub key_id: u64,
-    pub package_limit: u64,
+    pub quota_limit: u64,
     pub log_level: String,
     pub account: String,
 }
@@ -115,7 +116,7 @@ impl NodeConfigBuilder {
             network_listen_port: 40000,
             db_key: "123456".to_string(),
             key_id: 1,
-            package_limit: 30000,
+            quota_limit: DEFAULT_QUOTA_LIMIT,
             log_level: "info".to_string(),
             account: "".to_string(),
         }
@@ -140,8 +141,8 @@ impl NodeConfigBuilder {
         self
     }
 
-    pub fn package_limit(&mut self, package_limit: u64) -> &mut NodeConfigBuilder {
-        self.package_limit = package_limit;
+    pub fn quota_limit(&mut self, quota_limit: u64) -> &mut NodeConfigBuilder {
+        self.quota_limit = quota_limit;
         self
     }
 
@@ -161,7 +162,7 @@ impl NodeConfigBuilder {
             network_listen_port: self.network_listen_port,
             db_key: self.db_key.clone(),
             key_id: self.key_id,
-            package_limit: self.package_limit,
+            quota_limit: self.quota_limit,
             log_level: self.log_level.clone(),
             account: self.account.clone(),
         }
