@@ -13,11 +13,10 @@
 // limitations under the License.
 
 use crate::constant::{
-    ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, KEY_ID, KMS_DB, KMS_ETH, PRIVATE_KEY,
-    VALIDATOR_ADDRESS,
+    ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, PRIVATE_KEY, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
-use crate::util::{find_micro_service, key_pair_option, read_chain_config, write_file};
+use crate::util::{find_micro_service, read_chain_config, write_file};
 use clap::Parser;
 use ophelia::{PrivateKey, PublicKey, ToBlsPublicKey};
 use ophelia_blst::BlsPrivateKey;
@@ -33,13 +32,10 @@ pub struct NewAccountOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// kms db password
-    #[clap(long = "kms-password", default_value = "123456")]
-    pub(crate) kms_password: String,
 }
 
 /// execute new account
-pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String, String), Error> {
+pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
@@ -47,49 +43,48 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(u64, String, String)
     );
     let chain_config = read_chain_config(&file_name).unwrap();
 
-    // new account in base folder
-    let base_path = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
+    // create new account
+    // generate private key
+    let private_key = BlsPrivateKey::generate(&mut OsRng).to_bytes();
 
-    let is_eth = find_micro_service(&chain_config, KMS_ETH);
-    let (key_id, address) = key_pair_option(&base_path, opts.kms_password, is_eth);
+    // generate node address
+    let is_eth = find_micro_service(&chain_config, CRYPTO_ETH);
+    let address = if is_eth {
+        crypto_eth::eth::sk2address(private_key.as_ref())
+    } else {
+        crypto_sm::sm::sk2address(private_key.as_ref())
+    };
     let address = hex::encode(address);
 
     // gen a folder to store account info
+    let base_path = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
     let path = format!("{}/{}", &base_path, &address);
     fs::create_dir_all(&path).unwrap();
 
-    // move account files info account folder
-    let from = format!("{}/{}", &base_path, KMS_DB);
-    let to = format!("{}/{}/{}", &base_path, &address, KMS_DB);
-    fs::rename(from, to).unwrap();
-
-    // store key_id
-    let path = format!("{}/{}/{}", &base_path, &address, KEY_ID);
-    write_file(format!("{}", key_id).as_bytes(), path);
+    // store private_key
+    let path = format!("{}/{}/{}", &base_path, address, PRIVATE_KEY);
+    write_file(hex::encode(&private_key).as_bytes(), path);
 
     let is_overlord = find_micro_service(&chain_config, CONSENSUS_OVERLORD);
     let validator_address = if is_overlord {
-        let private_key = BlsPrivateKey::generate(&mut OsRng);
+        let private_key = BlsPrivateKey::try_from(private_key.as_ref()).unwrap();
         let common_ref = "".to_string();
         let pub_key = private_key.pub_key(&common_ref);
         let bls_address = pub_key.to_bytes().to_vec();
-        let validator_address = hex::encode(bls_address);
-        // store private_key
-        let path = format!("{}/{}/{}", &base_path, address, PRIVATE_KEY);
-        write_file(hex::encode(&private_key.to_bytes()).as_bytes(), path);
-        // store validator_address
-        let path = format!("{}/{}/{}", &base_path, address, VALIDATOR_ADDRESS);
-        write_file(validator_address.as_bytes(), path);
-        validator_address
+        hex::encode(bls_address)
     } else {
         address.clone()
     };
 
-    // output key_id and address of new account
+    // store validator_address
+    let path = format!("{}/{}/{}", &base_path, address, VALIDATOR_ADDRESS);
+    write_file(validator_address.as_bytes(), path);
+
+    // output node address and validator address
     println!(
-        "key_id: {} node address: {} validator address: {}",
-        key_id, address, validator_address
+        "node address: {} validator address: {}",
+        address, validator_address
     );
 
-    Ok((key_id, address, validator_address))
+    Ok((address, validator_address))
 }

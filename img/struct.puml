@@ -7,8 +7,6 @@
 +++ 监听端口
 +++ 证书（可选）
 +++ 日志等级
-+++ kms密码（db_key）
-+++ key_id
 +++ quota_limit
 +++ account
 @endmindmap

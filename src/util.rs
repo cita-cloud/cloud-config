@@ -14,8 +14,6 @@
 
 use crate::config::chain_config::ChainConfig;
 use crate::config::node_config::NodeConfig;
-use crate::constant::KMS_DB;
-use crate::traits::Kms;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use rcgen::{
@@ -105,22 +103,6 @@ const HASH_BYTES_LEN: usize = 32;
 
 pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
     libsm::sm3::hash::Sm3Hash::new(input).get_hash()
-}
-
-pub fn key_pair_option(node_dir: &str, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
-    if is_eth {
-        crate::config::kms_eth::KmsEth::create_kms_db(
-            format!("{}/{}", node_dir, KMS_DB),
-            kms_password,
-        )
-        .generate_key_pair("create by cmd".to_string())
-    } else {
-        crate::config::kms_sm::KmsSm::create_kms_db(
-            format!("{}/{}", node_dir, KMS_DB),
-            kms_password,
-        )
-        .generate_key_pair("create by cmd".to_string())
-    }
 }
 
 pub fn ca_cert() -> (Certificate, String, String) {

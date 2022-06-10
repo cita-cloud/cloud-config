@@ -17,7 +17,7 @@ cargo install --path .
 
 ```
 $ cloud-config -h
-cloud-config 6.4.0
+cloud-config 6.5.0
 Rivtower Technologies <contact@rivtower.com>
 
 USAGE:
@@ -48,7 +48,6 @@ SUBCOMMANDS:
     init-chain           init a chain
     init-chain-config    init chain config
     init-node            init node
-    migrate              migrate CITA-Cloud chain from 6.1.0 to 6.3.0
     new-account          new account
     set-admin            set admin of chain
     set-nodelist         set node list
@@ -90,7 +89,7 @@ SUBCOMMANDS:
 1. [create-ca](/src/create_ca.rs)创建链的根证书。会在`$(config-dir)/$(chain-name)/ca_cert/`下生成`cert.pem`和`key.pem`两个文件。
 2. [create-csr](/src/create_csr.rs)为各个节点创建证书和签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`csr.pem`和`key.pem`两个文件。
 3. [sign-csr](/src/sign_csr.rs)处理节点的签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`。
-4. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`key_id`和`kms.db`两个文件。
+4. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`private_key`，和`validator_address`两个文件。
 5. [import-account](/src/import_account.rs)导入私钥的方式创建账户。
 6. [import-ca](/src/import_ca.rs)导入已有的`CA`证书。要求证书格式为`pem`，`key`的格式为`pkcs8`。
 7. [import-cert](/src/import_cert.rs)导入已有的节点证书。要求证书格式为`pem`，`key`的格式为`pkcs8`。
@@ -112,7 +111,7 @@ SUBCOMMANDS:
 3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
 4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令，由各个共识节点分别创建，然后将账户地址集中到一起进行设置。
 5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。如果网络微服务选择了`network_tls`，则需要通过`create-csr`根据节点的`domain`为各个节点创建证书和签名请求。然后请求`CA`通过`sign-crs`处理签名请求，并下发生成的`cert.pem`到各个节点。
-6. [set-stage](/src/set_stage.rs)设置链配置进行到的阶段。将链的配置过程分为三个阶段，分别为`init`，`public`和`finalize`，一些子命令会根据当前所处的阶段，来判断是否可以进行操作，以避免一些误操作。`init-chain-config`初始化链的配置时，默认设置阶段为`init`，该阶段可以重复进行`init-chain-config`以修改链的基础配置；`set-admin`只能在`init`阶段执行，并且会自动将阶段修改为`public`；`append-validator`，`delete-validator`和`set-validators`只能在`public`阶段进行；此后需要本子命令将阶段修改为`finalize`，此时链的配置完成，不能再修改除`节点网络地址列表`之外的配置，并且此后才可以进行`init-node`操作。辅助命令和`delete-chain`不受阶段的限制。
+6. [set-stage](/src/set_stage.rs)设置链配置进行到的阶段。将链的配置过程分为三个阶段，分别为`init`，`public`和`finalize`，一些子命令会根据当前所处的阶段，来判断是否可以进行操作，以避免一些误操作。`init-chain-config`初始化链的配置时，默认设置阶段为`init`，该阶段可以重复进行`init-chain-config`以修改链的基础配置；`set-admin`只能在`init`阶段执行，并且会自动将阶段修改为`public`；`append-validator`，`delete-validator`和`set-validators`只能在`public`阶段进行；此后需要手工执行该命令将阶段修改为`finalize`，此时链的配置完成，不能再修改除`节点网络地址列表`之外的配置，并且此后才可以进行`init-node`操作。辅助命令和`delete-chain`不受阶段的限制。
 7. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
 8. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
 9. [update-yaml](/src/update_yaml.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点部署到`k8s`环境所需的资源文件。
@@ -127,8 +126,6 @@ SUBCOMMANDS:
 比如针对开发环境，有`create-dev`，`append-dev`和`delete-dev`，使用开发环境约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以生成和操作一条链的配置。
 
 针对演示或者生产阶段的`k8s`环境，有`create-k8s`，`append-k8s`和`delete-k8s`。
-
-针对版本升级时迁移配置文件的`migrate`。
 
 
 ### 使用示例
@@ -145,11 +142,15 @@ SUBCOMMANDS:
 
 ```
 $ cloud-config init-chain   
-$ tree test-chain 
-test-chain
+$ tree -a test-chain/
+test-chain/
+├── .gitignore
 ├── accounts
+│   └── .gitkeep
 ├── ca_cert
+│   └── .gitkeep
 └── certs
+    └── .gitkeep
 ```
 
 #### init-chain-config
@@ -173,8 +174,8 @@ test-chain
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord) [default:
-            consensus_bft]
+            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
+            [default: consensus_bft]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -185,17 +186,17 @@ test-chain
         --controller_tag <CONTROLLER_TAG>
             set controller micro service image tag [default: latest]
 
+        --crypto_image <CRYPTO_IMAGE>
+            set crypto micro service image name (crypto_eth/crypto_sm) [default: crypto_sm]
+
+        --crypto_tag <CRYPTO_TAG>
+            set crypto micro service image tag [default: latest]
+
         --executor_image <EXECUTOR_IMAGE>
             set executor micro service image name (executor_evm) [default: executor_evm]
 
         --executor_tag <EXECUTOR_TAG>
             set executor micro service image tag [default: latest]
-
-        --kms_image <KMS_IMAGE>
-            set kms micro service image name (kms_eth/kms_sm) [default: kms_sm]
-
-        --kms_tag <KMS_TAG>
-            set kms micro service image tag [default: latest]
 
         --network_image <NETWORK_IMAGE>
             set network micro service image name (network_tls/network_p2p) [default: network_tls]
@@ -227,8 +228,8 @@ test-chain
 ```
 $ cloud-config init-chain-config
 
-$ tree test-chain
-test-chain
+$ tree test-chain/
+test-chain/
 ├── accounts
 ├── ca_cert
 ├── certs
@@ -259,7 +260,7 @@ image = 'controller'
 tag = 'latest'
 
 [[micro_service_list]]
-image = 'kms_sm'
+image = 'crypto_sm'
 tag = 'latest'
 
 [genesis_block]
@@ -289,33 +290,30 @@ version = 0
 
         --config-dir <CONFIG_DIR>
             set config file directory, default means current directory [default: .]
-
-        --kms-password <KMS_PASSWORD>
-            kms db password [default: 123456]
 ```
 
 ```
 $ cloud-config new-account   
-key_id: 1 node address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5 validator address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+node address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5 validator address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5
 
 $ cloud-config new-account
-key_id: 1 node address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa validator address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+node address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa validator address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
 
 $ cloud-config new-account
-key_id: 1 node address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd validator address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+node address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd validator address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
 
 $ tree test-chain 
 test-chain
 ├── accounts
 │   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-│   │   ├── key_id
-│   │   └── kms.db
+│   │   ├── private_key
+│   │   └── validator_address
 │   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── key_id
-│   │   └── kms.db
+│   │   ├── private_key
+│   │   └── validator_address
 │   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│       ├── key_id
-│       └── kms.db
+│   │   ├── private_key
+│   │   └── validator_address
 ├── ca_cert
 ├── certs
 └── chain_config.toml
@@ -325,10 +323,11 @@ test-chain
 1. 这里会创建两个地址，一个用于标识节点的`node address`，一个用于共识`validator`的`validator address`。
 2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
 
+
 #### import-account
-导入账户（私钥）
 
 参数：
+
 ```
 --chain-name <CHAIN_NAME>
     set chain name [default: test-chain]
@@ -336,26 +335,27 @@ test-chain
 --config-dir <CONFIG_DIR>
     set config file directory, default means current directory [default: .]
 
---kms-password <KMS_PASSWORD>
-    kms db password [default: 123456]
-
 --privkey <PRIVKEY>
     hex encoded private key
 ```
 
-示例：
-
 ```
-# 将账户私钥导入链的配置
-$ cloud-config import-account --chain-name test-chain --config-dir . --kms-password 123456 --privkey 0xd8e3c336dd0c656e08e8860fd653e2e4a7ff8a8094ca8a36d4bd04facc0741f6
-key_id: 1 node address: f24aeda3a262e81507148d41a9eb9efd1489142c validator address: f24aeda3a262e81507148d41a9eb9efd1489142c
+$ cloud-config import-account --privkey 60e7b47ee260516dbfedf8e80ff38830bae8663cc498a900a610c147cae94344
+node address: 097913007f2c8d9ac87f89664fc70977fee6bf9a validator address: 097913007f2c8d9ac87f89664fc70977fee6bf9a
 
-# 在链的配置中查看这个账户
-$ ls test-chain/accounts/f24aeda3a262e81507148d41a9eb9efd1489142c/
-key_id  kms.db
+$ tree test-chain/
+test-chain/
+├── accounts
+│   └── 097913007f2c8d9ac87f89664fc70977fee6bf9a
+│       ├── private_key
+│       └── validator_address
+├── ca_cert
+├── certs
+└── chain_config.toml
 ```
 
 说明：
+
 1. 这里会创建两个地址，一个用于标识节点的`node address`，一个用于共识`validator`的`validator address`。
 2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
 
@@ -479,7 +479,7 @@ stage = 'Finalize'
 说明：
 
 1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
 3. `domain`为任意字符串，只需要确保节点之间不重复即可。
 
 ```
@@ -533,7 +533,7 @@ svc_port = 40000
 ```
 
 1. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
 3. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
 
 #### delete-node
@@ -566,15 +566,6 @@ $ cloud-config create-ca
 $ tree test-chain
 test-chain
 ├── accounts
-│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│       ├── key_id
-│       └── kms.db
 ├── ca_cert
 │   ├── cert.pem
 │   └── key.pem
@@ -584,40 +575,6 @@ test-chain
 
 说明：
 1. 该命令生成文件形式的根证书，存放在`ca_cert`目录下。
-
-#### import-ca
-
-参数：
-
-```
-        --ca-cert <CA_CERT_PATH>     set path of ca cert file(pem)
-        --ca-key <CA_KEY_PATH>       set path of ca key file(pem)
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-```
-
-说明：
-1. `ca-cert`为必选参数。为要导入的`CA`证书文件路径，格式为`pem`。
-2. `ca-key`为必选参数。为要导入的`CA`证书`key`文件路径，格式为`pem`，并且编码格式为`pkcs8`。
-
-#### import-cert
-
-参数：
-
-```
-        --cert <CERT_PATH>           set path of cert file(pem)
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-        --domain <DOMAIN>            domain of node
-        --key <KEY_PATH>             set path of key file(pem)
-```
-
-说明：
-1. `domain`为必选参数。值为前面`set-nodelist`或者`append-node`时传递的节点的网络地址中的`domain`。
-2. `cert`为必选参数。为要导入的节点证书文件路径，格式为`pem`。
-4. `key`为必选参数。为要导入的节点证书`key`文件路径，格式为`pem`，并且编码格式为`pkcs8`。
 
 #### create-csr
 
@@ -632,6 +589,7 @@ test-chain
 
 说明：
 1. `domain`为必选参数。值为前面`set-nodelist`或者`append-node`时传递的节点的网络地址中的`domain`。
+2. 证书中真正使用的`domain`是`$(chain-name)-$(domain)`。
 
 ```
 $ cloud-config create-csr --domain node0 
@@ -641,15 +599,6 @@ $ cloud-config create-csr --domain node1
 $ tree test-chain
 test-chain
 ├── accounts
-│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│       ├── key_id
-│       └── kms.db
 ├── ca_cert
 │   ├── cert.pem
 │   └── key.pem
@@ -689,15 +638,6 @@ $ cloud-config sign-csr --domain node1
 $ tree test-chain
 test-chain
 ├── accounts
-│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│       ├── key_id
-│       └── kms.db
 ├── ca_cert
 │   ├── cert.pem
 │   └── key.pem
@@ -717,6 +657,39 @@ test-chain
 1. 该命令生成节点的证书文件`cert.pem`，存放在`certs`目录下。
 2. 每个节点的文件都在以节点`domain`为文件名的子文件夹内。
 
+#### import-ca
+
+参数：
+
+```
+        --ca-cert <CA_CERT_PATH>     set path of ca cert file(pem)
+        --ca-key <CA_KEY_PATH>       set path of ca key file(pem)
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+```
+
+说明：
+1. `ca-cert`为必选参数。为要导入的`CA`证书文件路径，格式为`pem`。
+2. `ca-key`为必选参数。为要导入的`CA`证书`key`文件路径，格式为`pem`，并且编码格式为`pkcs8`。
+
+#### import-cert
+
+参数：
+
+```
+        --cert <CERT_PATH>           set path of cert file(pem)
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --domain <DOMAIN>            domain of node
+        --key <KEY_PATH>             set path of key file(pem)
+```
+
+说明：
+1. `domain`为必选参数。值为前面`set-nodelist`或者`append-node`时传递的节点的网络地址中的`domain`。
+2. `cert`为必选参数。为要导入的节点证书文件路径，格式为`pem`。
+4. `key`为必选参数。为要导入的节点证书`key`文件路径，格式为`pem`，并且编码格式为`pkcs8`。
 
 #### init-node
 
@@ -738,20 +711,14 @@ test-chain
         --controller-port <CONTROLLER_PORT>
             grpc controller_port of node [default: 50004]
 
+        --crypto-port <CRYPTO_PORT>
+            grpc crypto_port of node [default: 50005]
+
         --domain <DOMAIN>
             domain of node
 
         --executor-port <EXECUTOR_PORT>
             grpc executor_port of node [default: 50002]
-
-        --key-id <KEY_ID>
-            key id of account in kms db [default: 1]
-
-        --kms-password <KMS_PASSWORD>
-            kms db password [default: 123456]
-
-        --kms-port <KMS_PORT>
-            grpc kms_port of node [default: 50005]
 
         --log-level <LOG_LEVEL>
             log level [default: info]
@@ -767,12 +734,13 @@ test-chain
 
         --storage-port <STORAGE_PORT>
             grpc storage_port of node [default: 50003]
+
 ```
 
 说明：
 1. 参数部分基本对应`节点配置`数据结构，具体含义参见设计部分的描述。
 2. `domain`为必选参数，作为节点的标识，节点文件夹将会以`$(chanin-name)-$(domain)`的形式命名。
-3. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的地址。
+3. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的`node address`地址。
 
 ```
 $ cloud-config init-node --domain node0 --account 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
@@ -782,30 +750,12 @@ $ cloud-config init-node --domain node1 --account 344a9d7c390ea5f884e7c0ebf30abb
 $ tree test-chain-node* 
 test-chain-node0
 ├── accounts
-│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│       ├── key_id
-│       └── kms.db
 ├── ca_cert
 ├── certs
 ├── chain_config.toml
 └── node_config.toml
 test-chain-node1
 ├── accounts
-│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│       ├── key_id
-│       └── kms.db
 ├── ca_cert
 ├── certs
 ├── chain_config.toml
@@ -814,8 +764,6 @@ test-chain-node1
 
 $ cat test-chain-node0/node_config.toml
 account = '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa'
-db_key = '123456'
-key_id = 1
 log_level = 'info'
 network_listen_port = 40000
 quota_limit = 1073741824
@@ -823,8 +771,8 @@ quota_limit = 1073741824
 [grpc_ports]
 consensus_port = 50001
 controller_port = 50004
+crypto_port = 50005
 executor_port = 50002
-kms_port = 50005
 network_port = 50000
 storage_port = 50003
 ```
@@ -854,22 +802,26 @@ $ cloud-config update-node --domain node1
 
 $ tree test-chain-node*
 test-chain-node0
+├── chain_config.toml
 ├── config.toml
+├── consensus-log4rs.yaml
 ├── controller-log4rs.yaml
+├── crypto-log4rs.yaml
 ├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
 ├── network-log4rs.yaml
 ├── node_config.toml
+├── private_key
 └── storage-log4rs.yaml
 test-chain-node1
+├── chain_config.toml
 ├── config.toml
+├── consensus-log4rs.yaml
 ├── controller-log4rs.yaml
+├── crypto-log4rs.yaml
 ├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
 ├── network-log4rs.yaml
 ├── node_config.toml
+├── private_key
 └── storage-log4rs.yaml
 ```
 
@@ -952,11 +904,9 @@ test-chain-node0-cm-account.yaml  test-chain-node0-cm-config.yaml  test-chain-no
 1. 节点的`ip`都为`localhost`。
 2. 节点的网络端口从`40000`开始往后顺延。
 3. 节点的`domain`使用节点的序号。
-4. 节点的`kms`密码都为`123456`。
-5. 节点各个微服务的`gRPC`端口从`50000 + i*1000`开始往后顺延。其中`i`为节点的序号。
-6. 日志默认输出到文件。
-7. 增加节点只能在最大的节点序号往后增加。
-8. 删除节点也只能从最大的节点序号开始往前删除。
+4. 节点各个微服务的`gRPC`端口从`50000 + i*1000`开始往后顺延。其中`i`为节点的序号。
+5. 增加节点只能在最大的节点序号往后增加。
+6. 删除节点也只能从最大的节点序号开始往前删除。
 
 适用于开发阶段，在单机非容器环境直接跑链进行测试。
 
@@ -965,24 +915,20 @@ test-chain-node0-cm-account.yaml  test-chain-node0-cm-config.yaml  test-chain-no
 参数：
 ```
 $ cloud-config create-dev -h
-cloud-config-create-dev 
-
+cloud-config-create-dev
 create config in env dev
 
 USAGE:
-    cloud-config create-dev [FLAGS] [OPTIONS]
-
-FLAGS:
-    -h, --help       Print help information
-        --is-bft     is consensus bft
-        --is-tls     is network tls
-        --is-eth     is kms eth
-    -V, --version    Print version information
+    cloud-config create-dev [OPTIONS]
 
 OPTIONS:
         --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>      set config file directory, default means current directory
                                        [default: .]
+    -h, --help                         Print help information
+        --is-bft                       is consensus bft
+        --is-eth                       is crypto eth
+        --is-tls                       is network tls
         --log-level <LOG_LEVEL>        log level [default: info]
         --peers-count <PEERS_COUNT>    set initial node number [default: 4]
 ```
@@ -990,73 +936,28 @@ OPTIONS:
 说明：
 1. `--is-tls`标识网络微服务是否选择了`network_tls`。
 2. `--is-bft`标识共识微服务是否选择了`consensus_bft`。
-3. `--is-eth`标识kms微服务是否选择了`kms_eth`。
+3. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
 
 ```
 $ cloud-config create-dev  
-key_id:1, address:5928e5527c4c1c6ba75059c6aa2d5832cd543eab
-key_id:1, address:c83e8a0aa624f26d8344badfe6e0e9149e50965a
-key_id:1, address:74866e7bf097f3889465ceab1a0028cca65495f2
-key_id:1, address:e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
-key_id:1, address:c36d6b36b049a9d7ce30c472be389f6ff45f26ef
+node address: fca6ddc659665f94294bb73ef79c0f825b30ffed validator address: fca6ddc659665f94294bb73ef79c0f825b30ffed
+node address: 4e85201492995fb4d5995540165bc1af7e4df958 validator address: 4e85201492995fb4d5995540165bc1af7e4df958
+node address: f7e55b05b93399b0c61f71063123bc6ecfa62b48 validator address: f7e55b05b93399b0c61f71063123bc6ecfa62b48
+node address: 856c583be3b82e171feba44a991319e9a989deed validator address: 856c583be3b82e171feba44a991319e9a989deed
+node address: 804f620d1cb955f10381501da12e985fd76ab96d validator address: 804f620d1cb955f10381501da12e985fd76ab96d
 
-$ tree test-chain*
-test-chain
-├── accounts
-│   ├── 5928e5527c4c1c6ba75059c6aa2d5832cd543eab
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 74866e7bf097f3889465ceab1a0028cca65495f2
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── c36d6b36b049a9d7ce30c472be389f6ff45f26ef
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── c83e8a0aa624f26d8344badfe6e0e9149e50965a
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
-│       ├── key_id
-│       └── kms.db
-├── ca_cert
-├── certs
-└── chain_config.toml
-test-chain-0
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-1
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-2
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-3
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
+$ ls test-chain-*
+test-chain-0:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-1:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-2:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-3:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 ```
 
 #### append-dev
@@ -1064,97 +965,39 @@ test-chain-3
 参数：
 ```
 $ cloud-config append-dev -h
-cloud-config-append-dev 
-
+cloud-config-append-dev
 append node in env dev
 
 USAGE:
     cloud-config append-dev [OPTIONS]
 
-FLAGS:
-    -h, --help       Print help information
-    -V, --version    Print version information
-
 OPTIONS:
         --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>    set config file directory, default means current directory
                                      [default: .]
+    -h, --help                       Print help information
         --log-level <LOG_LEVEL>      log level [default: info]
 ```
 
 ```
 $ cloud-config append-dev
-key_id:1, address:50887f9dc812402e41fab3129c955c93dc176896
+node address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e validator address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e
 
-$ tree test-chain*
-test-chain
-├── accounts
-│   ├── 50887f9dc812402e41fab3129c955c93dc176896
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 5928e5527c4c1c6ba75059c6aa2d5832cd543eab
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 74866e7bf097f3889465ceab1a0028cca65495f2
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── c36d6b36b049a9d7ce30c472be389f6ff45f26ef
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── c83e8a0aa624f26d8344badfe6e0e9149e50965a
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
-│       ├── key_id
-│       └── kms.db
-├── ca_cert
-├── certs
-└── chain_config.toml
-test-chain-0
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-1
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-2
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-3
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-4
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
+$ ls test-chain-*
+test-chain-0:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-1:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-2:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-3:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-4:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 ```
 
 #### delete-dev
@@ -1162,85 +1005,33 @@ test-chain-4
 参数：
 ```
 $ cloud-config delete-dev -h
-cloud-config-delete-dev 
-
+cloud-config-delete-dev
 delete node in env dev
 
 USAGE:
     cloud-config delete-dev [OPTIONS]
 
-FLAGS:
-    -h, --help       Print help information
-    -V, --version    Print version information
-
 OPTIONS:
         --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
         --config-dir <CONFIG_DIR>    set config file directory, default means current directory
                                      [default: .]
-        --log-level <LOG_LEVEL>      log level [default: info]
-
+    -h, --help                       Print help information
 ```
 
 ```
 $ cloud-config delete-dev
+$ ls test-chain-*
+test-chain-0:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 
-$ tree test-chain*
-test-chain
-├── accounts
-│   ├── 5928e5527c4c1c6ba75059c6aa2d5832cd543eab
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 74866e7bf097f3889465ceab1a0028cca65495f2
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── c36d6b36b049a9d7ce30c472be389f6ff45f26ef
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── c83e8a0aa624f26d8344badfe6e0e9149e50965a
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── e4a4f3f10cb98969b1809a8bc99f0f34d86f788e
-│       ├── key_id
-│       └── kms.db
-├── ca_cert
-├── certs
-└── chain_config.toml
-test-chain-0
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-1
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-2
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-3
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
+test-chain-1:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-2:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-3:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 ```
 
 
@@ -1248,16 +1039,15 @@ test-chain-3
 
 约定：
 1. 超级管理员账户由用户自行创建并通过参数传入。
-2. 节点的`kms`密码都由用户设置并通过参数传入。
-3. 节点各个微服务的`gRPC`端口固定从`50000`开始往后顺延。
-4. 节点的网络监听端口固定为`40000`。
-5. 日志默认输出到`stdout`。
+2. 节点各个微服务的`gRPC`端口固定从`50000`开始往后顺延。
+3. 节点的网络监听端口固定为`40000`。
 
 适用于演示或者生产阶段，在k8s环境部署链。
 
 #### create-k8s
 
 参数：
+
 ```
         --admin <ADMIN>
             set admin
@@ -1278,8 +1068,8 @@ test-chain-3
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord) [default:
-            consensus_raft]
+            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
+            [default: consensus_bft]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -1290,26 +1080,23 @@ test-chain-3
         --controller_tag <CONTROLLER_TAG>
             set controller micro service image tag [default: latest]
 
+        --crypto_image <CRYPTO_IMAGE>
+            set crypto micro service image name (crypto_eth/crypto_sm) [default: crypto_sm]
+
+        --crypto_tag <CRYPTO_TAG>
+            set crypto micro service image tag [default: latest]
+
         --executor_image <EXECUTOR_IMAGE>
             set executor micro service image name (executor_evm) [default: executor_evm]
 
         --executor_tag <EXECUTOR_TAG>
             set executor micro service image tag [default: latest]
 
-        --kms-password-list <KMS_PASSWORD_LIST>
-            kms db password list, splited by ,
-
-        --kms_image <KMS_IMAGE>
-            set kms micro service image name (kms_eth/kms_sm) [default: kms_sm]
-
-        --kms_tag <KMS_TAG>
-            set kms micro service image tag [default: latest]
-
         --log-level <LOG_LEVEL>
             log level [default: info]
 
         --network_image <NETWORK_IMAGE>
-            set network micro service image name (network_tls/network_p2p) [default: network_p2p]
+            set network micro service image name (network_tls/network_p2p) [default: network_tls]
 
         --network_tag <NETWORK_TAG>
             set network micro service image tag [default: latest]
@@ -1317,7 +1104,7 @@ test-chain-3
         --nodelist <NODE_LIST>
             node list looks like
             localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000 last
-            two slice is optional, none means not k8s env
+            slice is optional, none means not k8s env
 
         --prevhash <PREVHASH>
             set genesis prevhash [default:
@@ -1338,120 +1125,52 @@ test-chain-3
 
 说明:
 1. `admin`为必选参数。使用用户事先创建好的超级管理员账户地址。
-2. `kms-password-list`为必选参数。用逗号隔开的多个节点的`kms`数据库密码。
-3. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。`cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
-5. `kms-password-list`和`nodelist`的数量必须相同。
+2. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。`cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
 
 ```
-$ cloud-config create-k8s --admin 8f81961f263f45f88230375623394c9301c033e7 --kms-password-list 123456,123456 --nodelist localhost:40000:node0,localhost:40001:node1
-key_id:1, address:4b209a87a31f67f2c64a7583301ff5a360796241
-key_id:1, address:b7f1a7d398da3eee28a5f01f02e8ae05317270c8
+$ ./target/debug/cloud-config create-k8s --admin 0xff8456931c10a9b02ec4a657ee05e724ecad9372 --nodelist localhost:40000:node0:k8s,localhost:40001:node1:k8s
+node address: 0467a471d83343ce99888180ca8cabe0e49a0ae3 validator address: 0467a471d83343ce99888180ca8cabe0e49a0ae3
+node address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41 validator address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41
 
-$ tree test-chain*
-test-chain
-├── accounts
-│   ├── 4b209a87a31f67f2c64a7583301ff5a360796241
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── b7f1a7d398da3eee28a5f01f02e8ae05317270c8
-│       ├── key_id
-│       └── kms.db
-├── ca_cert
-├── certs
-└── chain_config.toml
-test-chain-node0
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-node1
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
+$ ls test-chain-node*
+test-chain-node0:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-node1:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 ```
 
 #### append-k8s
 
 参数：
 ```
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory [default: .]
-
-        --kms-password <KMS_PASSWORD>
-            kms db password
-
-        --log-level <LOG_LEVEL>
-            log level [default: info]
-
-        --node <NODE>
-            node network address looks like localhost:40002:node2:k8s_cluster1 last slice is
-            optional, none means not k8s env
+        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
+                                     [default: .]
+        --log-level <LOG_LEVEL>      log level [default: info]
+        --node <NODE>                node network address looks like
+                                     localhost:40002:node2:k8s_cluster1 last slice is optional, none
+                                     means not k8s env
 ```
 
 说明：
-1. `kms-password`为必选参数。值为新增节点的`kms`数据库密码。
-2. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
-3. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
+1. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
+2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
 
 
 ```
-$ cloud-config append-k8s --kms-password 123456 --node localhost:40002:node2
-key_id:1, address:6ee268553c09f203dedd54f7d0a678c8a9439915
+$ cloud-config append-k8s --node localhost:40002:node2:k8s
+node address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed validator address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed
+$ ls test-chain-node*
+test-chain-node0:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 
-$ tree test-chain*
-test-chain
-├── accounts
-│   ├── 4b209a87a31f67f2c64a7583301ff5a360796241
-│   │   ├── key_id
-│   │   └── kms.db
-│   ├── 6ee268553c09f203dedd54f7d0a678c8a9439915
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── b7f1a7d398da3eee28a5f01f02e8ae05317270c8
-│       ├── key_id
-│       └── kms.db
-├── ca_cert
-├── certs
-└── chain_config.toml
-test-chain-node0
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-node1
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-node2
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
+test-chain-node1:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+
+test-chain-node2:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
+rink@dev:~/work/github/cita-cloud/cloud
 ```
 
 #### delete-k8s
@@ -1469,160 +1188,10 @@ test-chain-node2
 
 ```
 $ cloud-config delete-k8s --domain node2
+$ ls test-chain-node*
+test-chain-node0:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 
-$ tree test-chain*
-test-chain
-├── accounts
-│   ├── 4b209a87a31f67f2c64a7583301ff5a360796241
-│   │   ├── key_id
-│   │   └── kms.db
-│   └── b7f1a7d398da3eee28a5f01f02e8ae05317270c8
-│       ├── key_id
-│       └── kms.db
-├── ca_cert
-├── certs
-└── chain_config.toml
-test-chain-node0
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-test-chain-node1
-├── config.toml
-├── controller-log4rs.yaml
-├── executor-log4rs.yaml
-├── kms.db
-├── kms-log4rs.yaml
-├── network-log4rs.yaml
-├── node_config.toml
-└── storage-log4rs.yaml
-```
-
-#### migrate
-从v6.1.0的链配置中读取数据，生成v6.3.0链的配置。生成的配置中不包含运行时产生的数据。
-
-```
-    -c, --consensus-type <CONSENSUS_TYPE>
-            Consensus type, only `raft` or `bft` is supported [default: raft]
-
-    -d, --chain-dir <CHAIN_DIR>
-            The old chain dir
-
-    -k, --kms-password-list <KMS_PASSWORD_LIST>
-            KMS password list, e.g. "node1password,node2password"
-
-    -l, --nodelist <NODE_LIST>
-            Node list, e.g. "127.0.0.1:40000,citacloud.org:40001"
-
-    -n, --chain-name <CHAIN_NAME>
-            Name of the chain
-
-    -o, --out-dir <OUT_DIR>
-            The output dir for the upgraded chain
-```
-
-示例
-
-```
-$ tree old-chain
-
-old-chain
-├── test-chain
-│
-├── test-chain-0
-│   ├── chain_data
-|   |       (omitted)
-│   ├── consensus-config.toml
-│   ├── consensus-log4rs.yaml
-│   ├── controller-config.toml
-│   ├── controller-log4rs.yaml
-│   ├── data
-|   |       (omitted)
-│   ├── executor-log4rs.yaml
-│   ├── genesis.toml
-│   ├── init_sys_config.toml
-│   ├── key_file
-│   ├── key_id
-│   ├── kms-log4rs.yaml
-│   ├── logs
-|   |       (omitted)
-│   ├── network-config.toml
-│   ├── network_key
-│   ├── network-log4rs.yaml
-│   ├── node_address
-│   ├── node_key
-│   ├── raft-data-dir
-|   |       (omitted)
-│   └── storage-log4rs.yaml
-|── test-chain-1
-|       (omitted)
-|── test-chain-2
-|       (omitted)
-└── test-chain-3
-        (omitted)
-
-$ cloud-config migrate \
-    --chain-dir test-chain \
-    --chain-name test-chain \
-    --out-dir new-test-chain \
-    --consensus-type raft \
-    --kms-password-list 123456,123456,123456,123456 \
-    --nodelist 127.0.0.1:40000,127.0.0.1:40001,127.0.0.1:40002,127.0.0.1:40003
-
-$ tree new-test-chain
-new-test-chain/
-├── test-chain
-│   ├── accounts
-│   │   ├── 1dc41ae9cd4eeebf12a053e0abba49a909530981
-│   │   │   ├── key_id
-│   │   │   └── kms.db
-│   │   ├── 287d70c1e4263ff38ad993cb2c18d01e3d5a151b
-│   │   │   ├── key_id
-│   │   │   └── kms.db
-│   │   ├── 2ac2df73fff75e5260a75f2c0df8c06b08aff09f
-│   │   │   ├── key_id
-│   │   │   └── kms.db
-│   │   └── 83b097e4f547bb49c51dc17b8821e6b0a91b31da
-│   │       ├── key_id
-│   │       └── kms.db
-│   ├── ca_cert
-│   │   ├── cert.pem
-│   │   └── key.pem
-│   ├── certs
-│   │   ├── 0
-│   │   │   ├── cert.pem
-│   │   │   ├── csr.pem
-│   │   │   └── key.pem
-│   │   ├── 1
-│   │   │   ├── cert.pem
-│   │   │   ├── csr.pem
-│   │   │   └── key.pem
-│   │   ├── 2
-│   │   │   ├── cert.pem
-│   │   │   ├── csr.pem
-│   │   │   └── key.pem
-│   │   └── 3
-│   │       ├── cert.pem
-│   │       ├── csr.pem
-│   │       └── key.pem
-│   └── chain_config.toml
-├── test-chain-0
-│   ├── config.toml
-│   ├── controller-log4rs.yaml
-│   ├── executor-log4rs.yaml
-│   ├── kms.db
-│   ├── kms-log4rs.yaml
-│   ├── network-log4rs.yaml
-│   ├── node_config.toml
-│   └── storage-log4rs.yaml
-├── test-chain-1
-|       (omitted)
-├── test-chain-2
-|       (omitted)
-└── test-chain-3
-        (omitted)
+test-chain-node1:
+accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_config.toml  storage-log4rs.yaml
 ```

@@ -12,49 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CONSENSUS, CONSENSUS_BFT};
+use crate::constant::{CRYPTO, CRYPTO_ETH};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct ConsensusBft {
-    pub controller_port: u16,
-
-    pub consensus_port: u16,
-
-    pub network_port: u16,
-
+pub struct CryptoEthConfig {
     pub crypto_port: u16,
-
-    pub node_address: String,
 }
 
-impl ConsensusBft {
-    pub fn new(
-        controller_port: u16,
-        consensus_port: u16,
-        network_port: u16,
-        crypto_port: u16,
-        node_address: String,
-    ) -> Self {
-        Self {
-            controller_port,
-            consensus_port,
-            network_port,
-            crypto_port,
-            node_address,
-        }
+impl CryptoEthConfig {
+    pub fn new(crypto_port: u16) -> Self {
+        Self { crypto_port }
     }
 }
-
-impl YmlWriter for ConsensusBft {
-    fn service(&self) -> String {
-        CONSENSUS.to_string()
-    }
-}
-
-impl TomlWriter for ConsensusBft {
+impl TomlWriter for CryptoEthConfig {
     fn section(&self) -> String {
-        CONSENSUS_BFT.to_string()
+        CRYPTO_ETH.to_string()
+    }
+}
+
+impl YmlWriter for CryptoEthConfig {
+    fn service(&self) -> String {
+        CRYPTO.to_string()
     }
 }

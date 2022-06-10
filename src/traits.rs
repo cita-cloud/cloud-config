@@ -15,7 +15,6 @@
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorEvmConfig;
-use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::NetConfig;
 use crate::config::network_tls::NetworkConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
@@ -23,16 +22,6 @@ use crate::constant::LOG4RS_YAML;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
-
-pub trait Kms {
-    fn sk2address(sk: &[u8]) -> Vec<u8>;
-    fn create_kms_db(db_path: String, password: String) -> Self;
-
-    // return (account_id, address)
-    fn generate_key_pair(&self, description: String) -> (u64, Vec<u8>);
-    // return (account_id, address)
-    fn import_privkey(&self, privkey: &[u8]) -> (u64, Vec<u8>);
-}
 
 pub trait TomlWriter {
     fn write(&self, path: impl AsRef<path::Path>)
@@ -105,7 +94,6 @@ pub struct AggregateConfig {
     pub network_p2p: Option<NetConfig>,
     pub network_tls: Option<NetworkConfig>,
     pub controller: Option<ControllerConfig>,
-    pub kms_sm: Option<KmsSmConfig>,
     pub storage_rocksdb: Option<StorageRocksdbConfig>,
     pub executor_evm: Option<ExecutorEvmConfig>,
     pub consensus_raft: Option<Consensus>,

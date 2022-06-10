@@ -31,9 +31,7 @@ pub struct ControllerConfig {
 
     pub controller_port: u16,
 
-    pub kms_port: u16,
-
-    pub key_id: u64,
+    pub crypto_port: u16,
 
     pub node_address: String,
 
@@ -194,7 +192,7 @@ impl GenesisBlockBuilder {
 #[cfg(test)]
 mod controller_test {
     use super::*;
-    use crate::migrate::DEFAULT_QUOTA_LIMIT;
+    use crate::constant::DEFAULT_QUOTA_LIMIT;
 
     #[test]
     fn basic_test() {
@@ -204,8 +202,7 @@ mod controller_test {
             executor_port: 51232,
             storage_port: 51233,
             controller_port: 51234,
-            kms_port: 51235,
-            key_id: 1,
+            crypto_port: 51235,
             node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".into(),
             quota_limit: DEFAULT_QUOTA_LIMIT,
             validator_address_len: 20,

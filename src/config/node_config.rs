@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::migrate::DEFAULT_QUOTA_LIMIT;
+use crate::constant::DEFAULT_QUOTA_LIMIT;
 use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +23,7 @@ pub struct GrpcPorts {
     pub executor_port: u16,
     pub storage_port: u16,
     pub controller_port: u16,
-    pub kms_port: u16,
+    pub crypto_port: u16,
 }
 
 pub struct GrpcPortsBuilder {
@@ -32,7 +32,7 @@ pub struct GrpcPortsBuilder {
     pub executor_port: u16,
     pub storage_port: u16,
     pub controller_port: u16,
-    pub kms_port: u16,
+    pub crypto_port: u16,
 }
 
 impl GrpcPortsBuilder {
@@ -43,7 +43,7 @@ impl GrpcPortsBuilder {
             executor_port: 50002,
             storage_port: 50003,
             controller_port: 50004,
-            kms_port: 50005,
+            crypto_port: 50005,
         }
     }
     pub fn network_port(&mut self, network_port: u16) -> &mut GrpcPortsBuilder {
@@ -71,8 +71,8 @@ impl GrpcPortsBuilder {
         self
     }
 
-    pub fn kms_port(&mut self, kms_port: u16) -> &mut GrpcPortsBuilder {
-        self.kms_port = kms_port;
+    pub fn crypto_port(&mut self, crypto_port: u16) -> &mut GrpcPortsBuilder {
+        self.crypto_port = crypto_port;
         self
     }
 
@@ -83,7 +83,7 @@ impl GrpcPortsBuilder {
             executor_port: self.executor_port,
             storage_port: self.storage_port,
             controller_port: self.controller_port,
-            kms_port: self.kms_port,
+            crypto_port: self.crypto_port,
         }
     }
 }
@@ -92,8 +92,6 @@ impl GrpcPortsBuilder {
 pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
-    pub db_key: String,
-    pub key_id: u64,
     pub quota_limit: u64,
     pub log_level: String,
     pub account: String,
@@ -102,8 +100,6 @@ pub struct NodeConfig {
 pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
-    pub db_key: String,
-    pub key_id: u64,
     pub quota_limit: u64,
     pub log_level: String,
     pub account: String,
@@ -114,8 +110,6 @@ impl NodeConfigBuilder {
         Self {
             grpc_ports: GrpcPortsBuilder::new().build(),
             network_listen_port: 40000,
-            db_key: "123456".to_string(),
-            key_id: 1,
             quota_limit: DEFAULT_QUOTA_LIMIT,
             log_level: "info".to_string(),
             account: "".to_string(),
@@ -128,16 +122,6 @@ impl NodeConfigBuilder {
 
     pub fn network_listen_port(&mut self, network_listen_port: u16) -> &mut NodeConfigBuilder {
         self.network_listen_port = network_listen_port;
-        self
-    }
-
-    pub fn db_key(&mut self, db_key: String) -> &mut NodeConfigBuilder {
-        self.db_key = db_key;
-        self
-    }
-
-    pub fn key_id(&mut self, key_id: u64) -> &mut NodeConfigBuilder {
-        self.key_id = key_id;
         self
     }
 
@@ -160,8 +144,6 @@ impl NodeConfigBuilder {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
             network_listen_port: self.network_listen_port,
-            db_key: self.db_key.clone(),
-            key_id: self.key_id,
             quota_limit: self.quota_limit,
             log_level: self.log_level.clone(),
             account: self.account.clone(),

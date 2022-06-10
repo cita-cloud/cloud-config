@@ -16,16 +16,16 @@ use crate::config::consensus_bft::ConsensusBft;
 use crate::config::consensus_overlord::ConsensusOverlord;
 use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
+use crate::config::crypto_eth::CryptoEthConfig;
+use crate::config::crypto_sm::CryptoSmConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
-use crate::config::kms_eth::KmsEthConfig;
-use crate::config::kms_sm::KmsSmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
 use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
-    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, DNS4, EXECUTOR_EVM, KEY_PEM, KMS_DB, KMS_ETH,
-    KMS_SM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
+    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM, DNS4, EXECUTOR_EVM,
+    KEY_PEM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
     VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
@@ -92,19 +92,10 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     if !is_old {
         let from = format!(
             "{}/{}/{}/{}",
-            &node_dir, ACCOUNT_DIR, &node_config.account, KMS_DB
+            &node_dir, ACCOUNT_DIR, &node_config.account, PRIVATE_KEY
         );
-        let to = format!("{}/{}", &node_dir, KMS_DB);
+        let to = format!("{}/{}", &node_dir, PRIVATE_KEY);
         fs::copy(from, to).unwrap();
-
-        if is_overlord {
-            let from = format!(
-                "{}/{}/{}/{}",
-                &node_dir, ACCOUNT_DIR, &node_config.account, PRIVATE_KEY
-            );
-            let to = format!("{}/{}", &node_dir, PRIVATE_KEY);
-            fs::copy(from, to).unwrap();
-        }
     }
 
     // network config file
@@ -211,7 +202,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.controller_port,
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
-            node_config.grpc_ports.kms_port,
+            node_config.grpc_ports.crypto_port,
             format!("0x{}", &node_config.account),
         );
         consensus_config.write(&config_file_name);
@@ -229,7 +220,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.controller_port,
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
-            node_config.grpc_ports.kms_port,
             validator_address,
         );
         consensus_config.write(&config_file_name);
@@ -258,7 +248,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // if storage_rocksdb
     if find_micro_service(&chain_config, STORAGE_ROCKSDB) {
         let storage_config = StorageRocksdbConfig::new(
-            node_config.grpc_ports.kms_port,
+            node_config.grpc_ports.crypto_port,
             node_config.grpc_ports.storage_port,
         );
         storage_config.write(&config_file_name);
@@ -280,8 +270,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             executor_port: node_config.grpc_ports.executor_port,
             storage_port: node_config.grpc_ports.storage_port,
             controller_port: node_config.grpc_ports.controller_port,
-            kms_port: node_config.grpc_ports.kms_port,
-            key_id: node_config.key_id,
+            crypto_port: node_config.grpc_ports.crypto_port,
             node_address: node_config.account.clone(),
             quota_limit: node_config.quota_limit,
             validator_address_len: if is_overlord { 48 } else { 20 },
@@ -295,24 +284,24 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         panic!("unsupport controller service");
     }
 
-    // kms config file
-    // if kms_sm
-    if find_micro_service(&chain_config, KMS_SM) {
-        let kms_config = KmsSmConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
-        kms_config.write(&config_file_name);
+    // crypto config file
+    // if crypto_sm
+    if find_micro_service(&chain_config, CRYPTO_SM) {
+        let crypto_config = CryptoSmConfig::new(node_config.grpc_ports.crypto_port);
+        crypto_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            kms_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            crypto_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
-    } else if find_micro_service(&chain_config, KMS_ETH) {
-        let kms_config = KmsEthConfig::new(node_config.grpc_ports.kms_port, node_config.db_key);
-        kms_config.write(&config_file_name);
+    } else if find_micro_service(&chain_config, CRYPTO_ETH) {
+        let crypto_config = CryptoEthConfig::new(node_config.grpc_ports.crypto_port);
+        crypto_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            kms_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            crypto_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
         }
     } else {
-        panic!("unsupport kms service");
+        panic!("unsupport crypto service");
     }
 
     Ok(())

@@ -24,8 +24,6 @@ pub struct ConsensusOverlord {
 
     pub network_port: u16,
 
-    pub kms_port: u16,
-
     pub node_address: String,
 }
 
@@ -34,14 +32,12 @@ impl ConsensusOverlord {
         controller_port: u16,
         consensus_port: u16,
         network_port: u16,
-        kms_port: u16,
         node_address: String,
     ) -> Self {
         Self {
             controller_port,
             consensus_port,
             network_port,
-            kms_port,
             node_address,
         }
     }

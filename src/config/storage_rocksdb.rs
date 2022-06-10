@@ -18,14 +18,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageRocksdbConfig {
-    pub kms_port: u16,
+    pub crypto_port: u16,
     pub storage_port: u16,
 }
 
 impl StorageRocksdbConfig {
-    pub fn new(kms_port: u16, storage_port: u16) -> Self {
+    pub fn new(crypto_port: u16, storage_port: u16) -> Self {
         Self {
-            kms_port,
+            crypto_port,
             storage_port,
         }
     }
