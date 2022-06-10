@@ -22,6 +22,7 @@ use crate::error::Error;
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
+use crate::migrate::DEFAULT_QUOTA_LIMIT;
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_stage::{execute_set_stage, SetStageOpts};
@@ -186,7 +187,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             key_id: node.0,
             log_level: opts.log_level.clone(),
             account: node.1,
-            package_limit: 30000,
+            quota_limit: DEFAULT_QUOTA_LIMIT,
         })
         .unwrap();
 
@@ -298,7 +299,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         key_id,
         log_level: opts.log_level.clone(),
         account: addr,
-        package_limit: 30000,
+        quota_limit: DEFAULT_QUOTA_LIMIT,
     })
     .unwrap();
 
@@ -373,7 +374,7 @@ mod dev_test {
         let name1 = rand_string();
         execute_create_dev(CreateDevOpts {
             chain_name: name.clone(),
-            config_dir: "/tmp".to_string(),
+            config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
             is_tls: false,
@@ -384,7 +385,7 @@ mod dev_test {
 
         execute_create_dev(CreateDevOpts {
             chain_name: name1,
-            config_dir: "/tmp".to_string(),
+            config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
             is_tls: true,
@@ -395,14 +396,14 @@ mod dev_test {
 
         execute_append_dev(AppendDevOpts {
             chain_name: name.clone(),
-            config_dir: "/tmp".to_string(),
+            config_dir: ".tmp".to_string(),
             log_level: "info".to_string(),
         })
         .unwrap();
 
         execute_delete_dev(DeleteDevOpts {
             chain_name: name,
-            config_dir: "/tmp".to_string(),
+            config_dir: ".tmp".to_string(),
         })
         .unwrap();
     }

@@ -61,8 +61,8 @@ pub struct InitNodeOpts {
     #[clap(long = "key-id", default_value = "1")]
     pub(crate) key_id: u64,
     /// set one block contains tx limit, default 30000
-    #[clap(long = "package-limit", default_value = "30000")]
-    pub(crate) package_limit: u64,
+    #[clap(long = "quota-limit", default_value = "30000000")]
+    pub(crate) quota_limit: u64,
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     pub(crate) log_level: String,
@@ -101,7 +101,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .network_listen_port(opts.network_listen_port)
         .db_key(opts.kms_password)
         .key_id(opts.key_id)
-        .package_limit(opts.package_limit)
+        .quota_limit(opts.quota_limit)
         .log_level(opts.log_level)
         .account(opts.account)
         .build();

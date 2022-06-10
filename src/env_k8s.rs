@@ -23,6 +23,7 @@ use crate::error::Error;
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
+use crate::migrate::DEFAULT_QUOTA_LIMIT;
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
@@ -279,7 +280,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             key_id: node_account.0,
             log_level: opts.log_level.clone(),
             account: node_account.1,
-            package_limit: 30000,
+            quota_limit: DEFAULT_QUOTA_LIMIT,
         })
         .unwrap();
 
@@ -411,7 +412,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         key_id,
         log_level: opts.log_level.clone(),
         account: addr,
-        package_limit: 30000,
+        quota_limit: DEFAULT_QUOTA_LIMIT,
     })
     .unwrap();
 
