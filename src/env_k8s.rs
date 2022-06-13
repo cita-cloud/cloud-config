@@ -31,6 +31,7 @@ use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, rand_string, read_chain_config};
 use clap::Parser;
+use std::fs;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -362,6 +363,15 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     for node in chain_config.node_network_address_list {
         let domain = node.domain.clone();
 
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(&from, &to).unwrap();
+
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
@@ -442,6 +452,15 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
     // update reserve nodes
     for node in chain_config.node_network_address_list {
         let domain = node.domain.clone();
+
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(&from, &to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
