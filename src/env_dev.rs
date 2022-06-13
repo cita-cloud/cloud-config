@@ -31,6 +31,7 @@ use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{find_micro_service, read_chain_config};
 use clap::Parser;
+use std::fs;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -263,6 +264,15 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     for i in 0..peers_count {
         let domain = format!("{}", i);
 
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(&from, &to).unwrap();
+
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
@@ -341,6 +351,15 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
     // update reserve nodes
     for i in 0..delete_node_id {
         let domain = format!("{}", i);
+
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(&from, &to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
