@@ -16,6 +16,7 @@ use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::constant::{
     CHAIN_CONFIG_FILE, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT, NETWORK_P2P, NETWORK_TLS,
+    NETWORK_ZENOH,
 };
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
@@ -51,6 +52,9 @@ pub struct CreateDevOpts {
     /// is network tls
     #[clap(long = "is-tls")]
     is_tls: bool,
+    /// is network zenoh
+    #[clap(long = "is-zenoh")]
+    is_zenoh: bool,
     /// is consensus bft
     #[clap(long = "is-bft")]
     is_bft: bool,
@@ -67,6 +71,7 @@ pub struct CreateDevOpts {
 /// is stdout is false
 pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let is_tls = opts.is_tls;
+    let is_zenoh = opts.is_zenoh;
     let peers_count = opts.peers_count as usize;
 
     // init chain
@@ -82,6 +87,9 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     init_chain_config_opts.config_dir = opts.config_dir.clone();
     if !is_tls {
         init_chain_config_opts.network_image = NETWORK_P2P.to_string();
+    }
+    if is_zenoh {
+        init_chain_config_opts.network_image = NETWORK_ZENOH.to_string();
     }
     if !opts.is_bft {
         init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
@@ -134,7 +142,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
 
     // if network is tls
     // gen ca and gen cert for each node
-    if is_tls {
+    if is_tls || is_zenoh {
         execute_create_ca(CreateCAOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
@@ -222,7 +230,8 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
-    let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
+    let is_tls = find_micro_service(&chain_config, NETWORK_TLS)
+        || find_micro_service(&chain_config, NETWORK_ZENOH);
     let peers_count = chain_config.node_network_address_list.len();
     let new_node_id = peers_count;
 
@@ -392,6 +401,7 @@ mod dev_test {
             is_tls: false,
             is_bft: false,
             is_eth: false,
+            is_zenoh: false,
         })
         .unwrap();
 
@@ -403,6 +413,7 @@ mod dev_test {
             is_tls: true,
             is_bft: true,
             is_eth: true,
+            is_zenoh: false,
         })
         .unwrap();
 

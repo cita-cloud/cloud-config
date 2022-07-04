@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
-use crate::constant::{CHAIN_CONFIG_FILE, DEFAULT_QUOTA_LIMIT, NETWORK_TLS};
+use crate::constant::{CHAIN_CONFIG_FILE, DEFAULT_QUOTA_LIMIT, NETWORK_TLS, NETWORK_ZENOH};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -204,7 +204,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    let is_tls = opts.network_image == NETWORK_TLS;
+    let is_tls = opts.network_image == NETWORK_TLS || opts.network_image == NETWORK_ZENOH;
 
     // if network is tls
     // gen ca and gen cert for each node
@@ -308,7 +308,8 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
-    let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
+    let is_tls = find_micro_service(&chain_config, NETWORK_TLS)
+        || find_micro_service(&chain_config, NETWORK_ZENOH);
 
     // create account for new node
     let (addr, _) = execute_new_account(NewAccountOpts {
