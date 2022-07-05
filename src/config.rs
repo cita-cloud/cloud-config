@@ -22,5 +22,6 @@ pub(crate) mod crypto_sm;
 pub(crate) mod executor_evm;
 pub(crate) mod network_p2p;
 pub(crate) mod network_tls;
+pub(crate) mod network_zenoh;
 pub(crate) mod node_config;
 pub(crate) mod storage_rocksdb;

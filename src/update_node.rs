@@ -21,12 +21,13 @@ use crate::config::crypto_sm::CryptoSmConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
 use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
+use crate::config::network_zenoh::{PeerConfig as ZenohPeerConfig, ZenohConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
     CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM, DNS4, EXECUTOR_EVM,
-    KEY_PEM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
-    VALIDATOR_ADDRESS,
+    KEY_PEM, NETWORK_P2P, NETWORK_TLS, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY,
+    STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
@@ -174,6 +175,61 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             key,
             tls_peers,
         );
+        network_config.write(&config_file_name);
+        // only for new node
+        if !is_old {
+            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+        }
+    } else if find_micro_service(&chain_config, NETWORK_ZENOH) {
+        let mut zenoh_peers: Vec<ZenohPeerConfig> = Vec::new();
+        for node_network_address in &chain_config.node_network_address_list {
+            if node_network_address.domain != opts.domain {
+                let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
+                let node_cluster = &node_network_address.cluster;
+                let port = if local_cluster == node_cluster {
+                    node_network_address.svc_port
+                } else {
+                    node_network_address.port
+                };
+                zenoh_peers.push(ZenohPeerConfig {
+                    port,
+                    domain: real_domain,
+                    protocol: "quic".to_string(),
+                });
+            }
+        }
+        // load cert
+        let ca_cert = read_file(format!("{}/{}/{}", &node_dir, CA_CERT_DIR, CERT_PEM)).unwrap();
+        let cert = read_file(format!(
+            "{}/{}/{}/{}",
+            &node_dir, CERTS_DIR, &opts.domain, CERT_PEM
+        ))
+        .unwrap();
+        let key = read_file(format!(
+            "{}/{}/{}/{}",
+            &node_dir, CERTS_DIR, &opts.domain, KEY_PEM
+        ))
+        .unwrap();
+
+        let validator_address_path = format!(
+            "{}/{}/{}/{}",
+            &node_dir, ACCOUNT_DIR, &node_config.account, VALIDATOR_ADDRESS
+        );
+        let validator_address = read_file(&validator_address_path).unwrap();
+        let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
+        let network_config = ZenohConfig {
+            port: node_config.network_listen_port,
+            grpc_port: node_config.grpc_ports.network_port,
+            ca_cert,
+            cert,
+            priv_key: key,
+            peers: zenoh_peers,
+            domain: real_domain,
+            protocol: "quic".to_string(),
+            node_address: node_config.account.clone(),
+            validator_address,
+            chain_id: chain_config.system_config.chain_id.clone(),
+        };
         network_config.write(&config_file_name);
         // only for new node
         if !is_old {

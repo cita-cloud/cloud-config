@@ -23,6 +23,7 @@ pub const SYSTEM_CONFIG: &str = "system_config";
 pub const NETWORK: &str = "network";
 pub const NETWORK_P2P: &str = "network_p2p";
 pub const NETWORK_TLS: &str = "network_tls";
+pub const NETWORK_ZENOH: &str = "network_zenoh";
 pub const CRYPTO_SM: &str = "crypto_sm";
 pub const CRYPTO_ETH: &str = "crypto_eth";
 pub const CRYPTO: &str = "crypto";

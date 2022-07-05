@@ -17,6 +17,7 @@ use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::network_p2p::NetConfig;
 use crate::config::network_tls::NetworkConfig;
+use crate::config::network_zenoh::ZenohConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::LOG4RS_YAML;
 use crate::util;
@@ -77,6 +78,11 @@ root:
   appenders:
     - stdout
     - journey-service
+
+# Quinn will continuously print unwanted logs at the info level: https://github.com/quinn-rs/quinn/issues/1322 
+loggers:
+  quinn:
+    level: warn
 "#,
                 service, service, log_level
             ),
@@ -93,6 +99,7 @@ pub struct AggregateConfig {
     pub genesis_block: GenesisBlock,
     pub network_p2p: Option<NetConfig>,
     pub network_tls: Option<NetworkConfig>,
+    pub network_zenoh: Option<ZenohConfig>,
     pub controller: Option<ControllerConfig>,
     pub storage_rocksdb: Option<StorageRocksdbConfig>,
     pub executor_evm: Option<ExecutorEvmConfig>,
