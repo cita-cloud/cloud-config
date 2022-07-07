@@ -189,5 +189,5 @@ pub fn rand_string() -> String {
 }
 
 pub fn svc_name(chain_name: &str, domain: &str) -> String {
-    format!("{}-{}-nodeport", chain_name, domain)
+    format!("{}-{}", chain_name, domain)
 }
