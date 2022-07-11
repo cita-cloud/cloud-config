@@ -14,15 +14,16 @@
 
 use crate::constant::{
     CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH,
-    CRYPTO_SM, EXECUTOR_EVM, NETWORK_P2P, NETWORK_TLS, NODE_CONFIG_FILE, PRIVATE_KEY,
-    STORAGE_ROCKSDB,
+    CRYPTO_SM, EXECUTOR_EVM, NETWORK_P2P, NETWORK_TLS, NETWORK_ZENOH, NODE_CONFIG_FILE,
+    PRIVATE_KEY, STORAGE_ROCKSDB,
 };
 use crate::error::Error;
-use crate::util::{read_chain_config, read_file, read_node_config, svc_name, write_file};
+use crate::util::{
+    find_micro_service, read_chain_config, read_file, read_node_config, svc_name, write_file,
+};
 use clap::Parser;
 use k8s_openapi::api::apps::v1::StatefulSet;
 use k8s_openapi::api::apps::v1::StatefulSetSpec;
-use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::api::core::v1::ConfigMapVolumeSource;
 use k8s_openapi::api::core::v1::Container;
 use k8s_openapi::api::core::v1::ContainerPort;
@@ -38,6 +39,7 @@ use k8s_openapi::api::core::v1::ServicePort;
 use k8s_openapi::api::core::v1::ServiceSpec;
 use k8s_openapi::api::core::v1::Volume;
 use k8s_openapi::api::core::v1::VolumeMount;
+use k8s_openapi::api::core::v1::{ConfigMap, HostAlias};
 use k8s_openapi::apimachinery::pkg::api::resource::Quantity;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::LabelSelector;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
@@ -110,6 +112,13 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
 
     let yamls_path = format!("{}/yamls", &node_dir);
     fs::create_dir_all(&yamls_path).unwrap();
+
+    // protocol
+    let network_protocol = if find_micro_service(&chain_config, NETWORK_ZENOH) {
+        "UDP"
+    } else {
+        "TCP"
+    };
 
     // update yaml
     // node port svc
@@ -324,7 +333,13 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         metadata.labels = Some(labels);
         template.metadata = Some(metadata);
 
-        let mut template_spec = PodSpec::default();
+        let mut template_spec = PodSpec {
+            host_aliases: Some(vec![HostAlias {
+                hostnames: Some(vec![node_name.clone()]),
+                ip: Some("0.0.0.0".to_string()),
+            }]),
+            ..Default::default()
+        };
         let mut containers = Vec::new();
 
         let mut container_resources_requirements = ResourceRequirements::default();
@@ -345,7 +360,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 ContainerPort {
                     container_port: 40000,
                     name: Some("network".to_string()),
-                    protocol: Some("TCP".to_string()),
+                    protocol: Some(network_protocol.to_string()),
                     ..Default::default()
                 },
                 ContainerPort {
@@ -405,7 +420,8 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         "/etc/cita-cloud/config/config.toml".to_string(),
                         "--stdout".to_string(),
                     ]);
-                } else if micro_service.image == NETWORK_P2P {
+                } else if micro_service.image == NETWORK_P2P || micro_service.image == NETWORK_ZENOH
+                {
                     network_container.image = Some(format!(
                         "{}/{}/{}:{}",
                         &opts.docker_registry,
@@ -924,7 +940,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 name: Some("network".to_string()),
                 port: 40000,
                 target_port: Some(IntOrString::Int(40000)),
-                protocol: Some("TCP".to_string()),
+                protocol: Some(network_protocol.to_string()),
                 ..Default::default()
             },
             ServicePort {
