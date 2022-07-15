@@ -15,8 +15,8 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT, NETWORK_P2P, NETWORK_TLS,
-    NETWORK_ZENOH,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT,
+    NETWORK_P2P, NETWORK_TLS, NETWORK_ZENOH,
 };
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
@@ -58,6 +58,9 @@ pub struct CreateDevOpts {
     /// is consensus bft
     #[clap(long = "is-bft")]
     is_bft: bool,
+    /// is consensus overlord
+    #[clap(long = "is-overlord")]
+    is_overlord: bool,
     /// is crypto eth
     #[clap(long = "is-eth")]
     is_eth: bool,
@@ -72,6 +75,7 @@ pub struct CreateDevOpts {
 pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let is_tls = opts.is_tls;
     let is_zenoh = opts.is_zenoh;
+    let is_overlord = opts.is_overlord;
     let peers_count = opts.peers_count as usize;
 
     // init chain
@@ -93,6 +97,9 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     }
     if !opts.is_bft {
         init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
+    }
+    if is_overlord {
+        init_chain_config_opts.consensus_image = CONSENSUS_OVERLORD.to_string();
     }
     if opts.is_eth {
         init_chain_config_opts.crypto_image = CRYPTO_ETH.to_string();
@@ -402,6 +409,7 @@ mod dev_test {
             is_bft: false,
             is_eth: false,
             is_zenoh: false,
+            is_overlord: false,
         })
         .unwrap();
 
@@ -414,6 +422,7 @@ mod dev_test {
             is_bft: true,
             is_eth: true,
             is_zenoh: false,
+            is_overlord: false,
         })
         .unwrap();
 
