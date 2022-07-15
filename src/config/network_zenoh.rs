@@ -23,6 +23,13 @@ pub struct PeerConfig {
     pub domain: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModuleConfig {
+    pub module_name: String,
+    pub hostname: String,
+    pub port: u16,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ZenohConfig {
     pub grpc_port: u16,
@@ -40,6 +47,10 @@ pub struct ZenohConfig {
     // https://github.com/alexcrichton/toml-rs/issues/258
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub peers: Vec<PeerConfig>,
+
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub modules: Vec<ModuleConfig>,
 
     pub node_address: String,
     pub validator_address: String,

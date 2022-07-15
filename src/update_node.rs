@@ -21,7 +21,7 @@ use crate::config::crypto_sm::CryptoSmConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
 use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
-use crate::config::network_zenoh::{PeerConfig as ZenohPeerConfig, ZenohConfig};
+use crate::config::network_zenoh::{ModuleConfig, PeerConfig as ZenohPeerConfig, ZenohConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
@@ -217,6 +217,36 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         );
         let validator_address = read_file(&validator_address_path).unwrap();
         let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
+
+        // modules
+        let modules = vec![
+            ModuleConfig {
+                module_name: "consensus".to_string(),
+                hostname: "127.0.0.1".to_string(),
+                port: node_config.grpc_ports.consensus_port,
+            },
+            ModuleConfig {
+                module_name: "executor".to_string(),
+                hostname: "127.0.0.1".to_string(),
+                port: node_config.grpc_ports.executor_port,
+            },
+            ModuleConfig {
+                module_name: "storage".to_string(),
+                hostname: "127.0.0.1".to_string(),
+                port: node_config.grpc_ports.storage_port,
+            },
+            ModuleConfig {
+                module_name: "controller".to_string(),
+                hostname: "127.0.0.1".to_string(),
+                port: node_config.grpc_ports.controller_port,
+            },
+            ModuleConfig {
+                module_name: "crypto".to_string(),
+                hostname: "127.0.0.1".to_string(),
+                port: node_config.grpc_ports.crypto_port,
+            },
+        ];
+
         let network_config = ZenohConfig {
             port: node_config.network_listen_port,
             grpc_port: node_config.grpc_ports.network_port,
@@ -229,6 +259,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_address: node_config.account.clone(),
             validator_address,
             chain_id: chain_config.system_config.chain_id.clone(),
+            modules,
         };
         network_config.write(&config_file_name);
         // only for new node
