@@ -38,7 +38,7 @@ pub trait TomlWriter {
 pub trait YmlWriter {
     fn service(&self) -> String;
 
-    fn write_log4rs(&self, path: &str, _is_stdout: bool, log_level: &str)
+    fn write_log4rs(&self, path: &str, is_stdout: bool, log_level: &str)
     where
         Self: Serialize,
     {
@@ -76,15 +76,15 @@ appenders:
 root:
   level: {}
   appenders:
-    - stdout
     - journey-service
+    {}
 
 # Quinn will continuously print unwanted logs at the info level: https://github.com/quinn-rs/quinn/issues/1322 
 loggers:
   quinn:
     level: warn
 "#,
-                service, service, log_level
+                service, service, log_level, if is_stdout { "- stdout" } else { "" }
             ),
         )
         .unwrap();
