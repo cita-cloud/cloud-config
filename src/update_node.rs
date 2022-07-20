@@ -226,24 +226,9 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 port: node_config.grpc_ports.consensus_port,
             },
             ModuleConfig {
-                module_name: "executor".to_string(),
-                hostname: "127.0.0.1".to_string(),
-                port: node_config.grpc_ports.executor_port,
-            },
-            ModuleConfig {
-                module_name: "storage".to_string(),
-                hostname: "127.0.0.1".to_string(),
-                port: node_config.grpc_ports.storage_port,
-            },
-            ModuleConfig {
                 module_name: "controller".to_string(),
                 hostname: "127.0.0.1".to_string(),
                 port: node_config.grpc_ports.controller_port,
-            },
-            ModuleConfig {
-                module_name: "crypto".to_string(),
-                hostname: "127.0.0.1".to_string(),
-                port: node_config.grpc_ports.crypto_port,
             },
         ];
 
