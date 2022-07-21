@@ -108,9 +108,9 @@ SUBCOMMANDS:
     ------  .gitignore
     ```
 2. [init-chain-config](/src/init_chain_config.rs)。初始化除`admin`(管理员账户)，`validators`(共识节点地址列表)，`node_network_address_list`（节点网络地址列表）之外的`链级配置`。因为前述三个操作需要一些额外的准备工作，且需要先对除此之外的链接配置信息在所有参与方之间达成共识。因此对于去中心化场景来说，这一步其实是一个公示的过程。执行之后会生成`$(config-dir)/$(chain-name)/chain_config.toml`
-3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。如果网络微服务选择了`network_tls`，则还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
+3. [set-admin](/src/set_admin.rs)。设置管理员账户。账户需要事先通过[new-account](/src/new_account.rs)子命令创建。默认网络微服务为`network_zenoh`，还需要通过[create-ca](/src/create_ca.rs)创建链的根证书。
 4. [set-validators](/src/set_validators.rs)。设置共识节点账户列表。账户同样需要事先通过[new-account](/src/new_account.rs)子命令，由各个共识节点分别创建，然后将账户地址集中到一起进行设置。
-5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。如果网络微服务选择了`network_tls`，则需要通过`create-csr`根据节点的`domain`为各个节点创建证书和签名请求。然后请求`CA`通过`sign-crs`处理签名请求，并下发生成的`cert.pem`到各个节点。
+5. [set-nodelist](/src/set_nodelist.rs)。设置节点网络地址列表。各个节点参与方需要根据自己的网络环境，预先保留节点的`ip`，`port`和`domain`。然后将相关信息集中到一起进行设置。至此，`链级配置`信息设置完成，可以下发配置文件`chain_config.toml`到各个节点。默认网络微服务为`network_zenoh`，则需要通过`create-csr`根据节点的`domain`为各个节点创建证书和签名请求。然后请求`CA`通过`sign-crs`处理签名请求，并下发生成的`cert.pem`到各个节点。
 6. [set-stage](/src/set_stage.rs)设置链配置进行到的阶段。将链的配置过程分为三个阶段，分别为`init`，`public`和`finalize`，一些子命令会根据当前所处的阶段，来判断是否可以进行操作，以避免一些误操作。`init-chain-config`初始化链的配置时，默认设置阶段为`init`，该阶段可以重复进行`init-chain-config`以修改链的基础配置；`set-admin`只能在`init`阶段执行，并且会自动将阶段修改为`public`；`append-validator`，`delete-validator`和`set-validators`只能在`public`阶段进行；此后需要手工执行该命令将阶段修改为`finalize`，此时链的配置完成，不能再修改除`节点网络地址列表`之外的配置，并且此后才可以进行`init-node`操作。辅助命令和`delete-chain`不受阶段的限制。
 7. [init-node](/src/init_node.rs)。设置`节点配置`信息。这步操作由各个节点的参与方独立设置，节点之间可以不同。执行之后会生成`$(config-dir)/$(chain-name)-$(domain)/node_config.toml`
 8. [update-node](/src/update_node.rs)。根据之前设置的`链级配置`和`节点配置`，生成每个节点所需的微服务配置文件。
@@ -199,7 +199,7 @@ test-chain/
             set executor micro service image tag [default: latest]
 
         --network_image <NETWORK_IMAGE>
-            set network micro service image name (network_tls/network_p2p) [default: network_tls]
+            set network micro service image name (network_zenoh) [default: network_zenoh]
 
         --network_tag <NETWORK_TAG>
             set network micro service image tag [default: latest]
@@ -240,7 +240,7 @@ node_network_address_list = []
 stage = 'Init'
 
 [[micro_service_list]]
-image = 'network_tls'
+image = 'network_zenoh'
 tag = 'latest'
 
 [[micro_service_list]]
@@ -928,15 +928,15 @@ OPTIONS:
     -h, --help                         Print help information
         --is-bft                       is consensus bft
         --is-eth                       is crypto eth
-        --is-tls                       is network tls
+        --is-overlord                  is consensus overlord
         --log-level <LOG_LEVEL>        log level [default: info]
         --peers-count <PEERS_COUNT>    set initial node number [default: 4]
 ```
 
 说明：
-1. `--is-tls`标识网络微服务是否选择了`network_tls`。
-2. `--is-bft`标识共识微服务是否选择了`consensus_bft`。
-3. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
+1. `--is-bft`标识`consensus`微服务是否选择了`consensus_bft`。
+2. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
+3. `--is-overlord`标识`consensus`微服务是否选择了`consensus_overlord`。
 
 ```
 $ cloud-config create-dev  
@@ -1096,7 +1096,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
             log level [default: info]
 
         --network_image <NETWORK_IMAGE>
-            set network micro service image name (network_tls/network_p2p) [default: network_tls]
+            set network micro service image name (network_zenoh) [default: network_zenoh]
 
         --network_tag <NETWORK_TAG>
             set network micro service image tag [default: latest]
