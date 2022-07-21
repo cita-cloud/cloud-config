@@ -51,14 +51,14 @@ pub struct InitChainConfigOpts {
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
     pub(crate) block_limit: u64,
-    /// set network micro service image name (network_tls/network_p2p)
-    #[clap(long = "network_image", default_value = "network_tls")]
+    /// set network micro service image name (network_zenoh)
+    #[clap(long = "network_image", default_value = "network_zenoh")]
     pub(crate) network_image: String,
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
     pub(crate) network_tag: String,
     /// set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-    #[clap(long = "consensus_image", default_value = "consensus_bft")]
+    #[clap(long = "consensus_image", default_value = "consensus_raft")]
     pub(crate) consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]

@@ -15,8 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT,
-    NETWORK_P2P, NETWORK_TLS, NETWORK_ZENOH,
+    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT,
 };
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
@@ -30,7 +29,7 @@ use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
-use crate::util::{find_micro_service, read_chain_config};
+use crate::util::read_chain_config;
 use clap::Parser;
 use std::fs;
 
@@ -49,12 +48,6 @@ pub struct CreateDevOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
-    /// is network tls
-    #[clap(long = "is-tls")]
-    is_tls: bool,
-    /// is network zenoh
-    #[clap(long = "is-zenoh")]
-    is_zenoh: bool,
     /// is consensus bft
     #[clap(long = "is-bft")]
     is_bft: bool,
@@ -73,9 +66,6 @@ pub struct CreateDevOpts {
 /// node network listen port is 40000 + i
 /// is stdout is false
 pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
-    let is_tls = opts.is_tls;
-    let is_zenoh = opts.is_zenoh;
-    let is_overlord = opts.is_overlord;
     let peers_count = opts.peers_count as usize;
 
     // init chain
@@ -89,16 +79,11 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let mut init_chain_config_opts = InitChainConfigOpts::parse_from(vec![""]);
     init_chain_config_opts.chain_name = opts.chain_name.clone();
     init_chain_config_opts.config_dir = opts.config_dir.clone();
-    if !is_tls {
-        init_chain_config_opts.network_image = NETWORK_P2P.to_string();
+    if opts.is_bft {
+        init_chain_config_opts.consensus_image = CONSENSUS_BFT.to_string();
     }
-    if is_zenoh {
-        init_chain_config_opts.network_image = NETWORK_ZENOH.to_string();
-    }
-    if !opts.is_bft {
-        init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
-    }
-    if is_overlord {
+    // is_overlord will override is_bft
+    if opts.is_overlord {
         init_chain_config_opts.consensus_image = CONSENSUS_OVERLORD.to_string();
     }
     if opts.is_eth {
@@ -147,29 +132,26 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
         .unwrap();
     }
 
-    // if network is tls
     // gen ca and gen cert for each node
-    if is_tls || is_zenoh {
-        execute_create_ca(CreateCAOpts {
+    execute_create_ca(CreateCAOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+    })
+    .unwrap();
+    for i in 0..peers_count {
+        let domain = format!("{}", i);
+        execute_create_csr(CreateCSROpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
         })
         .unwrap();
-        for i in 0..peers_count {
-            let domain = format!("{}", i);
-            execute_create_csr(CreateCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-            execute_sign_csr(SignCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-        }
+        execute_sign_csr(SignCSROpts {
+            chain_name: opts.chain_name.clone(),
+            config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
+        })
+        .unwrap();
     }
 
     execute_set_stage(SetStageOpts {
@@ -237,8 +219,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
-    let is_tls = find_micro_service(&chain_config, NETWORK_TLS)
-        || find_micro_service(&chain_config, NETWORK_ZENOH);
     let peers_count = chain_config.node_network_address_list.len();
     let new_node_id = peers_count;
 
@@ -258,23 +238,20 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    // if network is tls
     // gen cert for new node
-    if is_tls {
-        let domain = format!("{}", new_node_id);
-        execute_create_csr(CreateCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain: domain.clone(),
-        })
-        .unwrap();
-        execute_sign_csr(SignCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain,
-        })
-        .unwrap();
-    }
+    let domain = format!("{}", new_node_id);
+    execute_create_csr(CreateCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain: domain.clone(),
+    })
+    .unwrap();
+    execute_sign_csr(SignCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain,
+    })
+    .unwrap();
 
     // update old nodes
     for i in 0..peers_count {
@@ -405,10 +382,8 @@ mod dev_test {
             config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
-            is_tls: false,
             is_bft: false,
             is_eth: false,
-            is_zenoh: false,
             is_overlord: false,
         })
         .unwrap();
@@ -418,10 +393,8 @@ mod dev_test {
             config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
-            is_tls: true,
             is_bft: true,
             is_eth: true,
-            is_zenoh: false,
             is_overlord: false,
         })
         .unwrap();

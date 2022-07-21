@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
-use crate::constant::{CHAIN_CONFIG_FILE, DEFAULT_QUOTA_LIMIT, NETWORK_TLS, NETWORK_ZENOH};
+use crate::constant::{CHAIN_CONFIG_FILE, DEFAULT_QUOTA_LIMIT};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -29,7 +29,7 @@ use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
 use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
-use crate::util::{find_micro_service, rand_string, read_chain_config};
+use crate::util::{rand_string, read_chain_config};
 use clap::Parser;
 use std::fs;
 
@@ -63,8 +63,8 @@ pub struct CreateK8sOpts {
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
     pub(crate) block_limit: u64,
-    /// set network micro service image name (network_tls/network_p2p)
-    #[clap(long = "network_image", default_value = "network_tls")]
+    /// set network micro service image name (network_zenoh)
+    #[clap(long = "network_image", default_value = "network_zenoh")]
     pub(crate) network_image: String,
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
@@ -204,31 +204,26 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    let is_tls = opts.network_image == NETWORK_TLS || opts.network_image == NETWORK_ZENOH;
-
-    // if network is tls
     // gen ca and gen cert for each node
-    if is_tls {
-        execute_create_ca(CreateCAOpts {
+    execute_create_ca(CreateCAOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+    })
+    .unwrap();
+    for node in node_list.iter() {
+        let domain = node.domain.to_string();
+        execute_create_csr(CreateCSROpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
         })
         .unwrap();
-        for node in node_list.iter() {
-            let domain = node.domain.to_string();
-            execute_create_csr(CreateCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-            execute_sign_csr(SignCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-        }
+        execute_sign_csr(SignCSROpts {
+            chain_name: opts.chain_name.clone(),
+            config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
+        })
+        .unwrap();
     }
 
     execute_set_stage(SetStageOpts {
@@ -308,8 +303,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let chain_config = read_chain_config(&file_name).unwrap();
-    let is_tls = find_micro_service(&chain_config, NETWORK_TLS)
-        || find_micro_service(&chain_config, NETWORK_ZENOH);
 
     // create account for new node
     let (addr, _) = execute_new_account(NewAccountOpts {
@@ -341,23 +334,20 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    // if network is tls
     // gen cert for new node
-    if is_tls {
-        let domain = new_node.domain.clone();
-        execute_create_csr(CreateCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain: domain.clone(),
-        })
-        .unwrap();
-        execute_sign_csr(SignCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain,
-        })
-        .unwrap();
-    }
+    let domain = new_node.domain.clone();
+    execute_create_csr(CreateCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain: domain.clone(),
+    })
+    .unwrap();
+    execute_sign_csr(SignCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain,
+    })
+    .unwrap();
 
     // update old nodes
     // chain_config load befor append node, so it only contains old nodes
@@ -496,7 +486,7 @@ mod k8s_test {
             chain_id: "".to_string(),
             block_interval: 3,
             block_limit: 100,
-            network_image: "network_tls".to_string(),
+            network_image: "network_zenoh".to_string(),
             network_tag: "latest".to_string(),
             consensus_image: "consensus_bft".to_string(),
             consensus_tag: "latest".to_string(),
@@ -525,7 +515,7 @@ mod k8s_test {
             chain_id: "".to_string(),
             block_interval: 3,
             block_limit: 100,
-            network_image: "network_p2p".to_string(),
+            network_image: "network_zenoh".to_string(),
             network_tag: "latest".to_string(),
             consensus_image: "consensus_raft".to_string(),
             consensus_tag: "latest".to_string(),

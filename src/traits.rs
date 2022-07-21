@@ -15,8 +15,6 @@
 use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorEvmConfig;
-use crate::config::network_p2p::NetConfig;
-use crate::config::network_tls::NetworkConfig;
 use crate::config::network_zenoh::ZenohConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::LOG4RS_YAML;
@@ -97,8 +95,6 @@ pub trait Writer: TomlWriter + YmlWriter {}
 pub struct AggregateConfig {
     pub system_config: SystemConfigFile,
     pub genesis_block: GenesisBlock,
-    pub network_p2p: Option<NetConfig>,
-    pub network_tls: Option<NetworkConfig>,
     pub network_zenoh: Option<ZenohConfig>,
     pub controller: Option<ControllerConfig>,
     pub storage_rocksdb: Option<StorageRocksdbConfig>,
