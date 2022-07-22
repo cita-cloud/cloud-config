@@ -19,20 +19,17 @@ use crate::config::controller::ControllerConfig;
 use crate::config::crypto_eth::CryptoEthConfig;
 use crate::config::crypto_sm::CryptoSmConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
-use crate::config::network_p2p::{NetConfig, PeerConfig as P2P_PeerConfig};
-use crate::config::network_tls::{NetworkConfig, PeerConfig as TLS_PeerConfig};
 use crate::config::network_zenoh::{ModuleConfig, PeerConfig as ZenohPeerConfig, ZenohConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
-    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM, DNS4, EXECUTOR_EVM,
-    KEY_PEM, NETWORK_P2P, NETWORK_TLS, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY,
-    STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
+    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM, EXECUTOR_EVM, KEY_PEM,
+    NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
 use crate::traits::YmlWriter;
-use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config, svc_name};
+use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
 use clap::Parser;
 use std::fs;
 
@@ -100,87 +97,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     }
 
     // network config file
-    // if network_p2p
-    if find_micro_service(&chain_config, NETWORK_P2P) {
-        let mut uris: Vec<P2P_PeerConfig> = Vec::new();
-        for node_network_address in &chain_config.node_network_address_list {
-            if node_network_address.domain != opts.domain {
-                let node_cluster = &node_network_address.cluster;
-                let host = if local_cluster.eq(node_cluster) {
-                    svc_name(&opts.chain_name, &node_network_address.domain)
-                } else {
-                    node_network_address.host.clone()
-                };
-                let port = if local_cluster.eq(node_cluster) {
-                    node_network_address.svc_port
-                } else {
-                    node_network_address.port
-                };
-                uris.push(P2P_PeerConfig {
-                    address: format!("/{}/{}/tcp/{}", DNS4, host, port),
-                });
-            }
-        }
-        let network_config = NetConfig::new(
-            node_config.network_listen_port,
-            node_config.grpc_ports.network_port,
-            &uris,
-        );
-        network_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
-        }
-    } else if find_micro_service(&chain_config, NETWORK_TLS) {
-        let mut tls_peers: Vec<TLS_PeerConfig> = Vec::new();
-        for node_network_address in &chain_config.node_network_address_list {
-            if node_network_address.domain != opts.domain {
-                let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
-                let node_cluster = &node_network_address.cluster;
-                let host = if local_cluster == node_cluster {
-                    svc_name(&opts.chain_name, &node_network_address.domain)
-                } else {
-                    node_network_address.host.clone()
-                };
-                let port = if local_cluster == node_cluster {
-                    node_network_address.svc_port
-                } else {
-                    node_network_address.port
-                };
-                tls_peers.push(crate::config::network_tls::PeerConfig {
-                    host,
-                    port,
-                    domain: real_domain,
-                });
-            }
-        }
-        // load cert
-        let ca_cert = read_file(format!("{}/{}/{}", &node_dir, CA_CERT_DIR, CERT_PEM)).unwrap();
-        let cert = read_file(format!(
-            "{}/{}/{}/{}",
-            &node_dir, CERTS_DIR, &opts.domain, CERT_PEM
-        ))
-        .unwrap();
-        let key = read_file(format!(
-            "{}/{}/{}/{}",
-            &node_dir, CERTS_DIR, &opts.domain, KEY_PEM
-        ))
-        .unwrap();
-
-        let network_config = NetworkConfig::new(
-            node_config.network_listen_port,
-            node_config.grpc_ports.network_port,
-            ca_cert,
-            cert,
-            key,
-            tls_peers,
-        );
-        network_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
-        }
-    } else if find_micro_service(&chain_config, NETWORK_ZENOH) {
+    if find_micro_service(&chain_config, NETWORK_ZENOH) {
         let mut zenoh_peers: Vec<ZenohPeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {

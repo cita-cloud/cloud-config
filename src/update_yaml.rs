@@ -14,8 +14,7 @@
 
 use crate::constant::{
     CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH,
-    CRYPTO_SM, EXECUTOR_EVM, NETWORK_P2P, NETWORK_TLS, NETWORK_ZENOH, NODE_CONFIG_FILE,
-    PRIVATE_KEY, STORAGE_ROCKSDB,
+    CRYPTO_SM, EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
 };
 use crate::error::Error;
 use crate::util::{
@@ -405,23 +404,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
 
         for micro_service in &chain_config.micro_service_list {
             if micro_service.image.starts_with("network") {
-                if micro_service.image == NETWORK_TLS {
-                    network_container.image = Some(format!(
-                        "{}/{}/{}:{}",
-                        &opts.docker_registry,
-                        &opts.docker_repo,
-                        &micro_service.image,
-                        &micro_service.tag
-                    ));
-                    network_container.command = Some(vec![
-                        "network".to_string(),
-                        "run".to_string(),
-                        "-c".to_string(),
-                        "/etc/cita-cloud/config/config.toml".to_string(),
-                        "--stdout".to_string(),
-                    ]);
-                } else if micro_service.image == NETWORK_P2P || micro_service.image == NETWORK_ZENOH
-                {
+                if micro_service.image == NETWORK_ZENOH {
                     network_container.image = Some(format!(
                         "{}/{}/{}:{}",
                         &opts.docker_registry,
