@@ -120,7 +120,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
     };
 
     // update yaml
-    // node port svc
+    // node svc
     // statefulset
     // configmap about config.toml
     // configmap about all log4rs.yaml
@@ -152,7 +152,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         );
         cm_config.data = Some(data);
 
-        let yaml_file_name = format!("{}/{}-cm-config.yaml", &yamls_path, &node_name);
+        let yaml_file_name = format!("{}/cm-config.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&cm_config).unwrap().as_bytes(),
             &yaml_file_name,
@@ -206,7 +206,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         );
         cm_log.data = Some(data);
 
-        let yaml_file_name = format!("{}/{}-cm-log.yaml", &yamls_path, &node_name);
+        let yaml_file_name = format!("{}/cm-log.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&cm_log).unwrap().as_bytes(),
             &yaml_file_name,
@@ -244,7 +244,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         );
         cm_account.binary_data = Some(binary_data);
 
-        let yaml_file_name = format!("{}/{}-cm-account.yaml", &yamls_path, &node_name);
+        let yaml_file_name = format!("{}/cm-account.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&cm_account).unwrap().as_bytes(),
             &yaml_file_name,
@@ -878,7 +878,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         spec.template = template;
         statefulset.spec = Some(spec);
 
-        let yaml_file_name = format!("{}/{}.yaml", &yamls_path, &node_name);
+        let yaml_file_name = format!("{}/statefulset.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&statefulset).unwrap().as_bytes(),
             &yaml_file_name,
@@ -886,7 +886,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
     }
 
     {
-        let mut nodeport_svc = Service::default();
+        let mut node_svc = Service::default();
 
         let mut metadata = ObjectMeta {
             name: Some(svc_name(&opts.chain_name, &opts.domain)),
@@ -903,19 +903,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         );
         metadata.labels = Some(labels);
 
-        nodeport_svc.metadata = metadata;
+        node_svc.metadata = metadata;
 
         let mut svc_spec = ServiceSpec {
-            type_: Some("NodePort".to_string()),
+            type_: Some("ClusterIP".to_string()),
             ..Default::default()
         };
 
         let mut match_labels = BTreeMap::new();
         match_labels.insert("app.kubernetes.io/chain-name".to_string(), opts.chain_name);
-        match_labels.insert(
-            "app.kubernetes.io/chain-node".to_string(),
-            node_name.clone(),
-        );
+        match_labels.insert("app.kubernetes.io/chain-node".to_string(), node_name);
         svc_spec.selector = Some(match_labels);
 
         svc_spec.ports = Some(vec![
@@ -942,11 +939,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             },
         ]);
 
-        nodeport_svc.spec = Some(svc_spec);
+        node_svc.spec = Some(svc_spec);
 
-        let yaml_file_name = format!("{}/{}-svc.yaml", &yamls_path, &node_name);
+        let yaml_file_name = format!("{}/node-svc.yaml", &yamls_path);
         write_file(
-            serde_yaml::to_string(&nodeport_svc).unwrap().as_bytes(),
+            serde_yaml::to_string(&node_svc).unwrap().as_bytes(),
             &yaml_file_name,
         );
     }
