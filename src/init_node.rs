@@ -54,8 +54,8 @@ pub struct InitNodeOpts {
     /// network listen port of node
     #[clap(long = "network-listen-port", default_value = "40000")]
     pub(crate) network_listen_port: u16,
-    /// set one block contains tx limit, default 30000
-    #[clap(long = "quota-limit", default_value = "30000000")]
+    /// set one block contains quota limit, default 1073741824
+    #[clap(long = "quota-limit", default_value = "1073741824")]
     pub(crate) quota_limit: u64,
     /// log level
     #[clap(long = "log-level", default_value = "info")]
