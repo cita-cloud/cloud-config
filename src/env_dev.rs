@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT,
 };
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
@@ -48,9 +48,9 @@ pub struct CreateDevOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
-    /// is consensus bft
-    #[clap(long = "is-bft")]
-    is_bft: bool,
+    /// is consensus raft
+    #[clap(long = "is-raft")]
+    is_raft: bool,
     /// is consensus overlord
     #[clap(long = "is-overlord")]
     is_overlord: bool,
@@ -79,10 +79,10 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let mut init_chain_config_opts = InitChainConfigOpts::parse_from(vec![""]);
     init_chain_config_opts.chain_name = opts.chain_name.clone();
     init_chain_config_opts.config_dir = opts.config_dir.clone();
-    if opts.is_bft {
-        init_chain_config_opts.consensus_image = CONSENSUS_BFT.to_string();
+    if opts.is_raft {
+        init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
     }
-    // is_overlord will override is_bft
+    // is_overlord will override is_raft
     if opts.is_overlord {
         init_chain_config_opts.consensus_image = CONSENSUS_OVERLORD.to_string();
     }
@@ -382,7 +382,7 @@ mod dev_test {
             config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
-            is_bft: false,
+            is_raft: false,
             is_eth: false,
             is_overlord: false,
         })
@@ -393,7 +393,7 @@ mod dev_test {
             config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
-            is_bft: true,
+            is_raft: true,
             is_eth: true,
             is_overlord: false,
         })

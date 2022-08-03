@@ -926,7 +926,7 @@ OPTIONS:
         --config-dir <CONFIG_DIR>      set config file directory, default means current directory
                                        [default: .]
     -h, --help                         Print help information
-        --is-bft                       is consensus bft
+        --is-raft                      is consensus raft
         --is-eth                       is crypto eth
         --is-overlord                  is consensus overlord
         --log-level <LOG_LEVEL>        log level [default: info]
@@ -934,7 +934,7 @@ OPTIONS:
 ```
 
 说明：
-1. `--is-bft`标识`consensus`微服务是否选择了`consensus_bft`。
+1. `--is-raft`标识`consensus`微服务是否选择了`consensus_raft`。
 2. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
 3. `--is-overlord`标识`consensus`微服务是否选择了`consensus_overlord`。
 
