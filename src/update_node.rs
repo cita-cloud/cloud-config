@@ -48,9 +48,9 @@ pub struct UpdateNodeOpts {
     /// domain of node
     #[clap(long = "domain")]
     pub(crate) domain: String,
-    /// is output to stdout
-    #[clap(long = "is-stdout")]
-    pub(crate) is_stdout: bool,
+    /// disable output to stdout
+    #[clap(long = "no-stdout")]
+    pub(crate) no_stdout: bool,
     /// is old node
     #[clap(long = "is-old")]
     pub(crate) is_old: bool,
@@ -59,6 +59,7 @@ pub struct UpdateNodeOpts {
 /// generate node config files by chain_config and node_config
 pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let is_old = opts.is_old;
+    let is_stdout = !opts.no_stdout;
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
 
@@ -166,7 +167,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         network_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            network_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            network_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport network service");
@@ -184,7 +185,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         consensus_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
         let consensus_config = ConsensusBft::new(
@@ -197,7 +198,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         consensus_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
         let validator_address_path = format!(
@@ -214,7 +215,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         consensus_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            consensus_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport consensus service");
@@ -227,7 +228,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         executor_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            executor_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            executor_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport executor service");
@@ -243,7 +244,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         storage_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            storage_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            storage_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport storage service");
@@ -267,7 +268,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         controller_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            controller_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            controller_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport controller service");
@@ -280,14 +281,14 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         crypto_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            crypto_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, CRYPTO_ETH) {
         let crypto_config = CryptoEthConfig::new(node_config.grpc_ports.crypto_port);
         crypto_config.write(&config_file_name);
         // only for new node
         if !is_old {
-            crypto_config.write_log4rs(&node_dir, opts.is_stdout, &node_config.log_level);
+            crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else {
         panic!("unsupport crypto service");
