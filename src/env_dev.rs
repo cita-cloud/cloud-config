@@ -189,7 +189,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            is_stdout: false,
+            no_stdout: true,
             config_name: "config.toml".to_string(),
             is_old: false,
         })
@@ -270,7 +270,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            is_stdout: false,
+            no_stdout: true,
             config_name: "config.toml".to_string(),
             is_old: true,
         })
@@ -303,7 +303,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir,
         domain,
-        is_stdout: false,
+        no_stdout: true,
         config_name: "config.toml".to_string(),
         is_old: false,
     })
@@ -358,7 +358,7 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            is_stdout: false,
+            no_stdout: true,
             config_name: "config.toml".to_string(),
             is_old: true,
         })

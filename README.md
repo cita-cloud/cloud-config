@@ -788,7 +788,7 @@ storage_port = 50003
         --config-name <CONFIG_NAME>    set config file name [default: config.toml]
         --domain <DOMAIN>              domain of node
         --is-old                       is old node
-        --is-stdout                    is output to stdout
+        --no-stdout                    disable output to stdout
 ```
 
 说明：
