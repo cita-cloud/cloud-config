@@ -58,7 +58,7 @@ pub struct InitChainConfigOpts {
     #[clap(long = "network_tag", default_value = "latest")]
     pub(crate) network_tag: String,
     /// set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-    #[clap(long = "consensus_image", default_value = "consensus_raft")]
+    #[clap(long = "consensus_image", default_value = "consensus_bft")]
     pub(crate) consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]
