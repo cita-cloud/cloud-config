@@ -517,9 +517,15 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                         &micro_service.image,
                         &micro_service.tag
                     ));
-                    consensus_container.command = Some(vec!["/bin/sh".to_string(),
-                    "-c".to_string(),
-                    "if [ ! -f \"/data/private_key\" ]; then cp /mnt/private_key /data;fi; consensus run -c /etc/cita-cloud/config/config.toml -l /etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
+                    consensus_container.command = Some(vec![
+                        "consensus".to_string(),
+                        "run".to_string(),
+                        "-c".to_string(),
+                        "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-l".to_string(),
+                        "/etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
+                        "-p".to_string(),
+                        "/mnt/private_key".to_string(),
                     ]);
                 } else {
                     panic!("Unkonwn consensus service!");
@@ -793,10 +799,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                     &micro_service.image,
                     &micro_service.tag
                 ));
-                crypto_container.command = Some(vec!["/bin/sh".to_string(),
-          "-c".to_string(),
-          "if [ ! -f \"/data/private_key\" ]; then cp /mnt/private_key /data;fi; crypto run -c /etc/cita-cloud/config/config.toml -l /etc/cita-cloud/log/crypto-log4rs.yaml".to_string(),
-          ]);
+                crypto_container.command = Some(vec![
+                    "crypto".to_string(),
+                    "run".to_string(),
+                    "-c".to_string(),
+                    "/etc/cita-cloud/config/config.toml".to_string(),
+                    "-l".to_string(),
+                    "/etc/cita-cloud/log/controller-log4rs.yaml".to_string(),
+                    "-p".to_string(),
+                    "/mnt/private_key".to_string(),
+                ]);
             }
         }
 
