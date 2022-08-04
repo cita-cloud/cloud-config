@@ -5,7 +5,6 @@
 ### 依赖
 
 * rust: 1.59
-* libsqlite3
 
 ### 安装
 
@@ -207,6 +206,9 @@ test-chain/
         --prevhash <PREVHASH>
             set genesis prevhash [default:
             0x0000000000000000000000000000000000000000000000000000000000000000]
+
+        --quota-limit <QUOTA_LIMIT>
+            set one block contains tx limit, default 1073741824 [default: 1073741824]
 
         --storage_image <STORAGE_IMAGE>
             set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
@@ -729,9 +731,6 @@ test-chain
         --network-port <NETWORK_PORT>
             grpc network_port of node [default: 50000]
 
-        --quota-limit <QUOTA_LIMIT>
-            set one block contains tx limit, default 30000 [default: 30000]
-
         --storage-port <STORAGE_PORT>
             grpc storage_port of node [default: 50003]
 
@@ -766,7 +765,6 @@ $ cat test-chain-node0/node_config.toml
 account = '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa'
 log_level = 'info'
 network_listen_port = 40000
-quota_limit = 1073741824
 
 [grpc_ports]
 consensus_port = 50001
@@ -1109,6 +1107,9 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
         --prevhash <PREVHASH>
             set genesis prevhash [default:
             0x0000000000000000000000000000000000000000000000000000000000000000]
+
+        --quota-limit <QUOTA_LIMIT>
+            set one block contains tx limit, default 1073741824 [default: 1073741824]
 
         --storage_image <STORAGE_IMAGE>
             set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]

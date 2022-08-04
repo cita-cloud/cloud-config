@@ -262,7 +262,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             controller_port: node_config.grpc_ports.controller_port,
             crypto_port: node_config.grpc_ports.crypto_port,
             node_address: node_config.account.clone(),
-            quota_limit: node_config.quota_limit,
             validator_address_len: if is_overlord { 48 } else { 20 },
         };
         controller_config.write(&config_file_name);

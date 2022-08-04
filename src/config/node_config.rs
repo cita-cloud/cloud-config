@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::DEFAULT_QUOTA_LIMIT;
 use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
@@ -92,7 +91,6 @@ impl GrpcPortsBuilder {
 pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
-    pub quota_limit: u64,
     pub log_level: String,
     pub account: String,
 }
@@ -100,7 +98,6 @@ pub struct NodeConfig {
 pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,
     pub network_listen_port: u16,
-    pub quota_limit: u64,
     pub log_level: String,
     pub account: String,
 }
@@ -110,7 +107,6 @@ impl NodeConfigBuilder {
         Self {
             grpc_ports: GrpcPortsBuilder::new().build(),
             network_listen_port: 40000,
-            quota_limit: DEFAULT_QUOTA_LIMIT,
             log_level: "info".to_string(),
             account: "".to_string(),
         }
@@ -122,11 +118,6 @@ impl NodeConfigBuilder {
 
     pub fn network_listen_port(&mut self, network_listen_port: u16) -> &mut NodeConfigBuilder {
         self.network_listen_port = network_listen_port;
-        self
-    }
-
-    pub fn quota_limit(&mut self, quota_limit: u64) -> &mut NodeConfigBuilder {
-        self.quota_limit = quota_limit;
         self
     }
 
@@ -144,7 +135,6 @@ impl NodeConfigBuilder {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
             network_listen_port: self.network_listen_port,
-            quota_limit: self.quota_limit,
             log_level: self.log_level.clone(),
             account: self.account.clone(),
         }
