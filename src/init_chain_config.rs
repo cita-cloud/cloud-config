@@ -51,6 +51,9 @@ pub struct InitChainConfigOpts {
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
     pub(crate) block_limit: u64,
+    /// set one block contains quota limit, default 1073741824
+    #[clap(long = "quota-limit", default_value = "1073741824")]
+    pub(crate) quota_limit: u64,
     /// set network micro service image name (network_zenoh)
     #[clap(long = "network_image", default_value = "network_zenoh")]
     pub(crate) network_image: String,
@@ -166,6 +169,7 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .chain_id(chain_id)
         .block_interval(opts.block_interval)
         .block_limit(opts.block_limit)
+        .quota_limit(opts.quota_limit)
         .build();
 
     let chain_config = ChainConfigBuilder::new()

@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, PRE_HASH, SYSTEM_CONFIG,
+    CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, DEFAULT_QUOTA_LIMIT, GENESIS_BLOCK,
+    PRE_HASH, SYSTEM_CONFIG,
 };
 use crate::traits::{TomlWriter, YmlWriter};
 use crate::util::check_address;
@@ -34,8 +35,6 @@ pub struct ControllerConfig {
     pub crypto_port: u16,
 
     pub node_address: String,
-
-    pub quota_limit: u64,
 
     pub validator_address_len: u32,
 }
@@ -61,6 +60,7 @@ pub struct SystemConfigFile {
     pub block_interval: u32,
     pub validators: Vec<String>,
     pub block_limit: u64,
+    pub quota_limit: u64,
 }
 
 impl SystemConfigFile {
@@ -88,6 +88,7 @@ pub struct SystemConfigBuilder {
     pub block_interval: u32,
     pub validators: Vec<String>,
     pub block_limit: u64,
+    pub quota_limit: u64,
 }
 
 impl SystemConfigBuilder {
@@ -99,6 +100,7 @@ impl SystemConfigBuilder {
             block_interval: DEFAULT_BLOCK_INTERVAL,
             validators: Vec::new(),
             block_limit: DEFAULT_BLOCK_LIMIT,
+            quota_limit: DEFAULT_QUOTA_LIMIT,
         }
     }
 
@@ -134,6 +136,11 @@ impl SystemConfigBuilder {
         self
     }
 
+    pub fn quota_limit(&mut self, quota_limit: u64) -> &mut SystemConfigBuilder {
+        self.quota_limit = quota_limit;
+        self
+    }
+
     pub fn build(&self) -> SystemConfigFile {
         SystemConfigFile {
             version: self.version,
@@ -142,6 +149,7 @@ impl SystemConfigBuilder {
             block_interval: self.block_interval,
             validators: self.validators.clone(),
             block_limit: self.block_limit,
+            quota_limit: self.quota_limit,
         }
     }
 }
@@ -192,7 +200,6 @@ impl GenesisBlockBuilder {
 #[cfg(test)]
 mod controller_test {
     use super::*;
-    use crate::constant::DEFAULT_QUOTA_LIMIT;
 
     #[test]
     fn basic_test() {
@@ -204,7 +211,6 @@ mod controller_test {
             controller_port: 51234,
             crypto_port: 51235,
             node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".into(),
-            quota_limit: DEFAULT_QUOTA_LIMIT,
             validator_address_len: 20,
         };
 

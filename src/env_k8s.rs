@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
-use crate::constant::{CHAIN_CONFIG_FILE, DEFAULT_QUOTA_LIMIT};
+use crate::constant::CHAIN_CONFIG_FILE;
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -63,6 +63,9 @@ pub struct CreateK8sOpts {
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
     pub(crate) block_limit: u64,
+    /// set one block contains quota limit, default 1073741824
+    #[clap(long = "quota-limit", default_value = "1073741824")]
+    pub(crate) quota_limit: u64,
     /// set network micro service image name (network_zenoh)
     #[clap(long = "network_image", default_value = "network_zenoh")]
     pub(crate) network_image: String,
@@ -136,6 +139,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         chain_id: opts.chain_id.clone(),
         block_interval: opts.block_interval,
         block_limit: opts.block_limit,
+        quota_limit: opts.quota_limit,
         network_image: opts.network_image.clone(),
         network_tag: opts.network_tag.clone(),
         consensus_image: opts.consensus_image.clone(),
@@ -261,7 +265,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             network_listen_port,
             log_level: opts.log_level.clone(),
             account: node_account,
-            quota_limit: DEFAULT_QUOTA_LIMIT,
         })
         .unwrap();
 
@@ -392,7 +395,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         network_listen_port,
         log_level: opts.log_level.clone(),
         account: addr,
-        quota_limit: DEFAULT_QUOTA_LIMIT,
     })
     .unwrap();
 
@@ -486,6 +488,7 @@ mod k8s_test {
             chain_id: "".to_string(),
             block_interval: 3,
             block_limit: 100,
+            quota_limit: 1073741824,
             network_image: "network_zenoh".to_string(),
             network_tag: "latest".to_string(),
             consensus_image: "consensus_bft".to_string(),
@@ -515,6 +518,7 @@ mod k8s_test {
             chain_id: "".to_string(),
             block_interval: 3,
             block_limit: 100,
+            quota_limit: 1073741824,
             network_image: "network_zenoh".to_string(),
             network_tag: "latest".to_string(),
             consensus_image: "consensus_raft".to_string(),

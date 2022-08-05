@@ -14,9 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CRYPTO_ETH, DEFAULT_QUOTA_LIMIT,
-};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CRYPTO_ETH};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -181,7 +179,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             network_listen_port: listen_port,
             log_level: opts.log_level.clone(),
             account: node_addr,
-            quota_limit: DEFAULT_QUOTA_LIMIT,
         })
         .unwrap();
 
@@ -295,7 +292,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         network_listen_port: listen_port,
         log_level: opts.log_level.clone(),
         account: addr,
-        quota_limit: DEFAULT_QUOTA_LIMIT,
     })
     .unwrap();
 

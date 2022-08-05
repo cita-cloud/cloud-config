@@ -54,9 +54,6 @@ pub struct InitNodeOpts {
     /// network listen port of node
     #[clap(long = "network-listen-port", default_value = "40000")]
     pub(crate) network_listen_port: u16,
-    /// set one block contains quota limit, default 1073741824
-    #[clap(long = "quota-limit", default_value = "1073741824")]
-    pub(crate) quota_limit: u64,
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     pub(crate) log_level: String,
@@ -93,7 +90,6 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     let node_config = NodeConfigBuilder::new()
         .grpc_ports(grpc_ports)
         .network_listen_port(opts.network_listen_port)
-        .quota_limit(opts.quota_limit)
         .log_level(opts.log_level)
         .account(opts.account)
         .build();
