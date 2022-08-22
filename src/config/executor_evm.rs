@@ -19,11 +19,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ExecutorEvmConfig {
     pub executor_port: u16,
+    pub metrics_port: u16,
+    pub enable_metrics: bool,
 }
 
 impl ExecutorEvmConfig {
-    pub fn new(executor_port: u16) -> Self {
-        Self { executor_port }
+    pub fn new(executor_port: u16, metrics_port: u16, enable_metrics: bool) -> Self {
+        Self {
+            executor_port,
+            metrics_port,
+            enable_metrics,
+        }
     }
 }
 
@@ -49,6 +55,8 @@ mod executor_test {
 
         let config = ExecutorEvmConfig {
             executor_port: 51232,
+            metrics_port: 61232,
+            enable_metrics: true,
         };
 
         config.write("example");

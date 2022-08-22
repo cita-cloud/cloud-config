@@ -88,31 +88,124 @@ impl GrpcPortsBuilder {
 }
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
+pub struct MetricsPorts {
+    pub network_metrics_port: u16,
+    pub consensus_metrics_port: u16,
+    pub executor_metrics_port: u16,
+    pub storage_metrics_port: u16,
+    pub controller_metrics_port: u16,
+    pub crypto_metrics_port: u16,
+}
+
+pub struct MetricsPortsBuilder {
+    pub network_metrics_port: u16,
+    pub consensus_metrics_port: u16,
+    pub executor_metrics_port: u16,
+    pub storage_metrics_port: u16,
+    pub controller_metrics_port: u16,
+    pub crypto_metrics_port: u16,
+}
+
+impl MetricsPortsBuilder {
+    pub fn new() -> Self {
+        Self {
+            network_metrics_port: 60000,
+            consensus_metrics_port: 60001,
+            executor_metrics_port: 60002,
+            storage_metrics_port: 60003,
+            controller_metrics_port: 60004,
+            crypto_metrics_port: 60005,
+        }
+    }
+    pub fn network_metrics_port(&mut self, network_metrics_port: u16) -> &mut MetricsPortsBuilder {
+        self.network_metrics_port = network_metrics_port;
+        self
+    }
+
+    pub fn consensus_metrics_port(
+        &mut self,
+        consensus_metrics_port: u16,
+    ) -> &mut MetricsPortsBuilder {
+        self.consensus_metrics_port = consensus_metrics_port;
+        self
+    }
+
+    pub fn executor_metrics_port(
+        &mut self,
+        executor_metrics_port: u16,
+    ) -> &mut MetricsPortsBuilder {
+        self.executor_metrics_port = executor_metrics_port;
+        self
+    }
+
+    pub fn storage_metrics_port(&mut self, storage_metrics_port: u16) -> &mut MetricsPortsBuilder {
+        self.storage_metrics_port = storage_metrics_port;
+        self
+    }
+
+    pub fn controller_metrics_port(
+        &mut self,
+        controller_metrics_port: u16,
+    ) -> &mut MetricsPortsBuilder {
+        self.controller_metrics_port = controller_metrics_port;
+        self
+    }
+
+    pub fn crypto_metrics_port(&mut self, crypto_metrics_port: u16) -> &mut MetricsPortsBuilder {
+        self.crypto_metrics_port = crypto_metrics_port;
+        self
+    }
+
+    pub fn build(&self) -> MetricsPorts {
+        MetricsPorts {
+            network_metrics_port: self.network_metrics_port,
+            consensus_metrics_port: self.consensus_metrics_port,
+            executor_metrics_port: self.executor_metrics_port,
+            storage_metrics_port: self.storage_metrics_port,
+            controller_metrics_port: self.controller_metrics_port,
+            crypto_metrics_port: self.crypto_metrics_port,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
+    pub metrics_ports: MetricsPorts,
     pub network_listen_port: u16,
     pub log_level: String,
     pub account: String,
+    pub enable_metrics: bool,
 }
 
 pub struct NodeConfigBuilder {
     pub grpc_ports: GrpcPorts,
+    pub metrics_ports: MetricsPorts,
     pub network_listen_port: u16,
     pub log_level: String,
     pub account: String,
+    pub enable_metrics: bool,
 }
 
 impl NodeConfigBuilder {
     pub fn new() -> Self {
         Self {
             grpc_ports: GrpcPortsBuilder::new().build(),
+            metrics_ports: MetricsPortsBuilder::new().build(),
             network_listen_port: 40000,
             log_level: "info".to_string(),
             account: "".to_string(),
+            enable_metrics: true,
         }
     }
+
     pub fn grpc_ports(&mut self, grpc_ports: GrpcPorts) -> &mut NodeConfigBuilder {
         self.grpc_ports = grpc_ports;
+        self
+    }
+
+    pub fn metrics_ports(&mut self, metrics_ports: MetricsPorts) -> &mut NodeConfigBuilder {
+        self.metrics_ports = metrics_ports;
         self
     }
 
@@ -131,12 +224,19 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn enable_metrics(&mut self, enable_metrics: bool) -> &mut NodeConfigBuilder {
+        self.enable_metrics = enable_metrics;
+        self
+    }
+
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
+            metrics_ports: self.metrics_ports.clone(),
             network_listen_port: self.network_listen_port,
             log_level: self.log_level.clone(),
             account: self.account.clone(),
+            enable_metrics: self.enable_metrics,
         }
     }
 }

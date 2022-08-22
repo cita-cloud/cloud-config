@@ -55,6 +55,8 @@ pub struct ZenohConfig {
     pub node_address: String,
     pub validator_address: String,
     pub chain_id: String,
+    pub metrics_port: u16,
+    pub enable_metrics: bool,
 }
 
 impl TomlWriter for ZenohConfig {

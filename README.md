@@ -708,17 +708,32 @@ test-chain
         --config-dir <CONFIG_DIR>
             set config file directory, default means current directory [default: .]
 
+        --consensus-metrics-port <CONSENSUS_METRICS_PORT>
+            consensus metrics port of node [default: 60001]
+
         --consensus-port <CONSENSUS_PORT>
             grpc consensus_port of node [default: 50001]
+
+        --controller-metrics-port <CONTROLLER_METRICS_PORT>
+            controller metrics port of node [default: 60004]
 
         --controller-port <CONTROLLER_PORT>
             grpc controller_port of node [default: 50004]
 
+        --crypto-metrics-port <CRYPTO_METRICS_PORT>
+            crypto metrics port of node [default: 60005]
+
         --crypto-port <CRYPTO_PORT>
             grpc crypto_port of node [default: 50005]
 
+        --disable-metrics
+            disable metrics exporter
+
         --domain <DOMAIN>
             domain of node
+
+        --executor-metrics-port <EXECUTOR_METRICS_PORT>
+            executor metrics port of node [default: 60002]
 
         --executor-port <EXECUTOR_PORT>
             grpc executor_port of node [default: 50002]
@@ -729,12 +744,17 @@ test-chain
         --network-listen-port <NETWORK_LISTEN_PORT>
             network listen port of node [default: 40000]
 
+        --network-metrics-port <NETWORK_METRICS_PORT>
+            network metrics port of node [default: 60000]
+
         --network-port <NETWORK_PORT>
             grpc network_port of node [default: 50000]
 
+        --storage-metrics-port <STORAGE_METRICS_PORT>
+            storage metrics port of node [default: 60003]
+
         --storage-port <STORAGE_PORT>
             grpc storage_port of node [default: 50003]
-
 ```
 
 说明：
@@ -763,7 +783,7 @@ test-chain-node1
 
 
 $ cat test-chain-node0/node_config.toml
-account = '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa'
+account = '5274d0171fd28a76d98f1e743298adf0c9b7d771'
 log_level = 'info'
 network_listen_port = 40000
 
@@ -774,6 +794,14 @@ crypto_port = 50005
 executor_port = 50002
 network_port = 50000
 storage_port = 50003
+
+[metrics_ports]
+consensus_metrics_port = 60001
+controller_metrics_port = 60004
+crypto_metrics_port = 60005
+executor_metrics_port = 60002
+network_metrics_port = 60000
+storage_metrics_port = 60003
 ```
 
 #### update-node
@@ -904,6 +932,7 @@ cm-account.yaml  cm-config.yaml  cm-log.yaml  node-svc.yaml  statefulset.yaml
 2. 节点的网络端口从`40000`开始往后顺延。
 3. 节点的`domain`使用节点的序号。
 4. 节点各个微服务的`gRPC`端口从`50000 + i*1000`开始往后顺延。其中`i`为节点的序号。
+4. 节点各个微服务的`metrics exporter`端口从`60000 + i*100`开始往后顺延。其中`i`为节点的序号。
 5. 增加节点只能在最大的节点序号往后增加。
 6. 删除节点也只能从最大的节点序号开始往前删除。
 
@@ -934,8 +963,8 @@ OPTIONS:
 
 说明：
 1. `--is-raft`标识`consensus`微服务是否选择了`consensus_raft`。
-2. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
-3. `--is-overlord`标识`consensus`微服务是否选择了`consensus_overlord`。
+2. `--is-overlord`标识`consensus`微服务是否选择了`consensus_overlord`。
+3. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
 
 ```
 $ cloud-config create-dev  
@@ -1038,7 +1067,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 
 约定：
 1. 超级管理员账户由用户自行创建并通过参数传入。
-2. 节点各个微服务的`gRPC`端口固定从`50000`开始往后顺延。
+2. 节点各个微服务的`gRPC`端口固定从`50000`开始依次分配给各微服务。
+2. 节点各个微服务的`metrics exporter`端口固定从`60000`依次分配给各微服务。
 3. 节点的网络监听端口固定为`40000`。
 
 适用于演示或者生产阶段，在k8s环境部署链。

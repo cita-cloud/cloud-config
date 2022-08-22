@@ -25,6 +25,10 @@ pub struct ConsensusOverlord {
     pub network_port: u16,
 
     pub node_address: String,
+
+    pub metrics_port: u16,
+
+    pub enable_metrics: bool,
 }
 
 impl ConsensusOverlord {
@@ -33,12 +37,16 @@ impl ConsensusOverlord {
         consensus_port: u16,
         network_port: u16,
         node_address: String,
+        metrics_port: u16,
+        enable_metrics: bool,
     ) -> Self {
         Self {
             controller_port,
             consensus_port,
             network_port,
             node_address,
+            metrics_port,
+            enable_metrics,
         }
     }
 }

@@ -163,6 +163,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             validator_address,
             chain_id: chain_config.system_config.chain_id.clone(),
             modules,
+            metrics_port: node_config.metrics_ports.network_metrics_port,
+            enable_metrics: node_config.enable_metrics,
         };
         network_config.write(&config_file_name);
         // only for new node
@@ -181,6 +183,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.controller_port,
             node_config.account.clone(),
             node_config.grpc_ports.consensus_port,
+            node_config.metrics_ports.consensus_metrics_port,
+            node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
         // only for new node
@@ -194,6 +198,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.crypto_port,
             format!("0x{}", &node_config.account),
+            node_config.metrics_ports.consensus_metrics_port,
+            node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
         // only for new node
@@ -211,6 +217,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
             validator_address,
+            node_config.metrics_ports.consensus_metrics_port,
+            node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
         // only for new node
@@ -224,7 +232,11 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // executor config file
     // if executor_evm
     if find_micro_service(&chain_config, EXECUTOR_EVM) {
-        let executor_config = ExecutorEvmConfig::new(node_config.grpc_ports.executor_port);
+        let executor_config = ExecutorEvmConfig::new(
+            node_config.grpc_ports.executor_port,
+            node_config.metrics_ports.executor_metrics_port,
+            node_config.enable_metrics,
+        );
         executor_config.write(&config_file_name);
         // only for new node
         if !is_old {
@@ -240,6 +252,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         let storage_config = StorageRocksdbConfig::new(
             node_config.grpc_ports.crypto_port,
             node_config.grpc_ports.storage_port,
+            node_config.metrics_ports.storage_metrics_port,
+            node_config.enable_metrics,
         );
         storage_config.write(&config_file_name);
         // only for new node
@@ -263,6 +277,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             crypto_port: node_config.grpc_ports.crypto_port,
             node_address: node_config.account.clone(),
             validator_address_len: if is_overlord { 48 } else { 20 },
+            metrics_port: node_config.metrics_ports.controller_metrics_port,
+            enable_metrics: node_config.enable_metrics,
         };
         controller_config.write(&config_file_name);
         // only for new node
@@ -276,14 +292,22 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // crypto config file
     // if crypto_sm
     if find_micro_service(&chain_config, CRYPTO_SM) {
-        let crypto_config = CryptoSmConfig::new(node_config.grpc_ports.crypto_port);
+        let crypto_config = CryptoSmConfig::new(
+            node_config.grpc_ports.crypto_port,
+            node_config.metrics_ports.crypto_metrics_port,
+            node_config.enable_metrics,
+        );
         crypto_config.write(&config_file_name);
         // only for new node
         if !is_old {
             crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
         }
     } else if find_micro_service(&chain_config, CRYPTO_ETH) {
-        let crypto_config = CryptoEthConfig::new(node_config.grpc_ports.crypto_port);
+        let crypto_config = CryptoEthConfig::new(
+            node_config.grpc_ports.crypto_port,
+            node_config.metrics_ports.crypto_metrics_port,
+            node_config.enable_metrics,
+        );
         crypto_config.write(&config_file_name);
         // only for new node
         if !is_old {

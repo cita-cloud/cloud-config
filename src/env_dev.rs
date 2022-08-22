@@ -61,6 +61,7 @@ pub struct CreateDevOpts {
 /// node network port is 40000 + i
 /// node domain is i
 /// grpc ports start from 50000 + i*1000
+/// metrics ports start from 60000 + i*100
 /// node network listen port is 40000 + i
 /// is stdout is false
 pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
@@ -162,6 +163,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     #[allow(clippy::needless_range_loop)]
     for i in 0..peers_count {
         let network_port = (50000 + i * 1000) as u16;
+        let network_metrics_port = (60000 + i * 100) as u16;
         let domain = format!("{}", i);
         let listen_port = (40000 + i) as u16;
         let node_addr = node_accounts[i].clone();
@@ -179,6 +181,13 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             network_listen_port: listen_port,
             log_level: opts.log_level.clone(),
             account: node_addr,
+            network_metrics_port,
+            consensus_metrics_port: network_metrics_port + 1,
+            executor_metrics_port: network_metrics_port + 2,
+            storage_metrics_port: network_metrics_port + 3,
+            controller_metrics_port: network_metrics_port + 4,
+            crypto_metrics_port: network_metrics_port + 5,
+            disable_metrics: false,
         })
         .unwrap();
 
@@ -276,6 +285,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
 
     // new node need init and update
     let network_port = (50000 + new_node_id * 1000) as u16;
+    let network_metrics_port = (60000 + new_node_id * 100) as u16;
     let domain = format!("{}", new_node_id);
     let listen_port = (40000 + new_node_id) as u16;
 
@@ -292,6 +302,13 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         network_listen_port: listen_port,
         log_level: opts.log_level.clone(),
         account: addr,
+        network_metrics_port,
+        consensus_metrics_port: network_metrics_port + 1,
+        executor_metrics_port: network_metrics_port + 2,
+        storage_metrics_port: network_metrics_port + 3,
+        controller_metrics_port: network_metrics_port + 4,
+        crypto_metrics_port: network_metrics_port + 5,
+        disable_metrics: false,
     })
     .unwrap();
 

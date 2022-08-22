@@ -25,6 +25,10 @@ pub struct Consensus {
     pub node_addr: String,
 
     pub grpc_listen_port: u16,
+
+    pub metrics_port: u16,
+
+    pub enable_metrics: bool,
 }
 
 impl Consensus {
@@ -33,12 +37,16 @@ impl Consensus {
         controller_port: u16,
         node_addr: String,
         grpc_listen_port: u16,
+        metrics_port: u16,
+        enable_metrics: bool,
     ) -> Self {
         Self {
             network_port,
             controller_port,
             node_addr,
             grpc_listen_port,
+            metrics_port,
+            enable_metrics,
         }
     }
 }
