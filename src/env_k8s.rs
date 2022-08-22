@@ -248,6 +248,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     // init node and update node
     for (i, node) in chain_config.node_network_address_list.iter().enumerate() {
         let network_port = 50000;
+        let network_metrics_port = 60000;
         let domain = node.domain.to_string();
         let network_listen_port = 40000;
         let node_account = node_accounts[i].clone();
@@ -265,6 +266,13 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             network_listen_port,
             log_level: opts.log_level.clone(),
             account: node_account,
+            network_metrics_port,
+            consensus_metrics_port: network_port + 1,
+            executor_metrics_port: network_port + 2,
+            storage_metrics_port: network_port + 3,
+            controller_metrics_port: network_port + 4,
+            crypto_metrics_port: network_port + 5,
+            disable_metrics: false,
         })
         .unwrap();
 
@@ -379,6 +387,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
 
     // new node need init and update
     let network_port = 50000;
+    let network_metrics_port = 60000;
     let network_listen_port = 40000;
     let domain = new_node.domain;
 
@@ -395,6 +404,13 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         network_listen_port,
         log_level: opts.log_level.clone(),
         account: addr,
+        network_metrics_port,
+        consensus_metrics_port: network_port + 1,
+        executor_metrics_port: network_port + 2,
+        storage_metrics_port: network_port + 3,
+        controller_metrics_port: network_port + 4,
+        crypto_metrics_port: network_port + 5,
+        disable_metrics: false,
     })
     .unwrap();
 

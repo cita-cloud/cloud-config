@@ -134,7 +134,7 @@ impl MicroServiceBuilder {
     }
 }
 
-#[derive(Debug, Serialize, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Clone, Deserialize, Eq, PartialEq)]
 pub enum ConfigStage {
     Init,
     Public,

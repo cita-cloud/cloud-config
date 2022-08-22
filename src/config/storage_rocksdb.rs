@@ -20,13 +20,22 @@ use serde::{Deserialize, Serialize};
 pub struct StorageRocksdbConfig {
     pub crypto_port: u16,
     pub storage_port: u16,
+    pub metrics_port: u16,
+    pub enable_metrics: bool,
 }
 
 impl StorageRocksdbConfig {
-    pub fn new(crypto_port: u16, storage_port: u16) -> Self {
+    pub fn new(
+        crypto_port: u16,
+        storage_port: u16,
+        metrics_port: u16,
+        enable_metrics: bool,
+    ) -> Self {
         Self {
             crypto_port,
             storage_port,
+            metrics_port,
+            enable_metrics,
         }
     }
 }

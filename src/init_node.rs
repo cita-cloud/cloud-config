@@ -13,11 +13,11 @@
 // limitations under the License.
 
 use crate::config::chain_config::ConfigStage;
-use crate::config::node_config::{GrpcPortsBuilder, NodeConfigBuilder};
+use crate::config::node_config::{GrpcPortsBuilder, MetricsPortsBuilder, NodeConfigBuilder};
 use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{copy_dir_all, read_chain_config, write_toml};
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use std::fs;
 use std::path::Path;
 
@@ -60,6 +60,27 @@ pub struct InitNodeOpts {
     /// account of node
     #[clap(long = "account")]
     pub(crate) account: String,
+    /// network metrics port of node
+    #[clap(long = "network-metrics-port", default_value = "60000")]
+    pub(crate) network_metrics_port: u16,
+    /// consensus metrics port of node
+    #[clap(long = "consensus-metrics-port", default_value = "60001")]
+    pub(crate) consensus_metrics_port: u16,
+    /// executor metrics port of node
+    #[clap(long = "executor-metrics-port", default_value = "60002")]
+    pub(crate) executor_metrics_port: u16,
+    /// storage metrics port of node
+    #[clap(long = "storage-metrics-port", default_value = "60003")]
+    pub(crate) storage_metrics_port: u16,
+    /// controller metrics port of node
+    #[clap(long = "controller-metrics-port", default_value = "60004")]
+    pub(crate) controller_metrics_port: u16,
+    /// crypto metrics port of node
+    #[clap(long = "crypto-metrics-port", default_value = "60005")]
+    pub(crate) crypto_metrics_port: u16,
+    /// disable metrics exporter
+    #[clap(long = "disable-metrics", action = ArgAction::SetTrue)]
+    pub(crate) disable_metrics: bool,
 }
 
 /// execute init node
@@ -87,11 +108,21 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .controller_port(opts.controller_port)
         .crypto_port(opts.crypto_port)
         .build();
+    let metrics_ports = MetricsPortsBuilder::new()
+        .network_metrics_port(opts.network_metrics_port)
+        .consensus_metrics_port(opts.consensus_metrics_port)
+        .executor_metrics_port(opts.executor_metrics_port)
+        .storage_metrics_port(opts.storage_metrics_port)
+        .controller_metrics_port(opts.controller_metrics_port)
+        .crypto_metrics_port(opts.crypto_metrics_port)
+        .build();
     let node_config = NodeConfigBuilder::new()
         .grpc_ports(grpc_ports)
+        .metrics_ports(metrics_ports)
         .network_listen_port(opts.network_listen_port)
         .log_level(opts.log_level)
         .account(opts.account)
+        .enable_metrics(!opts.disable_metrics)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);

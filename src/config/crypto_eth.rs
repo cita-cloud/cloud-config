@@ -19,11 +19,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct CryptoEthConfig {
     pub crypto_port: u16,
+    pub metrics_port: u16,
+    pub enable_metrics: bool,
 }
 
 impl CryptoEthConfig {
-    pub fn new(crypto_port: u16) -> Self {
-        Self { crypto_port }
+    pub fn new(crypto_port: u16, metrics_port: u16, enable_metrics: bool) -> Self {
+        Self {
+            crypto_port,
+            metrics_port,
+            enable_metrics,
+        }
     }
 }
 impl TomlWriter for CryptoEthConfig {
