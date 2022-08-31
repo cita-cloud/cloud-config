@@ -21,29 +21,24 @@ use crate::util::{
     find_micro_service, read_chain_config, read_file, read_node_config, svc_name, write_file,
 };
 use clap::Parser;
-use k8s_openapi::api::apps::v1::StatefulSet;
-use k8s_openapi::api::apps::v1::StatefulSetSpec;
-use k8s_openapi::api::core::v1::ConfigMapVolumeSource;
-use k8s_openapi::api::core::v1::Container;
-use k8s_openapi::api::core::v1::ContainerPort;
-use k8s_openapi::api::core::v1::ExecAction;
-use k8s_openapi::api::core::v1::PersistentVolumeClaim;
-use k8s_openapi::api::core::v1::PersistentVolumeClaimSpec;
-use k8s_openapi::api::core::v1::PodSpec;
-use k8s_openapi::api::core::v1::PodTemplateSpec;
-use k8s_openapi::api::core::v1::Probe;
-use k8s_openapi::api::core::v1::ResourceRequirements;
-use k8s_openapi::api::core::v1::Service;
-use k8s_openapi::api::core::v1::ServicePort;
-use k8s_openapi::api::core::v1::ServiceSpec;
-use k8s_openapi::api::core::v1::Volume;
-use k8s_openapi::api::core::v1::VolumeMount;
-use k8s_openapi::api::core::v1::{ConfigMap, HostAlias};
-use k8s_openapi::apimachinery::pkg::api::resource::Quantity;
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::LabelSelector;
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
-use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
-use k8s_openapi::ByteString;
+use k8s_openapi::{
+    api::{
+        apps::v1::{StatefulSet, StatefulSetSpec},
+        core::v1::{
+            Affinity, ConfigMap, ConfigMapVolumeSource, Container, ContainerPort, ExecAction,
+            HostAlias, PersistentVolumeClaim, PersistentVolumeClaimSpec, PodAffinityTerm,
+            PodAntiAffinity, PodSpec, PodTemplateSpec, Probe, ResourceRequirements, Service,
+            ServicePort, ServiceSpec, Volume, VolumeMount, WeightedPodAffinityTerm,
+        },
+    },
+    apimachinery::pkg::{
+        api::resource::Quantity,
+        apis::meta::v1::{LabelSelector, LabelSelectorRequirement, ObjectMeta},
+        util::intstr::IntOrString,
+    },
+    ByteString,
+};
+
 use std::collections::BTreeMap;
 use std::fs;
 
@@ -337,6 +332,29 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 hostnames: Some(vec![node_name.clone()]),
                 ip: Some("0.0.0.0".to_string()),
             }]),
+            affinity: Some(Affinity {
+                pod_anti_affinity: Some(PodAntiAffinity {
+                    preferred_during_scheduling_ignored_during_execution: Some(vec![
+                        WeightedPodAffinityTerm {
+                            weight: 100,
+                            pod_affinity_term: PodAffinityTerm {
+                                topology_key: "kubernetes.io/hostname".to_string(),
+                                label_selector: Some(LabelSelector {
+                                    match_expressions: Some(vec![LabelSelectorRequirement {
+                                        key: "app.kubernetes.io/chain-name".to_string(),
+                                        operator: "In".to_string(),
+                                        values: Some(vec![opts.chain_name.clone()]),
+                                    }]),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            },
+                        },
+                    ]),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
             ..Default::default()
         };
         let mut containers = Vec::new();
