@@ -17,8 +17,8 @@ use crate::config::node_config::NodeConfig;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, IsCa, KeyPair,
-    PKCS_ECDSA_P256_SHA256,
+    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, DistinguishedName,
+    DnType, DnValue, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
 };
 use std::io::{Read, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -106,11 +106,19 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
 }
 
 pub fn ca_cert() -> (Certificate, String, String) {
-    let mut params = CertificateParams::new(vec![]);
+    let mut params = CertificateParams::default();
     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
 
     let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
     params.key_pair.replace(keypair);
+
+    let mut dn = DistinguishedName::new();
+    dn.push(DnType::OrganizationName, "CITAHub");
+    dn.push(
+        DnType::CommonName,
+        DnValue::PrintableString("CA".to_string()),
+    );
+    params.distinguished_name = dn;
 
     let cert = Certificate::from_params(params).unwrap();
     let cert_pem = cert.serialize_pem_with_signer(&cert).unwrap();
@@ -128,6 +136,11 @@ pub fn restore_ca_cert(ca_cert_pem: &str, ca_key_pem: &str) -> Certificate {
 pub fn create_csr(domain: &str) -> (String, String) {
     let subject_alt_names = vec![domain.into()];
     let mut params = CertificateParams::new(subject_alt_names);
+
+    let mut dn = DistinguishedName::new();
+    dn.push(DnType::OrganizationName, "CITAHub");
+    dn.push(DnType::CommonName, DnValue::PrintableString(domain.into()));
+    params.distinguished_name = dn;
 
     let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
     params.key_pair.replace(keypair);
