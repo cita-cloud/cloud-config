@@ -823,7 +823,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                     "-c".to_string(),
                     "/etc/cita-cloud/config/config.toml".to_string(),
                     "-l".to_string(),
-                    "/etc/cita-cloud/log/controller-log4rs.yaml".to_string(),
+                    "/etc/cita-cloud/log/crypto-log4rs.yaml".to_string(),
                     "-p".to_string(),
                     "/mnt/private_key".to_string(),
                 ]);
