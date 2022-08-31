@@ -267,11 +267,11 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             log_level: opts.log_level.clone(),
             account: node_account,
             network_metrics_port,
-            consensus_metrics_port: network_port + 1,
-            executor_metrics_port: network_port + 2,
-            storage_metrics_port: network_port + 3,
-            controller_metrics_port: network_port + 4,
-            crypto_metrics_port: network_port + 5,
+            consensus_metrics_port: network_metrics_port + 1,
+            executor_metrics_port: network_metrics_port + 2,
+            storage_metrics_port: network_metrics_port + 3,
+            controller_metrics_port: network_metrics_port + 4,
+            crypto_metrics_port: network_metrics_port + 5,
             disable_metrics: false,
         })
         .unwrap();
@@ -405,11 +405,11 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         log_level: opts.log_level.clone(),
         account: addr,
         network_metrics_port,
-        consensus_metrics_port: network_port + 1,
-        executor_metrics_port: network_port + 2,
-        storage_metrics_port: network_port + 3,
-        controller_metrics_port: network_port + 4,
-        crypto_metrics_port: network_port + 5,
+        consensus_metrics_port: network_metrics_port + 1,
+        executor_metrics_port: network_metrics_port + 2,
+        storage_metrics_port: network_metrics_port + 3,
+        controller_metrics_port: network_metrics_port + 4,
+        crypto_metrics_port: network_metrics_port + 5,
         disable_metrics: false,
     })
     .unwrap();
