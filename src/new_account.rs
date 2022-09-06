@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, PRIVATE_KEY, VALIDATOR_ADDRESS,
+    ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, NODE_ADDRESS, PRIVATE_KEY,
+    VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{find_micro_service, read_chain_config, write_file};
@@ -79,6 +80,10 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     // store validator_address
     let path = format!("{}/{}/{}", &base_path, address, VALIDATOR_ADDRESS);
     write_file(validator_address.as_bytes(), path);
+
+    // store node_address
+    let path = format!("{}/{}/{}", &base_path, address, NODE_ADDRESS);
+    write_file(address.as_bytes(), path);
 
     // output node address and validator address
     println!(

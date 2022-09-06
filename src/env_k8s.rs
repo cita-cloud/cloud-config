@@ -282,7 +282,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             domain: domain.clone(),
             no_stdout: false,
             config_name: "config.toml".to_string(),
-            is_old: false,
+            is_dev: false,
         })
         .unwrap();
     }
@@ -380,7 +380,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
             domain: domain.clone(),
             no_stdout: false,
             config_name: "config.toml".to_string(),
-            is_old: true,
+            is_dev: false,
         })
         .unwrap();
     }
@@ -420,7 +420,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         domain,
         no_stdout: false,
         config_name: "config.toml".to_string(),
-        is_old: false,
+        is_dev: false,
     })
     .unwrap();
 
@@ -477,7 +477,7 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
             domain: domain.clone(),
             no_stdout: false,
             config_name: "config.toml".to_string(),
-            is_old: true,
+            is_dev: false,
         })
         .unwrap();
     }

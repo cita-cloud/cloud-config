@@ -43,4 +43,5 @@ pub const CSR_PEM: &str = "csr.pem";
 pub const LOG4RS_YAML: &str = "log4rs.yaml";
 pub const PRIVATE_KEY: &str = "private_key";
 pub const VALIDATOR_ADDRESS: &str = "validator_address";
+pub const NODE_ADDRESS: &str = "node_address";
 pub const DEFAULT_QUOTA_LIMIT: u64 = 1073741824;
