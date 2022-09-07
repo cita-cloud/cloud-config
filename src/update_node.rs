@@ -24,7 +24,7 @@ use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
     CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM, EXECUTOR_EVM, KEY_PEM,
-    NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
+    NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
@@ -51,15 +51,15 @@ pub struct UpdateNodeOpts {
     /// disable output to stdout
     #[clap(long = "no-stdout")]
     pub(crate) no_stdout: bool,
-    /// is old node
-    #[clap(long = "is-old")]
-    pub(crate) is_old: bool,
+    /// is for dev env
+    #[clap(long = "is-dev")]
+    pub(crate) is_dev: bool,
 }
 
 /// generate node config files by chain_config and node_config
 pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
-    let is_old = opts.is_old;
     let is_stdout = !opts.no_stdout;
+    let is_k8s = !opts.is_dev;
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
 
@@ -87,15 +87,31 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let is_overlord = find_micro_service(&chain_config, CONSENSUS_OVERLORD);
 
     // copy account files
-    // only for new node
-    if !is_old {
+    {
         let from = format!(
             "{}/{}/{}/{}",
             &node_dir, ACCOUNT_DIR, &node_config.account, PRIVATE_KEY
         );
         let to = format!("{}/{}", &node_dir, PRIVATE_KEY);
         fs::copy(from, to).unwrap();
+
+        let from = format!(
+            "{}/{}/{}/{}",
+            &node_dir, ACCOUNT_DIR, &node_config.account, VALIDATOR_ADDRESS
+        );
+        let to = format!("{}/{}", &node_dir, VALIDATOR_ADDRESS);
+        fs::copy(from, to).unwrap();
+
+        let from = format!(
+            "{}/{}/{}/{}",
+            &node_dir, ACCOUNT_DIR, &node_config.account, NODE_ADDRESS
+        );
+        let to = format!("{}/{}", &node_dir, NODE_ADDRESS);
+        fs::copy(from, to).unwrap();
     }
+
+    let validator_address_path = format!("{}/{}", &node_dir, VALIDATOR_ADDRESS);
+    let node_address_path = format!("{}/{}", &node_dir, NODE_ADDRESS);
 
     // network config file
     if find_micro_service(&chain_config, NETWORK_ZENOH) {
@@ -129,11 +145,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         ))
         .unwrap();
 
-        let validator_address_path = format!(
-            "{}/{}/{}/{}",
-            &node_dir, ACCOUNT_DIR, &node_config.account, VALIDATOR_ADDRESS
-        );
-        let validator_address = read_file(&validator_address_path).unwrap();
         let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
 
         // modules
@@ -159,18 +170,23 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             peers: zenoh_peers,
             domain: real_domain,
             protocol: "quic".to_string(),
-            node_address: node_config.account.clone(),
-            validator_address,
+            node_address: if is_k8s {
+                format!("/mnt/{}", NODE_ADDRESS)
+            } else {
+                node_address_path.clone()
+            },
+            validator_address: if is_k8s {
+                format!("/mnt/{}", VALIDATOR_ADDRESS)
+            } else {
+                validator_address_path
+            },
             chain_id: chain_config.system_config.chain_id.clone(),
             modules,
             metrics_port: node_config.metrics_ports.network_metrics_port,
             enable_metrics: node_config.enable_metrics,
         };
         network_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            network_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        network_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport network service");
     }
@@ -181,50 +197,43 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         let consensus_config = RAFT_Consensus::new(
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.controller_port,
-            node_config.account.clone(),
+            if is_k8s {
+                format!("/mnt/{}", NODE_ADDRESS)
+            } else {
+                node_address_path.clone()
+            },
             node_config.grpc_ports.consensus_port,
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
         let consensus_config = ConsensusBft::new(
             node_config.grpc_ports.controller_port,
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.crypto_port,
-            format!("0x{}", &node_config.account),
+            if is_k8s {
+                format!("/mnt/{}", NODE_ADDRESS)
+            } else {
+                node_address_path.clone()
+            },
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
-        let validator_address_path = format!(
-            "{}/{}/{}/{}",
-            &node_dir, ACCOUNT_DIR, &node_config.account, VALIDATOR_ADDRESS
-        );
-        let validator_address = read_file(&validator_address_path).unwrap();
         let consensus_config = ConsensusOverlord::new(
             node_config.grpc_ports.controller_port,
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
-            validator_address,
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport consensus service");
     }
@@ -238,10 +247,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.enable_metrics,
         );
         executor_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            executor_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        executor_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport executor service");
     }
@@ -256,10 +262,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.enable_metrics,
         );
         storage_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            storage_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        storage_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport storage service");
     }
@@ -275,16 +278,17 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             storage_port: node_config.grpc_ports.storage_port,
             controller_port: node_config.grpc_ports.controller_port,
             crypto_port: node_config.grpc_ports.crypto_port,
-            node_address: node_config.account.clone(),
+            node_address: if is_k8s {
+                format!("/mnt/{}", NODE_ADDRESS)
+            } else {
+                node_address_path
+            },
             validator_address_len: if is_overlord { 48 } else { 20 },
             metrics_port: node_config.metrics_ports.controller_metrics_port,
             enable_metrics: node_config.enable_metrics,
         };
         controller_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            controller_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        controller_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport controller service");
     }
@@ -298,10 +302,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.enable_metrics,
         );
         crypto_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else if find_micro_service(&chain_config, CRYPTO_ETH) {
         let crypto_config = CryptoEthConfig::new(
             node_config.grpc_ports.crypto_port,
@@ -309,10 +310,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.enable_metrics,
         );
         crypto_config.write(&config_file_name);
-        // only for new node
-        if !is_old {
-            crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-        }
+        crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport crypto service");
     }

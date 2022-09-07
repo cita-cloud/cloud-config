@@ -15,6 +15,7 @@
 use crate::constant::{
     CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH,
     CRYPTO_SM, EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
+    VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -229,7 +230,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             ..Default::default()
         };
         let mut data = BTreeMap::new();
-        data.insert("address".to_string(), node_config.account);
+        data.insert("node_address".to_string(), node_config.account);
+        data.insert(
+            "validator_address".to_string(),
+            fs::read_to_string(&format!("{}/{}", &node_dir, VALIDATOR_ADDRESS)).unwrap(),
+        );
         cm_account.data = Some(data);
 
         let mut binary_data = BTreeMap::new();
