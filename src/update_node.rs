@@ -110,9 +110,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         fs::copy(from, to).unwrap();
     }
 
-    let validator_address_path = format!("{}/{}", &node_dir, VALIDATOR_ADDRESS);
-    let node_address_path = format!("{}/{}", &node_dir, NODE_ADDRESS);
-
     // network config file
     if find_micro_service(&chain_config, NETWORK_ZENOH) {
         let mut zenoh_peers: Vec<ZenohPeerConfig> = Vec::new();
@@ -173,12 +170,12 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_address: if is_k8s {
                 format!("/mnt/{}", NODE_ADDRESS)
             } else {
-                node_address_path.clone()
+                NODE_ADDRESS.to_string()
             },
             validator_address: if is_k8s {
                 format!("/mnt/{}", VALIDATOR_ADDRESS)
             } else {
-                validator_address_path
+                VALIDATOR_ADDRESS.to_string()
             },
             chain_id: chain_config.system_config.chain_id.clone(),
             modules,
@@ -200,7 +197,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             if is_k8s {
                 format!("/mnt/{}", NODE_ADDRESS)
             } else {
-                node_address_path.clone()
+                NODE_ADDRESS.to_string()
             },
             node_config.grpc_ports.consensus_port,
             node_config.metrics_ports.consensus_metrics_port,
@@ -217,7 +214,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             if is_k8s {
                 format!("/mnt/{}", NODE_ADDRESS)
             } else {
-                node_address_path.clone()
+                NODE_ADDRESS.to_string()
             },
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
@@ -281,7 +278,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_address: if is_k8s {
                 format!("/mnt/{}", NODE_ADDRESS)
             } else {
-                node_address_path
+                NODE_ADDRESS.to_string()
             },
             validator_address_len: if is_overlord { 48 } else { 20 },
             metrics_port: node_config.metrics_ports.controller_metrics_port,
