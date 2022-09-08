@@ -408,6 +408,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                     name: "node-log".to_string(),
                     ..Default::default()
                 },
+                VolumeMount {
+                    mount_path: "/mnt".to_string(),
+                    name: "node-account".to_string(),
+                    ..Default::default()
+                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: Some(Probe {
@@ -720,6 +725,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 VolumeMount {
                     mount_path: "/etc/cita-cloud/log".to_string(),
                     name: "node-log".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/mnt".to_string(),
+                    name: "node-account".to_string(),
                     ..Default::default()
                 },
             ]),
