@@ -28,8 +28,9 @@ use k8s_openapi::{
         core::v1::{
             Affinity, ConfigMap, ConfigMapVolumeSource, Container, ContainerPort, ExecAction,
             HostAlias, PersistentVolumeClaim, PersistentVolumeClaimSpec, PodAffinityTerm,
-            PodAntiAffinity, PodSpec, PodTemplateSpec, Probe, ResourceRequirements, Service,
-            ServicePort, ServiceSpec, Volume, VolumeMount, WeightedPodAffinityTerm,
+            PodAntiAffinity, PodSecurityContext, PodSpec, PodTemplateSpec, Probe,
+            ResourceRequirements, Service, ServicePort, ServiceSpec, Volume, VolumeMount,
+            WeightedPodAffinityTerm,
         },
     },
     apimachinery::pkg::{
@@ -337,6 +338,12 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 hostnames: Some(vec![node_name.clone()]),
                 ip: Some("0.0.0.0".to_string()),
             }]),
+            security_context: Some(PodSecurityContext {
+                run_as_user: Some(1000),
+                run_as_group: Some(1000),
+                fs_group: Some(1000),
+                ..Default::default()
+            }),
             affinity: Some(Affinity {
                 pod_anti_affinity: Some(PodAntiAffinity {
                     preferred_during_scheduling_ignored_during_execution: Some(vec![
