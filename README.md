@@ -16,45 +16,41 @@ cargo install --path .
 
 ```
 $ cloud-config -h
-cloud-config 6.6.0
-Rivtower Technologies <contact@rivtower.com>
+Usage: cloud-config <COMMAND>
 
-USAGE:
-    cloud-config <SUBCOMMAND>
+Commands:
+  init-chain         init a chain
+  init-chain-config  init chain config
+  set-admin          set admin of chain
+  set-validators     set validators of chain
+  append-validator   append a validator into chain
+  set-nodelist       set node list
+  append-node        append a node into chain
+  delete-node        delete a node from chain
+  init-node          init node
+  update-node        update node
+  delete-chain       delete a chain
+  new-account        new account
+  import-account     import account
+  create-ca          create CA
+  create-csr         create csr
+  sign-csr           sign csr
+  create-dev         create config in env dev
+  append-dev         append node in env dev
+  delete-dev         delete node in env dev
+  create-k8s         create config in env k8s
+  append-k8s         append node in env k8s
+  delete-k8s         delete node in env k8s
+  set-stage          set stage
+  import-ca          import ca
+  import-cert        import node cert
+  update-yaml        update k8s yaml
+  delete-validator   delete a validator from chain
+  help               Print this message or the help of the given subcommand(s)
 
-OPTIONS:
-    -h, --help       Print help information
-    -V, --version    Print version information
-
-SUBCOMMANDS:
-    append-dev           append node in env dev
-    append-k8s           append node in env k8s
-    append-node          append a node into chain
-    append-validator     append a validator into chain
-    create-ca            create CA
-    create-csr           create csr
-    create-dev           create config in env dev
-    create-k8s           create config in env k8s
-    delete-chain         delete a chain
-    delete-dev           delete node in env dev
-    delete-k8s           delete node in env k8s
-    delete-node          delete a node from chain
-    delete-validator     delete a validator from chain
-    help                 Print this message or the help of the given subcommand(s)
-    import-account       import account
-    import-ca            import ca
-    import-cert          import node cert
-    init-chain           init a chain
-    init-chain-config    init chain config
-    init-node            init node
-    new-account          new account
-    set-admin            set admin of chain
-    set-nodelist         set node list
-    set-stage            set stage
-    set-validators       set validators of chain
-    sign-csr             sign csr
-    update-node          update node
-    update-yaml          update k8s yaml
+Options:
+  -h, --help     Print help information
+  -V, --version  Print version informatio
 ```
 
 ### 设计
