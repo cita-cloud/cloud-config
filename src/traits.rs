@@ -27,7 +27,7 @@ pub trait TomlWriter {
     where
         Self: Serialize,
     {
-        util::write_to_file(&self, path, self.section())
+        util::write_to_file(self, path, self.section())
     }
 
     fn section(&self) -> String;
