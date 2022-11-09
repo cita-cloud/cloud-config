@@ -11,8 +11,8 @@ edition = "2021"
 clap = { version = "4.0", features = ["derive"] }
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-crypto_sm = { git = "https://github.com/cita-cloud/crypto_sm", package = "crypto" }
-crypto_eth = { git = "https://github.com/cita-cloud/crypto_eth", package = "crypto" }
+crypto_sm = { git = "https://github.com/cita-cloud/crypto_sm", package = "crypto", branch = "v6.6.2" }
+crypto_eth = { git = "https://github.com/cita-cloud/crypto_eth", package = "crypto", branch = "v6.6.2" }
 toml = "0.5"
 hex = "0.4"
 rcgen = { version = "0.10", features = ["pem", "x509-parser"] }
