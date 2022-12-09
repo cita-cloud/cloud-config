@@ -18,7 +18,7 @@ use clap::Parser;
 
 use crate::{
     constant::{
-        ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, PRIVATE_KEY,
+        ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, NODE_ADDRESS, PRIVATE_KEY,
         VALIDATOR_ADDRESS,
     },
     error::Error,
@@ -55,7 +55,7 @@ pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String
         hex::decode(s).expect("invalid `node_key`")
     };
 
-    // generate node address
+    // generate node_address
     let is_eth = find_micro_service(&chain_config, CRYPTO_ETH);
     let address = if is_eth {
         crypto_eth::eth::sk2address(&private_key[..])
@@ -88,9 +88,13 @@ pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String
     let path = format!("{}/{}/{}", &base_path, address, VALIDATOR_ADDRESS);
     write_file(validator_address.as_bytes(), path);
 
-    // output node address and validator address
+    // store node_address
+    let path = format!("{}/{}/{}", &base_path, address, NODE_ADDRESS);
+    write_file(address.as_bytes(), path);
+
+    // output node_address and validator_address
     println!(
-        "node address: {} validator address: {}",
+        "node_address: {} validator_address: {}",
         address, validator_address
     );
 
