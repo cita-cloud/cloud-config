@@ -48,7 +48,7 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     // generate private key
     let private_key = BlsPrivateKey::generate(&mut OsRng).to_bytes();
 
-    // generate node address
+    // generate node_address
     let is_eth = find_micro_service(&chain_config, CRYPTO_ETH);
     let address = if is_eth {
         crypto_eth::eth::sk2address(private_key.as_ref())
@@ -85,9 +85,9 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     let path = format!("{}/{}/{}", &base_path, address, NODE_ADDRESS);
     write_file(address.as_bytes(), path);
 
-    // output node address and validator address
+    // output node_address and validator_address
     println!(
-        "node address: {} validator address: {}",
+        "node_address: {} validator_address: {}",
         address, validator_address
     );
 

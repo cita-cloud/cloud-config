@@ -84,8 +84,8 @@ Options:
 1. [create-ca](/src/create_ca.rs)创建链的根证书。会在`$(config-dir)/$(chain-name)/ca_cert/`下生成`cert.pem`和`key.pem`两个文件。
 2. [create-csr](/src/create_csr.rs)为各个节点创建证书和签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`csr.pem`和`key.pem`两个文件。
 3. [sign-csr](/src/sign_csr.rs)处理节点的签名请求。会在`$(config-dir)/$(chain-name)/certs/$(domain)/`下生成`cert.pem`。
-4. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`private_key`，和`validator_address`两个文件。
-5. [import-account](/src/import_account.rs)导入私钥的方式创建账户。
+4. [new-account](/src/new_account.rs)创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`node_address`，`private_key`，和`validator_address`三个文件。
+5. [import-account](/src/import_account.rs)导入私钥的方式创建账户。会在`$(config-dir)/$(chain-name)/accounts/`下，创建以账户地址为名的文件夹，里面有`node_address`，`private_key`，和`validator_address`三个文件。
 6. [import-ca](/src/import_ca.rs)导入已有的`CA`证书。要求证书格式为`pem`，`key`的格式为`pkcs8`。
 7. [import-cert](/src/import_cert.rs)导入已有的节点证书。要求证书格式为`pem`，`key`的格式为`pkcs8`。
 
@@ -293,24 +293,27 @@ version = 0
 
 ```
 $ cloud-config new-account   
-node address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5 validator address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+node_address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5 validator_address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5
 
 $ cloud-config new-account
-node address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa validator address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+node_address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa validator_address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
 
 $ cloud-config new-account
-node address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd validator address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+node_address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd validator_address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
 
 $ tree test-chain 
 test-chain
 ├── accounts
 │   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   │   ├── node_address
 │   │   ├── private_key
 │   │   └── validator_address
 │   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+│   │   ├── node_address
 │   │   ├── private_key
 │   │   └── validator_address
 │   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+│   │   ├── node_address
 │   │   ├── private_key
 │   │   └── validator_address
 ├── ca_cert
@@ -319,7 +322,7 @@ test-chain
 ```
 
 说明：
-1. 这里会创建两个地址，一个用于标识节点的`node address`，一个用于共识`validator`的`validator address`。
+1. 这里会创建两个地址，一个用于标识节点的`node_address`，一个用于共识`validator`的`validator_address`。
 2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
 
 
@@ -340,12 +343,13 @@ test-chain
 
 ```
 $ cloud-config import-account --privkey 60e7b47ee260516dbfedf8e80ff38830bae8663cc498a900a610c147cae94344
-node address: 097913007f2c8d9ac87f89664fc70977fee6bf9a validator address: 097913007f2c8d9ac87f89664fc70977fee6bf9a
+node_address: 097913007f2c8d9ac87f89664fc70977fee6bf9a validator_address: 097913007f2c8d9ac87f89664fc70977fee6bf9a
 
 $ tree test-chain/
 test-chain/
 ├── accounts
 │   └── 097913007f2c8d9ac87f89664fc70977fee6bf9a
+│   │   ├── node_address
 │       ├── private_key
 │       └── validator_address
 ├── ca_cert
@@ -355,7 +359,7 @@ test-chain/
 
 说明：
 
-1. 这里会创建两个地址，一个用于标识节点的`node address`，一个用于共识`validator`的`validator address`。
+1. 这里会创建两个地址，一个用于标识节点的`node_address`，一个用于共识`validator`的`validator_address`。
 2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
 
 #### set-admin
@@ -371,7 +375,7 @@ test-chain/
 
 说明：
 
-1. `admin`为必选参数。值为之前用`new-account`创建的`node address`地址。
+1. `admin`为必选参数。值为之前用`new-account`创建的`node_address`地址。
 
 
 ```
@@ -394,7 +398,7 @@ admin = 'aeaa6e333b8ed911f89acd01e88e3d9892da87b5'
 
 说明：
 
-1. `validators`为必选参数。值为多个之前用`new-account`创建的`validator address`地址,用逗号分隔。
+1. `validators`为必选参数。值为多个之前用`new-account`创建的`validator_address`地址,用逗号分隔。
 
 ```
 $ cloud-config set-validators --validators 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa,344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
@@ -419,7 +423,7 @@ validators = [
 
 说明：
 
-1. `validator`为必选参数。值为之前用`new-account`创建的`validator address`地址。
+1. `validator`为必选参数。值为之前用`new-account`创建的`validator_address`地址。
 2. 功能与`set-validators`相似，只不过是每次添加一个地址。
 
 #### delete-validator
@@ -756,7 +760,7 @@ test-chain
 说明：
 1. 参数部分基本对应`节点配置`数据结构，具体含义参见设计部分的描述。
 2. `domain`为必选参数，作为节点的标识，节点文件夹将会以`$(chanin-name)-$(domain)`的形式命名。
-3. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的`node address`地址。
+3. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的`node_address`地址。
 
 ```
 $ cloud-config init-node --domain node0 --account 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
@@ -968,11 +972,11 @@ OPTIONS:
 
 ```
 $ cloud-config create-dev
-node address: fca6ddc659665f94294bb73ef79c0f825b30ffed validator address: fca6ddc659665f94294bb73ef79c0f825b30ffed
-node address: 4e85201492995fb4d5995540165bc1af7e4df958 validator address: 4e85201492995fb4d5995540165bc1af7e4df958
-node address: f7e55b05b93399b0c61f71063123bc6ecfa62b48 validator address: f7e55b05b93399b0c61f71063123bc6ecfa62b48
-node address: 856c583be3b82e171feba44a991319e9a989deed validator address: 856c583be3b82e171feba44a991319e9a989deed
-node address: 804f620d1cb955f10381501da12e985fd76ab96d validator address: 804f620d1cb955f10381501da12e985fd76ab96d
+node_address: fca6ddc659665f94294bb73ef79c0f825b30ffed validator_address: fca6ddc659665f94294bb73ef79c0f825b30ffed
+node_address: 4e85201492995fb4d5995540165bc1af7e4df958 validator_address: 4e85201492995fb4d5995540165bc1af7e4df958
+node_address: f7e55b05b93399b0c61f71063123bc6ecfa62b48 validator_address: f7e55b05b93399b0c61f71063123bc6ecfa62b48
+node_address: 856c583be3b82e171feba44a991319e9a989deed validator_address: 856c583be3b82e171feba44a991319e9a989deed
+node_address: 804f620d1cb955f10381501da12e985fd76ab96d validator_address: 804f620d1cb955f10381501da12e985fd76ab96d
 
 $ ls test-chain-*
 test-chain-0:
@@ -1009,7 +1013,7 @@ OPTIONS:
 
 ```
 $ cloud-config append-dev
-node address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e validator address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e
+node_address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e validator_address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e
 
 $ ls test-chain-*
 test-chain-0:
@@ -1161,8 +1165,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 
 ```
 $ ./target/debug/cloud-config create-k8s --admin 0xff8456931c10a9b02ec4a657ee05e724ecad9372 --nodelist localhost:40000:node0:k8s,localhost:40001:node1:k8s
-node address: 0467a471d83343ce99888180ca8cabe0e49a0ae3 validator address: 0467a471d83343ce99888180ca8cabe0e49a0ae3
-node address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41 validator address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41
+node_address: 0467a471d83343ce99888180ca8cabe0e49a0ae3 validator_address: 0467a471d83343ce99888180ca8cabe0e49a0ae3
+node_address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41 validator_address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41
 
 $ ls test-chain-node*
 test-chain-node0:
@@ -1192,7 +1196,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 
 ```
 $ cloud-config append-k8s --node localhost:40002:node2:k8s
-node address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed validator address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed
+node_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed validator_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed
 $ ls test-chain-node*
 test-chain-node0:
 accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
