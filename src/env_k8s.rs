@@ -243,7 +243,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
 
-    let chain_config = read_chain_config(&chain_config_file).unwrap();
+    let chain_config = read_chain_config(chain_config_file).unwrap();
 
     // init node and update node
     for (i, node) in chain_config.node_network_address_list.iter().enumerate() {
@@ -313,7 +313,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     // create account for new node
     let (addr, _) = execute_new_account(NewAccountOpts {
@@ -372,7 +372,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         );
         let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
         let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-        fs::copy(&from, &to).unwrap();
+        fs::copy(from, to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -456,7 +456,7 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     // update reserve nodes
     for node in chain_config.node_network_address_list {
@@ -469,7 +469,7 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
         );
         let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
         let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-        fs::copy(&from, &to).unwrap();
+        fs::copy(from, to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),

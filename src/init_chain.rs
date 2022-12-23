@@ -47,17 +47,17 @@ pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
     }
 
     let path = format!("{}/{}", &chain_path, ACCOUNT_DIR);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
     let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, ACCOUNT_DIR);
     touch_file(gitkeep_path);
 
     let path = format!("{}/{}", &chain_path, CERTS_DIR);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
     let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, CERTS_DIR);
     touch_file(gitkeep_path);
 
     let path = format!("{}/{}", &chain_path, CA_CERT_DIR);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
     let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, CA_CERT_DIR);
     touch_file(gitkeep_path);
 

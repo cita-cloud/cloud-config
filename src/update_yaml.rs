@@ -103,7 +103,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
 
     // load chain_config
     let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
 
@@ -146,14 +146,14 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         let mut data = BTreeMap::new();
         data.insert(
             "config.toml".to_string(),
-            read_file(&config_file_name).unwrap(),
+            read_file(config_file_name).unwrap(),
         );
         cm_config.data = Some(data);
 
         let yaml_file_name = format!("{}/cm-config.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&cm_config).unwrap().as_bytes(),
-            &yaml_file_name,
+            yaml_file_name,
         );
     }
 
@@ -180,34 +180,34 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         let mut data = BTreeMap::new();
         data.insert(
             "consensus-log4rs.yaml".to_string(),
-            read_file(&format!("{}/consensus-log4rs.yaml", &node_dir)).unwrap(),
+            read_file(format!("{}/consensus-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
             "controller-log4rs.yaml".to_string(),
-            read_file(&format!("{}/controller-log4rs.yaml", &node_dir)).unwrap(),
+            read_file(format!("{}/controller-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
             "executor-log4rs.yaml".to_string(),
-            read_file(&format!("{}/executor-log4rs.yaml", &node_dir)).unwrap(),
+            read_file(format!("{}/executor-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
             "crypto-log4rs.yaml".to_string(),
-            read_file(&format!("{}/crypto-log4rs.yaml", &node_dir)).unwrap(),
+            read_file(format!("{}/crypto-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
             "network-log4rs.yaml".to_string(),
-            read_file(&format!("{}/network-log4rs.yaml", &node_dir)).unwrap(),
+            read_file(format!("{}/network-log4rs.yaml", &node_dir)).unwrap(),
         );
         data.insert(
             "storage-log4rs.yaml".to_string(),
-            read_file(&format!("{}/storage-log4rs.yaml", &node_dir)).unwrap(),
+            read_file(format!("{}/storage-log4rs.yaml", &node_dir)).unwrap(),
         );
         cm_log.data = Some(data);
 
         let yaml_file_name = format!("{}/cm-log.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&cm_log).unwrap().as_bytes(),
-            &yaml_file_name,
+            yaml_file_name,
         );
     }
 
@@ -235,21 +235,21 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         data.insert("node_address".to_string(), node_config.account);
         data.insert(
             "validator_address".to_string(),
-            fs::read_to_string(&format!("{}/{}", &node_dir, VALIDATOR_ADDRESS)).unwrap(),
+            fs::read_to_string(format!("{}/{}", &node_dir, VALIDATOR_ADDRESS)).unwrap(),
         );
         cm_account.data = Some(data);
 
         let mut binary_data = BTreeMap::new();
         binary_data.insert(
             PRIVATE_KEY.to_string(),
-            ByteString(fs::read(&format!("{}/{}", &node_dir, PRIVATE_KEY)).unwrap()),
+            ByteString(fs::read(format!("{}/{}", &node_dir, PRIVATE_KEY)).unwrap()),
         );
         cm_account.binary_data = Some(binary_data);
 
         let yaml_file_name = format!("{}/cm-account.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&cm_account).unwrap().as_bytes(),
-            &yaml_file_name,
+            yaml_file_name,
         );
     }
 
@@ -961,7 +961,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         let yaml_file_name = format!("{}/statefulset.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&statefulset).unwrap().as_bytes(),
-            &yaml_file_name,
+            yaml_file_name,
         );
     }
 
@@ -1024,7 +1024,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
         let yaml_file_name = format!("{}/node-svc.yaml", &yamls_path);
         write_file(
             serde_yaml::to_string(&node_svc).unwrap().as_bytes(),
-            &yaml_file_name,
+            yaml_file_name,
         );
     }
 

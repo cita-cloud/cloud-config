@@ -39,16 +39,16 @@ pub fn execute_delete_chain(opts: DeleteChainOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     // delete node folders
     for node in chain_config.node_network_address_list {
         let path = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &node.domain);
-        fs::remove_dir_all(&path).unwrap();
+        fs::remove_dir_all(path).unwrap();
     }
 
     let path = format!("{}/{}", &opts.config_dir, &opts.chain_name);
-    fs::remove_dir_all(&path).unwrap();
+    fs::remove_dir_all(path).unwrap();
 
     Ok(())
 }

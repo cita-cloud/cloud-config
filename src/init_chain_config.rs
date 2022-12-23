@@ -178,7 +178,7 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .micro_service_list(micro_service_list)
         .build();
 
-    write_toml(&chain_config, file_name);
+    write_toml(chain_config, file_name);
 
     Ok(())
 }
