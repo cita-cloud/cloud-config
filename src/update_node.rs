@@ -69,7 +69,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
 
     // load chain_config
     let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     let mut local_cluster = "";
     for node_network_address in &chain_config.node_network_address_list {

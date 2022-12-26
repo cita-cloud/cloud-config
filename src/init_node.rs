@@ -131,25 +131,25 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     // copy  accounts  ca_cert  certs and  chain_config.toml
     let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
     let to = format!("{}/{}", &node_dir, ACCOUNT_DIR);
-    copy_dir_all(&from, &to).unwrap();
+    copy_dir_all(from, to).unwrap();
 
     let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, CA_CERT_DIR);
     let to = format!("{}/{}", &node_dir, CA_CERT_DIR);
-    copy_dir_all(&from, &to).unwrap();
+    copy_dir_all(from, to).unwrap();
 
     let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, CERTS_DIR);
     let to = format!("{}/{}", &node_dir, CERTS_DIR);
-    copy_dir_all(&from, &to).unwrap();
+    copy_dir_all(from, to).unwrap();
 
     let from = format!(
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-    fs::copy(&from, &to).unwrap();
+    fs::copy(from, to).unwrap();
 
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
-    write_toml(&node_config, file_name);
+    write_toml(node_config, file_name);
 
     Ok(())
 }

@@ -42,7 +42,7 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     // create new account
     // generate private key
@@ -60,7 +60,7 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     // gen a folder to store account info
     let base_path = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
     let path = format!("{}/{}", &base_path, &address);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
 
     // store private_key
     let path = format!("{}/{}/{}", &base_path, address, PRIVATE_KEY);

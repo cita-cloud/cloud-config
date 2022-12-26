@@ -224,7 +224,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
     let peers_count = chain_config.node_network_address_list.len();
     let new_node_id = peers_count;
 
@@ -270,7 +270,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         );
         let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
         let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-        fs::copy(&from, &to).unwrap();
+        fs::copy(from, to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -340,7 +340,7 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
     let peers_count = chain_config.node_network_address_list.len();
     let delete_node_id = peers_count - 1;
 
@@ -365,7 +365,7 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
         );
         let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
         let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
-        fs::copy(&from, &to).unwrap();
+        fs::copy(from, to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),

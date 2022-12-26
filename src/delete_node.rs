@@ -80,10 +80,10 @@ pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
         "{}/{}/{}/{}",
         config_dir, chain_name, ACCOUNT_DIR, &node_config.account,
     );
-    fs::remove_dir_all(&account_path).unwrap();
+    fs::remove_dir_all(account_path).unwrap();
 
     // delete cert folder
     // ignore error because maybe cert folder doesn't exist
     let cert_path = format!("{}/{}/{}/{}", config_dir, chain_name, CERTS_DIR, domain);
-    let _ = fs::remove_dir_all(&cert_path);
+    let _ = fs::remove_dir_all(cert_path);
 }
