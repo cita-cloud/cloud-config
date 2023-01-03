@@ -34,8 +34,8 @@ pub struct GrpcPortsBuilder {
     pub crypto_port: u16,
 }
 
-impl GrpcPortsBuilder {
-    pub fn new() -> Self {
+impl Default for GrpcPortsBuilder {
+    fn default() -> Self {
         Self {
             network_port: 50000,
             consensus_port: 50001,
@@ -45,6 +45,9 @@ impl GrpcPortsBuilder {
             crypto_port: 50005,
         }
     }
+}
+
+impl GrpcPortsBuilder {
     pub fn network_port(&mut self, network_port: u16) -> &mut GrpcPortsBuilder {
         self.network_port = network_port;
         self
@@ -106,8 +109,8 @@ pub struct MetricsPortsBuilder {
     pub crypto_metrics_port: u16,
 }
 
-impl MetricsPortsBuilder {
-    pub fn new() -> Self {
+impl Default for MetricsPortsBuilder {
+    fn default() -> Self {
         Self {
             network_metrics_port: 60000,
             consensus_metrics_port: 60001,
@@ -117,6 +120,9 @@ impl MetricsPortsBuilder {
             crypto_metrics_port: 60005,
         }
     }
+}
+
+impl MetricsPortsBuilder {
     pub fn network_metrics_port(&mut self, network_metrics_port: u16) -> &mut MetricsPortsBuilder {
         self.network_metrics_port = network_metrics_port;
         self
@@ -187,18 +193,20 @@ pub struct NodeConfigBuilder {
     pub enable_metrics: bool,
 }
 
-impl NodeConfigBuilder {
-    pub fn new() -> Self {
+impl Default for NodeConfigBuilder {
+    fn default() -> Self {
         Self {
-            grpc_ports: GrpcPortsBuilder::new().build(),
-            metrics_ports: MetricsPortsBuilder::new().build(),
+            grpc_ports: GrpcPortsBuilder::default().build(),
+            metrics_ports: MetricsPortsBuilder::default().build(),
             network_listen_port: 40000,
             log_level: "info".to_string(),
             account: "".to_string(),
             enable_metrics: true,
         }
     }
+}
 
+impl NodeConfigBuilder {
     pub fn grpc_ports(&mut self, grpc_ports: GrpcPorts) -> &mut NodeConfigBuilder {
         self.grpc_ports = grpc_ports;
         self

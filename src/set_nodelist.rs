@@ -59,7 +59,7 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
                 node_network_info[3].to_string()
             };
 
-            NodeNetworkAddressBuilder::new()
+            NodeNetworkAddressBuilder::default()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())

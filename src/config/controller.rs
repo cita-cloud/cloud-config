@@ -95,8 +95,8 @@ pub struct SystemConfigBuilder {
     pub quota_limit: u64,
 }
 
-impl SystemConfigBuilder {
-    pub fn new() -> Self {
+impl Default for SystemConfigBuilder {
+    fn default() -> Self {
         Self {
             version: 0,
             chain_id: "".to_string(),
@@ -107,7 +107,9 @@ impl SystemConfigBuilder {
             quota_limit: DEFAULT_QUOTA_LIMIT,
         }
     }
+}
 
+impl SystemConfigBuilder {
     pub fn version(&mut self, version: u32) -> &mut SystemConfigBuilder {
         self.version = version;
         self
@@ -176,13 +178,16 @@ pub struct GenesisBlockBuilder {
     pub prevhash: String,
 }
 
-impl GenesisBlockBuilder {
-    pub fn new() -> Self {
+impl Default for GenesisBlockBuilder {
+    fn default() -> Self {
         Self {
             timestamp: 0,
             prevhash: PRE_HASH.to_string(),
         }
     }
+}
+
+impl GenesisBlockBuilder {
     pub fn timestamp(&mut self, timestamp: u64) -> &mut GenesisBlockBuilder {
         self.timestamp = timestamp;
         self

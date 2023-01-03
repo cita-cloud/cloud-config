@@ -49,9 +49,9 @@ pub struct NodeNetworkAddressBuilder {
     pub svc_port: u16,
 }
 
-impl NodeNetworkAddressBuilder {
-    pub fn new() -> NodeNetworkAddressBuilder {
-        NodeNetworkAddressBuilder {
+impl Default for NodeNetworkAddressBuilder {
+    fn default() -> Self {
+        Self {
             host: "localhost".to_string(),
             port: 0,
             domain: "".to_string(),
@@ -59,7 +59,9 @@ impl NodeNetworkAddressBuilder {
             svc_port: 40000,
         }
     }
+}
 
+impl NodeNetworkAddressBuilder {
     pub fn host(&mut self, host: String) -> &mut NodeNetworkAddressBuilder {
         self.host = host;
         self
@@ -108,14 +110,16 @@ pub struct MicroServiceBuilder {
     pub tag: String,
 }
 
-impl MicroServiceBuilder {
-    pub fn new() -> MicroServiceBuilder {
+impl Default for MicroServiceBuilder {
+    fn default() -> Self {
         MicroServiceBuilder {
             image: "".to_string(),
             tag: "latest".to_string(),
         }
     }
+}
 
+impl MicroServiceBuilder {
     pub fn image(&mut self, image: String) -> &mut MicroServiceBuilder {
         self.image = image;
         self
@@ -176,16 +180,19 @@ pub struct ChainConfigBuilder {
     pub stage: ConfigStage,
 }
 
-impl ChainConfigBuilder {
-    pub fn new() -> Self {
+impl Default for ChainConfigBuilder {
+    fn default() -> Self {
         Self {
-            system_config: SystemConfigBuilder::new().build(),
-            genesis_block: GenesisBlockBuilder::new().build(),
+            system_config: SystemConfigBuilder::default().build(),
+            genesis_block: GenesisBlockBuilder::default().build(),
             node_network_address_list: Vec::new(),
             micro_service_list: Vec::new(),
             stage: ConfigStage::Init,
         }
     }
+}
+
+impl ChainConfigBuilder {
     pub fn system_config(&mut self, system_config: SystemConfigFile) -> &mut ChainConfigBuilder {
         self.system_config = system_config;
         self

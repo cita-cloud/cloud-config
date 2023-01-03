@@ -100,7 +100,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         return Err(Error::InvalidStage);
     }
 
-    let grpc_ports = GrpcPortsBuilder::new()
+    let grpc_ports = GrpcPortsBuilder::default()
         .network_port(opts.network_port)
         .consensus_port(opts.consensus_port)
         .executor_port(opts.executor_port)
@@ -108,7 +108,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .controller_port(opts.controller_port)
         .crypto_port(opts.crypto_port)
         .build();
-    let metrics_ports = MetricsPortsBuilder::new()
+    let metrics_ports = MetricsPortsBuilder::default()
         .network_metrics_port(opts.network_metrics_port)
         .consensus_metrics_port(opts.consensus_metrics_port)
         .executor_metrics_port(opts.executor_metrics_port)
@@ -116,7 +116,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .controller_metrics_port(opts.controller_metrics_port)
         .crypto_metrics_port(opts.crypto_metrics_port)
         .build();
-    let node_config = NodeConfigBuilder::new()
+    let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)
         .metrics_ports(metrics_ports)
         .network_listen_port(opts.network_listen_port)
