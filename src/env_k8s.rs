@@ -36,6 +36,7 @@ use std::fs;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct CreateK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -116,6 +117,38 @@ pub struct CreateK8sOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     pub log_level: String,
+}
+
+impl Default for CreateK8sOpts {
+    fn default() -> Self {
+        Self {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: Default::default(),
+            block_interval: 3,
+            block_limit: 100,
+            quota_limit: 1073741824,
+            network_image: "network_zenoh".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_bft".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_rocksdb".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            crypto_image: "crypto_sm".to_string(),
+            crypto_tag: "latest".to_string(),
+            admin: Default::default(),
+            node_list: Default::default(),
+            log_level: "info".to_string(),
+        }
+    }
 }
 
 /// admin set by args

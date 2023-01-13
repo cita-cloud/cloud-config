@@ -48,6 +48,7 @@ use std::net::Ipv4Addr;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct UpdateYamlOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
@@ -91,6 +92,27 @@ pub struct UpdateYamlOpts {
     /// is enable debug
     #[clap(long = "enable-debug")]
     pub enable_debug: bool,
+}
+
+impl Default for UpdateYamlOpts {
+    fn default() -> Self {
+        Self {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            config_name: "config.toml".to_string(),
+            domain: Default::default(),
+            pull_policy: "IfNotPresent".to_string(),
+            docker_registry: "docker.io".to_string(),
+            docker_repo: "citacloud".to_string(),
+            storage_class: Default::default(),
+            storage_capacity: "10Gi".to_string(),
+            requests_cpu: "10m".to_string(),
+            requests_memory: "32Mi".to_string(),
+            limits_cpu: "4000m".to_string(),
+            limits_memory: "8192Mi".to_string(),
+            enable_debug: false,
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
