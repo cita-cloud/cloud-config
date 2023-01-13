@@ -47,11 +47,22 @@ pub fn execute_delete_validator(opts: DeleteValidatorOpts) -> Result<(), Error> 
 
     let mut validators = chain_config.system_config.validators.clone();
 
-    match validators.binary_search_by(|validator| validator.cmp(&opts.validator)) {
-        Ok(index) => {
-            validators.remove(index);
+    let mut pos_opt = None;
+    for (pos, validator) in validators.iter().enumerate() {
+        if validator.eq(&opts.validator) {
+            pos_opt = Some(pos);
+            break;
         }
-        Err(_) => panic!("Can't found validator that want to delete!"),
+    }
+
+    match pos_opt {
+        Some(pos) => {
+            validators.remove(pos);
+        }
+        None => panic!(
+            "Can't found validator that want to delete! validator {} not in {:?}",
+            opts.validator, validators
+        ),
     }
 
     chain_config.set_validators(validators);

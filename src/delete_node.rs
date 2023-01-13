@@ -50,11 +50,22 @@ pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {
 
     let mut node_list = chain_config.node_network_address_list.clone();
 
-    match node_list.binary_search_by(|node| node.domain.cmp(&opts.domain)) {
-        Ok(index) => {
-            node_list.remove(index);
+    let mut pos_opt = None;
+    for (pos, node) in node_list.iter().enumerate() {
+        if node.domain.eq(&opts.domain) {
+            pos_opt = Some(pos);
+            break;
         }
-        Err(_) => panic!("Can't found node that want to delete!"),
+    }
+
+    match pos_opt {
+        Some(pos) => {
+            node_list.remove(pos);
+        }
+        None => panic!(
+            "Can't found node that want to delete! domain {} not in {:?}",
+            opts.domain, node_list
+        ),
     }
 
     chain_config.set_node_network_address_list(node_list);
