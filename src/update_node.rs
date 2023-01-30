@@ -84,8 +84,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
     let _ = fs::remove_file(&config_file_name);
 
-    let is_overlord = find_micro_service(&chain_config, CONSENSUS_OVERLORD);
-
     // copy account files
     {
         let from = format!(
@@ -280,7 +278,11 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             } else {
                 NODE_ADDRESS.to_string()
             },
-            validator_address_len: if is_overlord { 48 } else { 20 },
+            validator_address: if is_k8s {
+                format!("/mnt/{}", VALIDATOR_ADDRESS)
+            } else {
+                VALIDATOR_ADDRESS.to_string()
+            },
             metrics_port: node_config.metrics_ports.controller_metrics_port,
             enable_metrics: node_config.enable_metrics,
         };
