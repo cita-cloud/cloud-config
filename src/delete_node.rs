@@ -77,7 +77,7 @@ pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {
 }
 
 pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
-    let node_dir = format!("{}/{}-{}", config_dir, chain_name, domain);
+    let node_dir = format!("{config_dir}/{chain_name}-{domain}");
 
     // load node_config
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
@@ -95,6 +95,6 @@ pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
 
     // delete cert folder
     // ignore error because maybe cert folder doesn't exist
-    let cert_path = format!("{}/{}/{}/{}", config_dir, chain_name, CERTS_DIR, domain);
+    let cert_path = format!("{config_dir}/{chain_name}/{CERTS_DIR}/{domain}");
     let _ = fs::remove_dir_all(cert_path);
 }

@@ -353,7 +353,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
                 node_net_info
                     .host
                     .parse::<Ipv4Addr>()
-                    .unwrap_or_else(|err| panic!("must be valid IP address: [{}]", err));
+                    .unwrap_or_else(|err| panic!("must be valid IP address: [{err}]"));
                 host_aliases.push(HostAlias {
                     hostnames: Some(vec![format!(
                         "{}-{}",

@@ -86,10 +86,7 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     write_file(address.as_bytes(), path);
 
     // output node_address and validator_address
-    println!(
-        "node_address: {} validator_address: {}",
-        address, validator_address
-    );
+    println!("node_address: {address} validator_address: {validator_address}");
 
     Ok((address, validator_address))
 }

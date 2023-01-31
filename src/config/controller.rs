@@ -36,7 +36,7 @@ pub struct ControllerConfig {
 
     pub node_address: String,
 
-    pub validator_address_len: u32,
+    pub validator_address: String,
 
     pub metrics_port: u16,
 
@@ -214,8 +214,8 @@ mod controller_test {
             storage_port: 51233,
             controller_port: 51234,
             crypto_port: 51235,
-            node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".into(),
-            validator_address_len: 20,
+            node_address: "/mnt/node_address".into(),
+            validator_address: "/mnt/validator_address".into(),
             metrics_port: 61234,
             enable_metrics: true,
         };
