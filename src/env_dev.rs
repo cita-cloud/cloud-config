@@ -138,7 +138,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     })
     .unwrap();
     for i in 0..peers_count {
-        let domain = format!("{}", i);
+        let domain = format!("{i}");
         execute_create_csr(CreateCSROpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
@@ -164,7 +164,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     for i in 0..peers_count {
         let network_port = (50000 + i * 1000) as u16;
         let network_metrics_port = (60000 + i * 100) as u16;
-        let domain = format!("{}", i);
+        let domain = format!("{i}");
         let listen_port = (40000 + i) as u16;
         let node_addr = node_accounts[i].clone();
 
@@ -245,7 +245,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     .unwrap();
 
     // gen cert for new node
-    let domain = format!("{}", new_node_id);
+    let domain = format!("{new_node_id}");
     execute_create_csr(CreateCSROpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
@@ -261,7 +261,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
 
     // update old nodes
     for i in 0..peers_count {
-        let domain = format!("{}", i);
+        let domain = format!("{i}");
 
         // chain_config modified, update for old nodes
         let from = format!(
@@ -286,7 +286,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     // new node need init and update
     let network_port = (50000 + new_node_id * 1000) as u16;
     let network_metrics_port = (60000 + new_node_id * 100) as u16;
-    let domain = format!("{}", new_node_id);
+    let domain = format!("{new_node_id}");
     let listen_port = (40000 + new_node_id) as u16;
 
     execute_init_node(InitNodeOpts {
@@ -344,7 +344,7 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
     let peers_count = chain_config.node_network_address_list.len();
     let delete_node_id = peers_count - 1;
 
-    let domain = format!("{}", delete_node_id);
+    let domain = format!("{delete_node_id}");
     execute_delete_node(DeleteNodeOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
@@ -356,7 +356,7 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
 
     // update reserve nodes
     for i in 0..delete_node_id {
-        let domain = format!("{}", i);
+        let domain = format!("{i}");
 
         // chain_config modified, update for old nodes
         let from = format!(

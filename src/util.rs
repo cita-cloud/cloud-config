@@ -44,13 +44,13 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
 
 pub fn read_chain_config(path: impl AsRef<path::Path>) -> Result<ChainConfig, Error> {
     let buffer = std::fs::read_to_string(path)
-        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+        .unwrap_or_else(|err| panic!("Error while loading config: [{err}]"));
     toml::from_str::<ChainConfig>(&buffer)
 }
 
 pub fn read_node_config(path: impl AsRef<path::Path>) -> Result<NodeConfig, Error> {
     let buffer = std::fs::read_to_string(path)
-        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+        .unwrap_or_else(|err| panic!("Error while loading config: [{err}]"));
     toml::from_str::<NodeConfig>(&buffer)
 }
 
@@ -202,5 +202,5 @@ pub fn rand_string() -> String {
 }
 
 pub fn svc_name(chain_name: &str, domain: &str) -> String {
-    format!("{}-{}", chain_name, domain)
+    format!("{chain_name}-{domain}")
 }

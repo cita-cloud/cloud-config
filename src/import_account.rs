@@ -93,10 +93,7 @@ pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String
     write_file(address.as_bytes(), path);
 
     // output node_address and validator_address
-    println!(
-        "node_address: {} validator_address: {}",
-        address, validator_address
-    );
+    println!("node_address: {address} validator_address: {validator_address}");
 
     Ok((address, validator_address))
 }

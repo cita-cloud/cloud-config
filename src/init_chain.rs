@@ -62,10 +62,8 @@ pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
     touch_file(gitkeep_path);
 
     let git_ignore_path = format!("{}/.gitignore", &chain_path);
-    let git_ignore_content = format!(
-        "{}/*/\n{}/{}\n{}/*/{}\n",
-        ACCOUNT_DIR, CA_CERT_DIR, KEY_PEM, CERTS_DIR, KEY_PEM
-    );
+    let git_ignore_content =
+        format!("{ACCOUNT_DIR}/*/\n{CA_CERT_DIR}/{KEY_PEM}\n{CERTS_DIR}/*/{KEY_PEM}\n");
     write_file(git_ignore_content.as_bytes(), git_ignore_path);
     Ok(())
 }

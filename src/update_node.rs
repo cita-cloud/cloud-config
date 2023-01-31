@@ -166,12 +166,12 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             domain: real_domain,
             protocol: "quic".to_string(),
             node_address: if is_k8s {
-                format!("/mnt/{}", NODE_ADDRESS)
+                format!("/mnt/{NODE_ADDRESS}")
             } else {
                 NODE_ADDRESS.to_string()
             },
             validator_address: if is_k8s {
-                format!("/mnt/{}", VALIDATOR_ADDRESS)
+                format!("/mnt/{VALIDATOR_ADDRESS}")
             } else {
                 VALIDATOR_ADDRESS.to_string()
             },
@@ -193,7 +193,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.controller_port,
             if is_k8s {
-                format!("/mnt/{}", NODE_ADDRESS)
+                format!("/mnt/{NODE_ADDRESS}")
             } else {
                 NODE_ADDRESS.to_string()
             },
@@ -210,7 +210,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.network_port,
             node_config.grpc_ports.crypto_port,
             if is_k8s {
-                format!("/mnt/{}", NODE_ADDRESS)
+                format!("/mnt/{NODE_ADDRESS}")
             } else {
                 NODE_ADDRESS.to_string()
             },
@@ -274,12 +274,12 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             controller_port: node_config.grpc_ports.controller_port,
             crypto_port: node_config.grpc_ports.crypto_port,
             node_address: if is_k8s {
-                format!("/mnt/{}", NODE_ADDRESS)
+                format!("/mnt/{NODE_ADDRESS}")
             } else {
                 NODE_ADDRESS.to_string()
             },
             validator_address: if is_k8s {
-                format!("/mnt/{}", VALIDATOR_ADDRESS)
+                format!("/mnt/{VALIDATOR_ADDRESS}")
             } else {
                 VALIDATOR_ADDRESS.to_string()
             },

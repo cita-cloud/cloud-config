@@ -42,7 +42,7 @@ pub trait YmlWriter {
     {
         let service = self.service();
         fs::write(
-            format!("{}/{}-{}", path, service, LOG4RS_YAML),
+            format!("{path}/{service}-{LOG4RS_YAML}"),
             format!(
                 r#"# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds
