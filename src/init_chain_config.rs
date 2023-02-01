@@ -124,27 +124,27 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
     };
 
     // proc six micro service
-    let network_micro_service = MicroServiceBuilder::new()
+    let network_micro_service = MicroServiceBuilder::default()
         .image(opts.network_image)
         .tag(opts.network_tag)
         .build();
-    let consensus_micro_service = MicroServiceBuilder::new()
+    let consensus_micro_service = MicroServiceBuilder::default()
         .image(opts.consensus_image)
         .tag(opts.consensus_tag)
         .build();
-    let executor_micro_service = MicroServiceBuilder::new()
+    let executor_micro_service = MicroServiceBuilder::default()
         .image(opts.executor_image)
         .tag(opts.executor_tag)
         .build();
-    let storage_micro_service = MicroServiceBuilder::new()
+    let storage_micro_service = MicroServiceBuilder::default()
         .image(opts.storage_image)
         .tag(opts.storage_tag)
         .build();
-    let controller_micro_service = MicroServiceBuilder::new()
+    let controller_micro_service = MicroServiceBuilder::default()
         .image(opts.controller_image)
         .tag(opts.controller_tag)
         .build();
-    let crypto_micro_service = MicroServiceBuilder::new()
+    let crypto_micro_service = MicroServiceBuilder::default()
         .image(opts.crypto_image)
         .tag(opts.crypto_tag)
         .build();
@@ -158,13 +158,13 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
     ];
 
     // genesis block
-    let genesis_block = GenesisBlockBuilder::new()
+    let genesis_block = GenesisBlockBuilder::default()
         .timestamp(timestamp)
         .prevhash(opts.prevhash)
         .build();
 
     // system config
-    let system_config = SystemConfigBuilder::new()
+    let system_config = SystemConfigBuilder::default()
         .version(opts.version)
         .chain_id(chain_id)
         .block_interval(opts.block_interval)
@@ -172,7 +172,7 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .quota_limit(opts.quota_limit)
         .build();
 
-    let chain_config = ChainConfigBuilder::new()
+    let chain_config = ChainConfigBuilder::default()
         .system_config(system_config)
         .genesis_block(genesis_block)
         .micro_service_list(micro_service_list)

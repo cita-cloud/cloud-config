@@ -197,7 +197,7 @@ fn main() {
         SubCommand::SetStage(opts) => execute_set_stage(opts).unwrap(),
         SubCommand::ImportCA(opts) => execute_import_ca(opts).map(|_| ()).unwrap(),
         SubCommand::ImportCert(opts) => execute_import_cert(opts).map(|_| ()).unwrap(),
-        SubCommand::UpdateYaml(opts) => execute_update_yaml(opts).unwrap(),
+        SubCommand::UpdateYaml(opts) => execute_update_yaml(opts).map(|_| ()).unwrap(),
         SubCommand::DeleteValidator(opts) => execute_delete_validator(opts).unwrap(),
     }
 }

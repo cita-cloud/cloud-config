@@ -41,59 +41,93 @@ use k8s_openapi::{
     ByteString,
 };
 
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
 use std::net::Ipv4Addr;
 
 /// A subcommand for run
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct UpdateYamlOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set config file name
     #[clap(long = "config-name", default_value = "config.toml")]
-    pub(crate) config_name: String,
+    pub config_name: String,
     /// domain of node
     #[clap(long = "domain")]
-    pub(crate) domain: String,
+    pub domain: String,
     /// image pull policy: IfNotPresent or Always
     #[clap(long = "pull-policy", default_value = "IfNotPresent")]
-    pub(crate) pull_policy: String,
+    pub pull_policy: String,
     /// docker registry
     #[clap(long = "docker-registry", default_value = "docker.io")]
-    pub(crate) docker_registry: String,
+    pub docker_registry: String,
     /// docker repo
     #[clap(long = "docker-repo", default_value = "citacloud")]
-    pub(crate) docker_repo: String,
+    pub docker_repo: String,
     /// storage class
     #[clap(long = "storage-class")]
-    pub(crate) storage_class: String,
+    pub storage_class: String,
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
-    pub(crate) storage_capacity: String,
+    pub storage_capacity: String,
     /// container resource requirements -- requests cpu
     #[clap(long = "requests-cpu", default_value = "10m")]
-    pub(crate) requests_cpu: String,
+    pub requests_cpu: String,
     /// container resource requirements -- requests memory
     #[clap(long = "requests-memory", default_value = "32Mi")]
-    pub(crate) requests_memory: String,
+    pub requests_memory: String,
     /// container resource requirements -- limits cpu
     #[clap(long = "limits-cpu", default_value = "4000m")]
-    pub(crate) limits_cpu: String,
+    pub limits_cpu: String,
     /// container resource requirements -- limits memory
     #[clap(long = "limits-memory", default_value = "8192Mi")]
-    pub(crate) limits_memory: String,
+    pub limits_memory: String,
     /// is enable debug
     #[clap(long = "enable-debug")]
-    pub(crate) enable_debug: bool,
+    pub enable_debug: bool,
+}
+
+impl Default for UpdateYamlOpts {
+    fn default() -> Self {
+        Self {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            config_name: "config.toml".to_string(),
+            domain: Default::default(),
+            pull_policy: "IfNotPresent".to_string(),
+            docker_registry: "docker.io".to_string(),
+            docker_repo: "citacloud".to_string(),
+            storage_class: Default::default(),
+            storage_capacity: "10Gi".to_string(),
+            requests_cpu: "10m".to_string(),
+            requests_memory: "32Mi".to_string(),
+            limits_cpu: "4000m".to_string(),
+            limits_memory: "8192Mi".to_string(),
+            enable_debug: false,
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
+pub struct NodeK8sConfig {
+    pub cm_config: ConfigMap,
+    pub cm_log: ConfigMap,
+    pub cm_account: ConfigMap,
+    pub statefulset: StatefulSet,
+    pub node_svc: Service,
 }
 
 /// generate k8s yaml by chain_config and node_config
-pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
+pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error> {
+    let mut node_k8s_config = NodeK8sConfig::default();
+
     let node_name = format!("{}-{}", &opts.chain_name, &opts.domain);
     let node_dir = format!("{}/{}", &opts.config_dir, &node_name);
 
@@ -155,6 +189,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             serde_yaml::to_string(&cm_config).unwrap().as_bytes(),
             yaml_file_name,
         );
+        node_k8s_config.cm_config = cm_config;
     }
 
     {
@@ -209,6 +244,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             serde_yaml::to_string(&cm_log).unwrap().as_bytes(),
             yaml_file_name,
         );
+        node_k8s_config.cm_log = cm_log;
     }
 
     {
@@ -251,6 +287,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             serde_yaml::to_string(&cm_account).unwrap().as_bytes(),
             yaml_file_name,
         );
+        node_k8s_config.cm_account = cm_account;
     }
 
     {
@@ -963,6 +1000,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             serde_yaml::to_string(&statefulset).unwrap().as_bytes(),
             yaml_file_name,
         );
+        node_k8s_config.statefulset = statefulset;
     }
 
     {
@@ -1026,7 +1064,8 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             serde_yaml::to_string(&node_svc).unwrap().as_bytes(),
             yaml_file_name,
         );
+        node_k8s_config.node_svc = node_svc;
     }
 
-    Ok(())
+    Ok(node_k8s_config)
 }

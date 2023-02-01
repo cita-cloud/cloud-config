@@ -57,7 +57,7 @@ pub fn execute_append_node(opts: AppendNodeOpts) -> Result<(), Error> {
     };
 
     node_list.push(
-        NodeNetworkAddressBuilder::new()
+        NodeNetworkAddressBuilder::default()
             .host(node_network_info[0].to_string())
             .port(node_network_info[1].parse::<u16>().unwrap())
             .domain(node_network_info[2].to_string())

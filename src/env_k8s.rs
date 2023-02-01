@@ -31,90 +31,124 @@ use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::util::{rand_string, read_chain_config};
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 use std::fs;
 
 /// A subcommand for run
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct CreateK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set genesis timestamp
     #[clap(long = "timestamp", default_value = "0")]
-    pub(crate) timestamp: u64,
+    pub timestamp: u64,
     /// set genesis prevhash
     #[clap(
         long = "prevhash",
         default_value = "0x0000000000000000000000000000000000000000000000000000000000000000"
     )]
-    pub(crate) prevhash: String,
+    pub prevhash: String,
     /// set system config version
     #[clap(long = "version", default_value = "0")]
-    pub(crate) version: u32,
+    pub version: u32,
     /// set system config chain_id
     #[clap(long = "chain_id", default_value = "")]
-    pub(crate) chain_id: String,
+    pub chain_id: String,
     /// set system config block_interval
     #[clap(long = "block_interval", default_value = "3")]
-    pub(crate) block_interval: u32,
+    pub block_interval: u32,
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
-    pub(crate) block_limit: u64,
+    pub block_limit: u64,
     /// set one block contains quota limit, default 1073741824
     #[clap(long = "quota-limit", default_value = "1073741824")]
-    pub(crate) quota_limit: u64,
+    pub quota_limit: u64,
     /// set network micro service image name (network_zenoh)
     #[clap(long = "network_image", default_value = "network_zenoh")]
-    pub(crate) network_image: String,
+    pub network_image: String,
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
-    pub(crate) network_tag: String,
+    pub network_tag: String,
     /// set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
     #[clap(long = "consensus_image", default_value = "consensus_bft")]
-    pub(crate) consensus_image: String,
+    pub consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]
-    pub(crate) consensus_tag: String,
+    pub consensus_tag: String,
     /// set executor micro service image name (executor_evm)
     #[clap(long = "executor_image", default_value = "executor_evm")]
-    pub(crate) executor_image: String,
+    pub executor_image: String,
     /// set executor micro service image tag
     #[clap(long = "executor_tag", default_value = "latest")]
-    pub(crate) executor_tag: String,
+    pub executor_tag: String,
     /// set storage micro service image name (storage_rocksdb)
     #[clap(long = "storage_image", default_value = "storage_rocksdb")]
-    pub(crate) storage_image: String,
+    pub storage_image: String,
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
-    pub(crate) storage_tag: String,
+    pub storage_tag: String,
     /// set controller micro service image name (controller)
     #[clap(long = "controller_image", default_value = "controller")]
-    pub(crate) controller_image: String,
+    pub controller_image: String,
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
-    pub(crate) controller_tag: String,
+    pub controller_tag: String,
     /// set crypto micro service image name (crypto_eth/crypto_sm)
     #[clap(long = "crypto_image", default_value = "crypto_sm")]
-    pub(crate) crypto_image: String,
+    pub crypto_image: String,
     /// set crypto micro service image tag
     #[clap(long = "crypto_tag", default_value = "latest")]
-    pub(crate) crypto_tag: String,
+    pub crypto_tag: String,
 
     /// set admin
     #[clap(long = "admin")]
-    pub(crate) admin: String,
+    pub admin: String,
 
     /// node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000
     /// last slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
-    pub(crate) node_list: String,
+    pub node_list: String,
 
     /// log level
     #[clap(long = "log-level", default_value = "info")]
-    pub(crate) log_level: String,
+    pub log_level: String,
+}
+
+impl Default for CreateK8sOpts {
+    fn default() -> Self {
+        Self {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: Default::default(),
+            block_interval: 3,
+            block_limit: 100,
+            quota_limit: 1073741824,
+            network_image: "network_zenoh".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_bft".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_rocksdb".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            crypto_image: "crypto_sm".to_string(),
+            crypto_tag: "latest".to_string(),
+            admin: Default::default(),
+            node_list: Default::default(),
+            log_level: "info".to_string(),
+        }
+    }
 }
 
 /// admin set by args
@@ -174,7 +208,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             } else {
                 node_network_info[3].to_string()
             };
-            NodeNetworkAddressBuilder::new()
+            NodeNetworkAddressBuilder::default()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())
@@ -330,7 +364,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         node_network_info[3].to_string()
     };
 
-    let new_node = NodeNetworkAddressBuilder::new()
+    let new_node = NodeNetworkAddressBuilder::default()
         .host(node_network_info[0].to_string())
         .port(node_network_info[1].parse::<u16>().unwrap())
         .domain(node_network_info[2].to_string())
