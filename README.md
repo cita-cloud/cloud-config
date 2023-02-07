@@ -879,6 +879,9 @@ test-chain-node1
         --domain <DOMAIN>
             domain of node
 
+        --disable-health-check
+            is disable health-check
+
         --enable-debug
             is enable debug
 
