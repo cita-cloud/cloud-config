@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CRYPTO_ETH};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT, CRYPTO_ETH};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -55,9 +55,6 @@ pub struct CreateDevOpts {
     /// is consensus raft
     #[clap(long = "is-raft")]
     is_raft: bool,
-    /// is consensus overlord
-    #[clap(long = "is-overlord")]
-    is_overlord: bool,
     /// is crypto eth
     #[clap(long = "is-eth")]
     is_eth: bool,
@@ -84,12 +81,9 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let mut init_chain_config_opts = InitChainConfigOpts::parse_from(vec![""]);
     init_chain_config_opts.chain_name = opts.chain_name.clone();
     init_chain_config_opts.config_dir = opts.config_dir.clone();
+    // is_raft will override overlord
     if opts.is_raft {
         init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
-    }
-    // is_overlord will override is_raft
-    if opts.is_overlord {
-        init_chain_config_opts.consensus_image = CONSENSUS_OVERLORD.to_string();
     }
     if opts.is_eth {
         init_chain_config_opts.crypto_image = CRYPTO_ETH.to_string();
@@ -411,7 +405,6 @@ mod dev_test {
             jaeger_agent_endpoint: None,
             is_raft: false,
             is_eth: false,
-            is_overlord: false,
         })
         .unwrap();
 
@@ -424,7 +417,6 @@ mod dev_test {
             jaeger_agent_endpoint: None,
             is_raft: true,
             is_eth: true,
-            is_overlord: false,
         })
         .unwrap();
 

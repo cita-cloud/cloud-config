@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::consensus_bft::ConsensusBft;
 use crate::config::consensus_overlord::ConsensusOverlord;
 use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
@@ -23,7 +22,7 @@ use crate::config::log_config::LogConfig;
 use crate::config::network_zenoh::{ModuleConfig, PeerConfig as ZenohPeerConfig, ZenohConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
-    ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS, CONSENSUS_BFT,
+    ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS,
     CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO, CRYPTO_ETH, CRYPTO_SM, EXECUTOR,
     EXECUTOR_EVM, KEY_PEM, NETWORK, NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY,
     STORAGE, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
@@ -203,29 +202,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.consensus_port,
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
-        );
-        consensus_config.write(&config_file_name);
-    } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
-        let consensus_config = ConsensusBft::new(
-            real_domain.clone(),
-            node_config.grpc_ports.controller_port,
-            node_config.grpc_ports.consensus_port,
-            node_config.grpc_ports.network_port,
-            node_config.grpc_ports.crypto_port,
-            if is_k8s {
-                format!("/mnt/{NODE_ADDRESS}")
-            } else {
-                NODE_ADDRESS.to_string()
-            },
-            node_config.metrics_ports.consensus_metrics_port,
-            node_config.enable_metrics,
-            LogConfig {
-                max_level: node_config.log_level.clone(),
-                service_name: CONSENSUS.to_owned(),
-                rolling_file_path: node_config.log_file_path.clone(),
-                agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
-                ..Default::default()
-            },
         );
         consensus_config.write(&config_file_name);
     } else if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {

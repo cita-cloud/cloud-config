@@ -13,9 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH,
-    CRYPTO_SM, EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
-    VALIDATOR_ADDRESS,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM,
+    EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -604,22 +603,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
                         "--stdout".to_string(),
-                    ]);
-                } else if micro_service.image == CONSENSUS_BFT {
-                    consensus_container.image = Some(format!(
-                        "{}/{}/{}:{}",
-                        &opts.docker_registry,
-                        &opts.docker_repo,
-                        &micro_service.image,
-                        &micro_service.tag
-                    ));
-                    consensus_container.command = Some(vec![
-                        "consensus".to_string(),
-                        "run".to_string(),
-                        "-c".to_string(),
-                        "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
                     ]);
                 } else if micro_service.image == CONSENSUS_OVERLORD {
                     consensus_container.image = Some(format!(

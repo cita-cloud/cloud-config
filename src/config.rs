@@ -13,7 +13,6 @@
 // limitations under the License.
 
 pub mod chain_config;
-pub mod consensus_bft;
 pub mod consensus_overlord;
 pub mod consensus_raft;
 pub mod controller;

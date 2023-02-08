@@ -169,8 +169,8 @@ test-chain/
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-            [default: consensus_bft]
+            set consensus micro service image name (consensus_raft/consensus_overlord)
+            [default: consensus_overlord]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -242,7 +242,7 @@ image = 'network_zenoh'
 tag = 'latest'
 
 [[micro_service_list]]
-image = 'consensus_bft'
+image = 'consensus_overlord'
 tag = 'latest'
 
 [[micro_service_list]]
@@ -741,6 +741,12 @@ test-chain
         --log-level <LOG_LEVEL>
             log level [default: info]
 
+        --log-file-path <LOG_FILE_PATH>
+            log file path
+
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+            jaeger agent endpoint
+
         --network-listen-port <NETWORK_LISTEN_PORT>
             network listen port of node [default: 40000]
 
@@ -957,15 +963,15 @@ USAGE:
     cloud-config create-dev [OPTIONS]
 
 OPTIONS:
-        --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>      set config file directory, default means current directory
-                                       [default: .]
-    -h, --help                         Print help information
-        --is-raft                      is consensus raft
-        --is-eth                       is crypto eth
-        --is-overlord                  is consensus overlord
-        --log-level <LOG_LEVEL>        log level [default: info]
-        --peers-count <PEERS_COUNT>    set initial node number [default: 4]
+        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory [default: .]
+    -h, --help                                          Print help information
+        --is-raft                                       is consensus raft
+        --is-eth                                        is crypto eth
+        --log-level <LOG_LEVEL>                         log level [default: info]
+        --log-file-path <LOG_FILE_PATH>                 log file path
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
+        --peers-count <PEERS_COUNT>                     set initial node number [default: 4]
 ```
 
 说明：
@@ -1007,11 +1013,12 @@ USAGE:
     cloud-config append-dev [OPTIONS]
 
 OPTIONS:
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-    -h, --help                       Print help information
-        --log-level <LOG_LEVEL>      log level [default: info]
+        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory [default: .]
+    -h, --help                                          Print help information
+        --log-level <LOG_LEVEL>                         log level [default: info]
+        --log-file-path <LOG_FILE_PATH>                 log file path
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
 ```
 
 ```
@@ -1104,8 +1111,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-            [default: consensus_bft]
+            set consensus micro service image name (consensus_raft/consensus_overlord)
+            [default: consensus_overlord]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -1130,6 +1137,11 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 
         --log-level <LOG_LEVEL>
             log level [default: info]
+
+        --log-file-path <LOG_FILE_PATH>
+            log file path
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+            jaeger agent endpoint
 
         --network_image <NETWORK_IMAGE>
             set network micro service image name (network_zenoh) [default: network_zenoh]
@@ -1183,13 +1195,16 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 
 参数：
 ```
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-        --log-level <LOG_LEVEL>      log level [default: info]
-        --node <NODE>                node network address looks like
-                                     localhost:40002:node2:k8s_cluster1 last slice is optional, none
-                                     means not k8s env
+        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory
+                                                        [default: .]
+        --log-level <LOG_LEVEL>                         log level [default: info]
+
+        --log-file-path <LOG_FILE_PATH>                 log file path
+
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
+
+        --node <NODE>                                   node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
 ```
 
 说明：

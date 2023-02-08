@@ -74,8 +74,8 @@ pub struct CreateK8sOpts {
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
     pub network_tag: String,
-    /// set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-    #[clap(long = "consensus_image", default_value = "consensus_bft")]
+    /// set consensus micro service image name (consensus_raft/consensus_overlord)
+    #[clap(long = "consensus_image", default_value = "consensus_overlord")]
     pub consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]
@@ -142,7 +142,7 @@ impl Default for CreateK8sOpts {
             quota_limit: 1073741824,
             network_image: "network_zenoh".to_string(),
             network_tag: "latest".to_string(),
-            consensus_image: "consensus_bft".to_string(),
+            consensus_image: "consensus_overlord".to_string(),
             consensus_tag: "latest".to_string(),
             executor_image: "executor_evm".to_string(),
             executor_tag: "latest".to_string(),
@@ -557,7 +557,7 @@ mod k8s_test {
             quota_limit: 1073741824,
             network_image: "network_zenoh".to_string(),
             network_tag: "latest".to_string(),
-            consensus_image: "consensus_bft".to_string(),
+            consensus_image: "consensus_overlord".to_string(),
             consensus_tag: "latest".to_string(),
             executor_image: "executor_evm".to_string(),
             executor_tag: "latest".to_string(),

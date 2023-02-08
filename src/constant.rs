@@ -15,7 +15,6 @@
 pub const CONTROLLER: &str = "controller";
 #[allow(dead_code)]
 pub const CONSENSUS: &str = "consensus";
-pub const CONSENSUS_BFT: &str = "consensus_bft";
 pub const CONSENSUS_RAFT: &str = "consensus_raft";
 pub const CONSENSUS_OVERLORD: &str = "consensus_overlord";
 pub const GENESIS_BLOCK: &str = "genesis_block";
