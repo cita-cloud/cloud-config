@@ -969,7 +969,7 @@ OPTIONS:
         --is-raft                                       is consensus raft
         --is-eth                                        is crypto eth
         --log-level <LOG_LEVEL>                         log level [default: info]
-        --log-file-path <LOG_FILE_PATH>                 log file path
+        --log-file-path <LOG_FILE_PATH>                 log file path [default: ./logs]
         --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
         --peers-count <PEERS_COUNT>                     set initial node number [default: 4]
 ```

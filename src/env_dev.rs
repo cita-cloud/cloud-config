@@ -47,7 +47,7 @@ pub struct CreateDevOpts {
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
     /// log file path
-    #[clap(long = "log-file-path")]
+    #[clap(long = "log-file-path", default_value = "./logs")]
     log_file_path: Option<String>,
     /// jaeger agent endpoint
     #[clap(long = "jaeger-agent-endpoint")]
