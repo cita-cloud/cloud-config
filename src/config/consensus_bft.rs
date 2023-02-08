@@ -16,8 +16,12 @@ use crate::constant::{CONSENSUS, CONSENSUS_BFT};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ConsensusBft {
+    pub domain: String,
+
     pub controller_port: u16,
 
     pub consensus_port: u16,
@@ -31,10 +35,14 @@ pub struct ConsensusBft {
     pub metrics_port: u16,
 
     pub enable_metrics: bool,
+
+    pub log_config: LogConfig,
 }
 
 impl ConsensusBft {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
+        domain: String,
         controller_port: u16,
         consensus_port: u16,
         network_port: u16,
@@ -42,8 +50,10 @@ impl ConsensusBft {
         node_address: String,
         metrics_port: u16,
         enable_metrics: bool,
+        log_config: LogConfig,
     ) -> Self {
         Self {
+            domain,
             controller_port,
             consensus_port,
             network_port,
@@ -51,6 +61,7 @@ impl ConsensusBft {
             node_address,
             metrics_port,
             enable_metrics,
+            log_config,
         }
     }
 }

@@ -117,6 +117,14 @@ pub struct CreateK8sOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     pub log_level: String,
+
+    /// log file path
+    #[clap(long = "log-file-path")]
+    pub log_file_path: Option<String>,
+
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    pub jaeger_agent_endpoint: Option<String>,
 }
 
 impl Default for CreateK8sOpts {
@@ -147,6 +155,8 @@ impl Default for CreateK8sOpts {
             admin: Default::default(),
             node_list: Default::default(),
             log_level: "info".to_string(),
+            log_file_path: Default::default(),
+            jaeger_agent_endpoint: Default::default(),
         }
     }
 }
@@ -299,6 +309,8 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             crypto_port: network_port + 5,
             network_listen_port,
             log_level: opts.log_level.clone(),
+            log_file_path: opts.log_file_path.clone(),
+            jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
             account: node_account,
             network_metrics_port,
             consensus_metrics_port: network_metrics_port + 1,
@@ -314,7 +326,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
-            no_stdout: false,
             config_name: "config.toml".to_string(),
             is_dev: false,
         })
@@ -335,6 +346,12 @@ pub struct AppendK8sOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
+    /// log file path
+    #[clap(long = "log-file-path")]
+    log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    jaeger_agent_endpoint: Option<String>,
     /// node network address looks like localhost:40002:node2:k8s_cluster1
     /// last slice is optional, none means not k8s env.
     #[clap(long = "node")]
@@ -412,7 +429,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
-            no_stdout: false,
             config_name: "config.toml".to_string(),
             is_dev: false,
         })
@@ -436,7 +452,9 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         controller_port: network_port + 4,
         crypto_port: network_port + 5,
         network_listen_port,
-        log_level: opts.log_level.clone(),
+        log_level: opts.log_level,
+        log_file_path: opts.log_file_path,
+        jaeger_agent_endpoint: opts.jaeger_agent_endpoint,
         account: addr,
         network_metrics_port,
         consensus_metrics_port: network_metrics_port + 1,
@@ -452,7 +470,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
         domain,
-        no_stdout: false,
         config_name: "config.toml".to_string(),
         is_dev: false,
     })
@@ -509,7 +526,6 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
-            no_stdout: false,
             config_name: "config.toml".to_string(),
             is_dev: false,
         })
@@ -555,6 +571,8 @@ mod k8s_test {
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
                 .to_string(),
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
         })
         .unwrap();
 
@@ -585,6 +603,8 @@ mod k8s_test {
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
                 .to_string(),
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
         })
         .unwrap();
 
@@ -593,6 +613,8 @@ mod k8s_test {
             config_dir: "/tmp".to_string(),
             log_level: "info".to_string(),
             node: "localhost:40002:node2:k8s:40000".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
         })
         .unwrap();
 

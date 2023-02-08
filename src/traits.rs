@@ -17,10 +17,9 @@ use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::network_zenoh::ZenohConfig;
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
-use crate::constant::LOG4RS_YAML;
 use crate::util;
 use serde::{Deserialize, Serialize};
-use std::{fs, path};
+use std::path;
 
 pub trait TomlWriter {
     fn write(&self, path: impl AsRef<path::Path>)
@@ -35,58 +34,6 @@ pub trait TomlWriter {
 
 pub trait YmlWriter {
     fn service(&self) -> String;
-
-    fn write_log4rs(&self, path: &str, is_stdout: bool, log_level: &str)
-    where
-        Self: Serialize,
-    {
-        let service = self.service();
-        fs::write(
-            format!("{path}/{service}-{LOG4RS_YAML}"),
-            format!(
-                r#"# Scan this file for changes every 30 seconds
-refresh_rate: 30 seconds
-
-appenders:
-# An appender named "stdout" that writes to stdout
-  stdout:
-    kind: console
-
-  journey-service:
-    kind: rolling_file
-    path: "logs/{}-service.log"
-    policy:
-      # Identifies which policy is to be used. If no kind is specified, it will
-      # default to "compound".
-      kind: compound
-      # The remainder of the configuration is passed along to the policy's
-      # deserializer, and will vary based on the kind of policy.
-      trigger:
-        kind: size
-        limit: 50mb
-      roller:
-        kind: fixed_window
-        base: 1
-        count: 5
-        pattern: "logs/{}-service.{{}}.gz"
-
-# Set the default logging level and attach the default appender to the root
-root:
-  level: {}
-  appenders:
-    - journey-service
-    {}
-
-# Quinn will continuously print unwanted logs at the info level: https://github.com/quinn-rs/quinn/issues/1322 
-loggers:
-  quinn:
-    level: warn
-"#,
-                service, service, log_level, if is_stdout { "- stdout" } else { "" }
-            ),
-        )
-        .unwrap();
-    }
 }
 
 pub trait Writer: TomlWriter + YmlWriter {}

@@ -46,6 +46,12 @@ pub struct CreateDevOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
+    /// log file path
+    #[clap(long = "log-file-path")]
+    log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    jaeger_agent_endpoint: Option<String>,
     /// is consensus raft
     #[clap(long = "is-raft")]
     is_raft: bool,
@@ -180,6 +186,8 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             crypto_port: network_port + 5,
             network_listen_port: listen_port,
             log_level: opts.log_level.clone(),
+            log_file_path: opts.log_file_path.clone(),
+            jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
             account: node_addr,
             network_metrics_port,
             consensus_metrics_port: network_metrics_port + 1,
@@ -195,7 +203,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            no_stdout: true,
             config_name: "config.toml".to_string(),
             is_dev: true,
         })
@@ -216,6 +223,12 @@ pub struct AppendDevOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
+    /// log file path
+    #[clap(long = "log-file-path")]
+    log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    jaeger_agent_endpoint: Option<String>,
 }
 
 /// append a new node into chain
@@ -276,7 +289,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            no_stdout: true,
             config_name: "config.toml".to_string(),
             is_dev: true,
         })
@@ -301,6 +313,8 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         crypto_port: network_port + 5,
         network_listen_port: listen_port,
         log_level: opts.log_level.clone(),
+        log_file_path: opts.log_file_path.clone(),
+        jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
         account: addr,
         network_metrics_port,
         consensus_metrics_port: network_metrics_port + 1,
@@ -316,7 +330,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir,
         domain,
-        no_stdout: true,
         config_name: "config.toml".to_string(),
         is_dev: true,
     })
@@ -371,7 +384,6 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            no_stdout: true,
             config_name: "config.toml".to_string(),
             is_dev: true,
         })
@@ -395,6 +407,8 @@ mod dev_test {
             config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
             is_raft: false,
             is_eth: false,
             is_overlord: false,
@@ -406,6 +420,8 @@ mod dev_test {
             config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
             is_raft: true,
             is_eth: true,
             is_overlord: false,
@@ -416,6 +432,8 @@ mod dev_test {
             chain_name: name.clone(),
             config_dir: ".tmp".to_string(),
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
         })
         .unwrap();
 

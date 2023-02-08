@@ -16,26 +16,34 @@ use crate::constant::{STORAGE, STORAGE_ROCKSDB};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageRocksdbConfig {
+    pub domain: String,
     pub crypto_port: u16,
     pub storage_port: u16,
     pub metrics_port: u16,
     pub enable_metrics: bool,
+    pub log_config: LogConfig,
 }
 
 impl StorageRocksdbConfig {
     pub fn new(
+        domain: String,
         crypto_port: u16,
         storage_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
+        log_config: LogConfig,
     ) -> Self {
         Self {
+            domain,
             crypto_port,
             storage_port,
             metrics_port,
             enable_metrics,
+            log_config,
         }
     }
 }
