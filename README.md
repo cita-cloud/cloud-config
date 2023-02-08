@@ -976,8 +976,7 @@ OPTIONS:
 
 说明：
 1. `--is-raft`标识`consensus`微服务是否选择了`consensus_raft`。
-2. `--is-overlord`标识`consensus`微服务是否选择了`consensus_overlord`。
-3. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
+2. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
 
 ```
 $ cloud-config create-dev
