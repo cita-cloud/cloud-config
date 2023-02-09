@@ -837,28 +837,16 @@ $ tree test-chain-node*
 test-chain-node0
 ├── chain_config.toml
 ├── config.toml
-├── consensus-log4rs.yaml
-├── controller-log4rs.yaml
-├── crypto-log4rs.yaml
-├── executor-log4rs.yaml
-├── network-log4rs.yaml
 ├── node_address
 ├── node_config.toml
 ├── private_key
-├── storage-log4rs.yaml
 └── validator_address
 test-chain-node1
 ├── chain_config.toml
 ├── config.toml
-├── consensus-log4rs.yaml
-├── controller-log4rs.yaml
-├── crypto-log4rs.yaml
-├── executor-log4rs.yaml
-├── network-log4rs.yaml
 ├── node_address
 ├── node_config.toml
 ├── private_key
-├── storage-log4rs.yaml
 └── validator_address
 ```
 
@@ -988,16 +976,16 @@ node_address: 804f620d1cb955f10381501da12e985fd76ab96d validator_address: 804f62
 
 $ ls test-chain-*
 test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### append-dev
@@ -1026,19 +1014,19 @@ node_address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e validator_address: 48eb18
 
 $ ls test-chain-*
 test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-4:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### delete-dev
@@ -1063,16 +1051,16 @@ OPTIONS:
 $ cloud-config delete-dev
 $ ls test-chain-*
 test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 
@@ -1184,10 +1172,10 @@ node_address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41 validator_address: 24bec8
 
 $ ls test-chain-node*
 test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### append-k8s
@@ -1216,13 +1204,13 @@ $ cloud-config append-k8s --node localhost:40002:node2:k8s
 node_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed validator_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed
 $ ls test-chain-node*
 test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### delete-k8s
@@ -1242,8 +1230,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 $ cloud-config delete-k8s --domain node2
 $ ls test-chain-node*
 test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
