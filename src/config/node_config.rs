@@ -180,6 +180,8 @@ pub struct NodeConfig {
     pub metrics_ports: MetricsPorts,
     pub network_listen_port: u16,
     pub log_level: String,
+    pub log_file_path: Option<String>,
+    pub jaeger_agent_endpoint: Option<String>,
     pub account: String,
     pub enable_metrics: bool,
 }
@@ -189,6 +191,8 @@ pub struct NodeConfigBuilder {
     pub metrics_ports: MetricsPorts,
     pub network_listen_port: u16,
     pub log_level: String,
+    pub log_file_path: Option<String>,
+    pub jaeger_agent_endpoint: Option<String>,
     pub account: String,
     pub enable_metrics: bool,
 }
@@ -200,6 +204,8 @@ impl Default for NodeConfigBuilder {
             metrics_ports: MetricsPortsBuilder::default().build(),
             network_listen_port: 40000,
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
             account: "".to_string(),
             enable_metrics: true,
         }
@@ -237,12 +243,27 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn log_file_path(&mut self, log_file_path: Option<String>) -> &mut NodeConfigBuilder {
+        self.log_file_path = log_file_path;
+        self
+    }
+
+    pub fn jaeger_agent_endpoint(
+        &mut self,
+        jaeger_agent_endpoint: Option<String>,
+    ) -> &mut NodeConfigBuilder {
+        self.jaeger_agent_endpoint = jaeger_agent_endpoint;
+        self
+    }
+
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
             metrics_ports: self.metrics_ports.clone(),
             network_listen_port: self.network_listen_port,
             log_level: self.log_level.clone(),
+            log_file_path: self.log_file_path.clone(),
+            jaeger_agent_endpoint: self.jaeger_agent_endpoint.clone(),
             account: self.account.clone(),
             enable_metrics: self.enable_metrics,
         }

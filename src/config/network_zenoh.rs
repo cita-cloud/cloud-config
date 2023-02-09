@@ -16,6 +16,8 @@ use crate::constant::{NETWORK, NETWORK_ZENOH};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PeerConfig {
     pub protocol: String,
@@ -57,6 +59,7 @@ pub struct ZenohConfig {
     pub chain_id: String,
     pub metrics_port: u16,
     pub enable_metrics: bool,
+    pub log_config: LogConfig,
 }
 
 impl TomlWriter for ZenohConfig {

@@ -15,7 +15,6 @@
 pub const CONTROLLER: &str = "controller";
 #[allow(dead_code)]
 pub const CONSENSUS: &str = "consensus";
-pub const CONSENSUS_BFT: &str = "consensus_bft";
 pub const CONSENSUS_RAFT: &str = "consensus_raft";
 pub const CONSENSUS_OVERLORD: &str = "consensus_overlord";
 pub const GENESIS_BLOCK: &str = "genesis_block";
@@ -40,7 +39,6 @@ pub const CERTS_DIR: &str = "certs";
 pub const KEY_PEM: &str = "key.pem";
 pub const CERT_PEM: &str = "cert.pem";
 pub const CSR_PEM: &str = "csr.pem";
-pub const LOG4RS_YAML: &str = "log4rs.yaml";
 pub const PRIVATE_KEY: &str = "private_key";
 pub const VALIDATOR_ADDRESS: &str = "validator_address";
 pub const NODE_ADDRESS: &str = "node_address";

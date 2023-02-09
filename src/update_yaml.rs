@@ -13,9 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_BFT, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH,
-    CRYPTO_SM, EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB,
-    VALIDATOR_ADDRESS,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM,
+    EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -122,7 +121,6 @@ impl Default for UpdateYamlOpts {
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
 pub struct NodeK8sConfig {
     pub cm_config: ConfigMap,
-    pub cm_log: ConfigMap,
     pub cm_account: ConfigMap,
     pub statefulset: StatefulSet,
     pub node_svc: Service,
@@ -159,7 +157,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
     // node svc
     // statefulset
     // configmap about config.toml
-    // configmap about all log4rs.yaml
     // configmap about account
     {
         let mut metadata = ObjectMeta {
@@ -194,61 +191,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             yaml_file_name,
         );
         node_k8s_config.cm_config = cm_config;
-    }
-
-    {
-        let mut metadata = ObjectMeta {
-            name: Some(format!("{}-log", &node_name)),
-            ..Default::default()
-        };
-        let mut labels = BTreeMap::new();
-        labels.insert(
-            "app.kubernetes.io/chain-name".to_string(),
-            opts.chain_name.clone(),
-        );
-        labels.insert(
-            "app.kubernetes.io/chain-node".to_string(),
-            node_name.clone(),
-        );
-        metadata.labels = Some(labels);
-
-        let mut cm_log = ConfigMap {
-            metadata,
-            ..Default::default()
-        };
-        let mut data = BTreeMap::new();
-        data.insert(
-            "consensus-log4rs.yaml".to_string(),
-            read_file(format!("{}/consensus-log4rs.yaml", &node_dir)).unwrap(),
-        );
-        data.insert(
-            "controller-log4rs.yaml".to_string(),
-            read_file(format!("{}/controller-log4rs.yaml", &node_dir)).unwrap(),
-        );
-        data.insert(
-            "executor-log4rs.yaml".to_string(),
-            read_file(format!("{}/executor-log4rs.yaml", &node_dir)).unwrap(),
-        );
-        data.insert(
-            "crypto-log4rs.yaml".to_string(),
-            read_file(format!("{}/crypto-log4rs.yaml", &node_dir)).unwrap(),
-        );
-        data.insert(
-            "network-log4rs.yaml".to_string(),
-            read_file(format!("{}/network-log4rs.yaml", &node_dir)).unwrap(),
-        );
-        data.insert(
-            "storage-log4rs.yaml".to_string(),
-            read_file(format!("{}/storage-log4rs.yaml", &node_dir)).unwrap(),
-        );
-        cm_log.data = Some(data);
-
-        let yaml_file_name = format!("{}/cm-log.yaml", &yamls_path);
-        write_file(
-            serde_yaml::to_string(&cm_log).unwrap().as_bytes(),
-            yaml_file_name,
-        );
-        node_k8s_config.cm_log = cm_log;
     }
 
     {
@@ -525,8 +467,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "run".to_string(),
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/network-log4rs.yaml".to_string(),
                     ]);
                 } else {
                     panic!("Unkonwn network service!");
@@ -605,22 +545,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                         "--stdout".to_string(),
                     ]);
-                } else if micro_service.image == CONSENSUS_BFT {
-                    consensus_container.image = Some(format!(
-                        "{}/{}/{}:{}",
-                        &opts.docker_registry,
-                        &opts.docker_repo,
-                        &micro_service.image,
-                        &micro_service.tag
-                    ));
-                    consensus_container.command = Some(vec![
-                        "consensus".to_string(),
-                        "run".to_string(),
-                        "-c".to_string(),
-                        "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
-                    ]);
                 } else if micro_service.image == CONSENSUS_OVERLORD {
                     consensus_container.image = Some(format!(
                         "{}/{}/{}:{}",
@@ -634,8 +558,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "run".to_string(),
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/consensus-log4rs.yaml".to_string(),
                         "-p".to_string(),
                         "/mnt/private_key".to_string(),
                     ]);
@@ -709,8 +631,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "run".to_string(),
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/executor-log4rs.yaml".to_string(),
                     ]);
                 } else {
                     panic!("Unkonwn executor service!");
@@ -782,8 +702,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "run".to_string(),
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/storage-log4rs.yaml".to_string(),
                     ]);
                 } else {
                     panic!("Unkonwn storage service!");
@@ -860,8 +778,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "run".to_string(),
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
-                        "-l".to_string(),
-                        "/etc/cita-cloud/log/controller-log4rs.yaml".to_string(),
                     ]);
                 } else {
                     panic!("Unkonwn controller service!");
@@ -937,8 +853,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     "run".to_string(),
                     "-c".to_string(),
                     "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-l".to_string(),
-                    "/etc/cita-cloud/log/crypto-log4rs.yaml".to_string(),
                     "-p".to_string(),
                     "/mnt/private_key".to_string(),
                 ]);

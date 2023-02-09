@@ -20,8 +20,12 @@ use crate::traits::{TomlWriter, YmlWriter};
 use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {
+    pub domain: String,
+
     pub network_port: u16,
 
     pub consensus_port: u16,
@@ -41,6 +45,8 @@ pub struct ControllerConfig {
     pub metrics_port: u16,
 
     pub enable_metrics: bool,
+
+    pub log_config: LogConfig,
 }
 
 impl TomlWriter for ControllerConfig {
@@ -213,6 +219,7 @@ mod controller_test {
     #[test]
     fn basic_test() {
         let config = ControllerConfig {
+            domain: "test-chain-0".into(),
             network_port: 51230,
             consensus_port: 51231,
             executor_port: 51232,
@@ -223,6 +230,7 @@ mod controller_test {
             validator_address: "/mnt/validator_address".into(),
             metrics_port: 61234,
             enable_metrics: true,
+            log_config: LogConfig::default(),
         };
 
         config.write("example");

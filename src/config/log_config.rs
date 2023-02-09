@@ -12,14 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod chain_config;
-pub mod consensus_overlord;
-pub mod consensus_raft;
-pub mod controller;
-pub mod crypto_eth;
-pub mod crypto_sm;
-pub mod executor_evm;
-pub mod log_config;
-pub mod network_zenoh;
-pub mod node_config;
-pub mod storage_rocksdb;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogConfig {
+    pub max_level: String,
+    pub filter: String,
+    pub service_name: String,
+    pub rolling_file_path: Option<String>,
+    pub agent_endpoint: Option<String>,
+}
+
+impl Default for LogConfig {
+    fn default() -> Self {
+        Self {
+            max_level: "info".to_owned(),
+            filter: "info".to_owned(),
+            service_name: Default::default(),
+            rolling_file_path: Default::default(),
+            agent_endpoint: Default::default(),
+        }
+    }
+}

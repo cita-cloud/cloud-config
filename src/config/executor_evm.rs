@@ -16,19 +16,31 @@ use crate::constant::{EXECUTOR, EXECUTOR_EVM};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ExecutorEvmConfig {
+    pub domain: String,
     pub executor_port: u16,
     pub metrics_port: u16,
     pub enable_metrics: bool,
+    pub log_config: LogConfig,
 }
 
 impl ExecutorEvmConfig {
-    pub fn new(executor_port: u16, metrics_port: u16, enable_metrics: bool) -> Self {
+    pub fn new(
+        domain: String,
+        executor_port: u16,
+        metrics_port: u16,
+        enable_metrics: bool,
+        log_config: LogConfig,
+    ) -> Self {
         Self {
+            domain,
             executor_port,
             metrics_port,
             enable_metrics,
+            log_config,
         }
     }
 }
@@ -54,9 +66,11 @@ mod executor_test {
         let _ = std::fs::remove_file("example/config.toml");
 
         let config = ExecutorEvmConfig {
+            domain: "test-chain-0".to_string(),
             executor_port: 51232,
             metrics_port: 61232,
             enable_metrics: true,
+            log_config: LogConfig::default(),
         };
 
         config.write("example");

@@ -57,6 +57,12 @@ pub struct InitNodeOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     pub(crate) log_level: String,
+    /// log file path
+    #[clap(long = "log-file-path")]
+    pub(crate) log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    pub(crate) jaeger_agent_endpoint: Option<String>,
     /// account of node
     #[clap(long = "account")]
     pub(crate) account: String,
@@ -121,6 +127,8 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .metrics_ports(metrics_ports)
         .network_listen_port(opts.network_listen_port)
         .log_level(opts.log_level)
+        .log_file_path(opts.log_file_path)
+        .jaeger_agent_endpoint(opts.jaeger_agent_endpoint)
         .account(opts.account)
         .enable_metrics(!opts.disable_metrics)
         .build();

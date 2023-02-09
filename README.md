@@ -169,8 +169,8 @@ test-chain/
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-            [default: consensus_bft]
+            set consensus micro service image name (consensus_raft/consensus_overlord)
+            [default: consensus_overlord]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -242,7 +242,7 @@ image = 'network_zenoh'
 tag = 'latest'
 
 [[micro_service_list]]
-image = 'consensus_bft'
+image = 'consensus_overlord'
 tag = 'latest'
 
 [[micro_service_list]]
@@ -741,6 +741,12 @@ test-chain
         --log-level <LOG_LEVEL>
             log level [default: info]
 
+        --log-file-path <LOG_FILE_PATH>
+            log file path
+
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+            jaeger agent endpoint
+
         --network-listen-port <NETWORK_LISTEN_PORT>
             network listen port of node [default: 40000]
 
@@ -831,28 +837,16 @@ $ tree test-chain-node*
 test-chain-node0
 ├── chain_config.toml
 ├── config.toml
-├── consensus-log4rs.yaml
-├── controller-log4rs.yaml
-├── crypto-log4rs.yaml
-├── executor-log4rs.yaml
-├── network-log4rs.yaml
 ├── node_address
 ├── node_config.toml
 ├── private_key
-├── storage-log4rs.yaml
 └── validator_address
 test-chain-node1
 ├── chain_config.toml
 ├── config.toml
-├── consensus-log4rs.yaml
-├── controller-log4rs.yaml
-├── crypto-log4rs.yaml
-├── executor-log4rs.yaml
-├── network-log4rs.yaml
 ├── node_address
 ├── node_config.toml
 ├── private_key
-├── storage-log4rs.yaml
 └── validator_address
 ```
 
@@ -957,21 +951,20 @@ USAGE:
     cloud-config create-dev [OPTIONS]
 
 OPTIONS:
-        --chain-name <CHAIN_NAME>      set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>      set config file directory, default means current directory
-                                       [default: .]
-    -h, --help                         Print help information
-        --is-raft                      is consensus raft
-        --is-eth                       is crypto eth
-        --is-overlord                  is consensus overlord
-        --log-level <LOG_LEVEL>        log level [default: info]
-        --peers-count <PEERS_COUNT>    set initial node number [default: 4]
+        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory [default: .]
+    -h, --help                                          Print help information
+        --is-raft                                       is consensus raft
+        --is-eth                                        is crypto eth
+        --log-level <LOG_LEVEL>                         log level [default: info]
+        --log-file-path <LOG_FILE_PATH>                 log file path [default: ./logs]
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
+        --peers-count <PEERS_COUNT>                     set initial node number [default: 4]
 ```
 
 说明：
 1. `--is-raft`标识`consensus`微服务是否选择了`consensus_raft`。
-2. `--is-overlord`标识`consensus`微服务是否选择了`consensus_overlord`。
-3. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
+2. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
 
 ```
 $ cloud-config create-dev
@@ -983,16 +976,16 @@ node_address: 804f620d1cb955f10381501da12e985fd76ab96d validator_address: 804f62
 
 $ ls test-chain-*
 test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### append-dev
@@ -1007,11 +1000,12 @@ USAGE:
     cloud-config append-dev [OPTIONS]
 
 OPTIONS:
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-    -h, --help                       Print help information
-        --log-level <LOG_LEVEL>      log level [default: info]
+        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory [default: .]
+    -h, --help                                          Print help information
+        --log-level <LOG_LEVEL>                         log level [default: info]
+        --log-file-path <LOG_FILE_PATH>                 log file path
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
 ```
 
 ```
@@ -1020,19 +1014,19 @@ node_address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e validator_address: 48eb18
 
 $ ls test-chain-*
 test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-4:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### delete-dev
@@ -1057,16 +1051,16 @@ OPTIONS:
 $ cloud-config delete-dev
 $ ls test-chain-*
 test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 
@@ -1104,8 +1098,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
             set config file directory, default means current directory [default: .]
 
         --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_bft/consensus_raft/consensus_overlord)
-            [default: consensus_bft]
+            set consensus micro service image name (consensus_raft/consensus_overlord)
+            [default: consensus_overlord]
 
         --consensus_tag <CONSENSUS_TAG>
             set consensus micro service image tag [default: latest]
@@ -1130,6 +1124,11 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 
         --log-level <LOG_LEVEL>
             log level [default: info]
+
+        --log-file-path <LOG_FILE_PATH>
+            log file path
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+            jaeger agent endpoint
 
         --network_image <NETWORK_IMAGE>
             set network micro service image name (network_zenoh) [default: network_zenoh]
@@ -1173,23 +1172,26 @@ node_address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41 validator_address: 24bec8
 
 $ ls test-chain-node*
 test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### append-k8s
 
 参数：
 ```
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-        --log-level <LOG_LEVEL>      log level [default: info]
-        --node <NODE>                node network address looks like
-                                     localhost:40002:node2:k8s_cluster1 last slice is optional, none
-                                     means not k8s env
+        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
+        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory
+                                                        [default: .]
+        --log-level <LOG_LEVEL>                         log level [default: info]
+
+        --log-file-path <LOG_FILE_PATH>                 log file path
+
+        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
+
+        --node <NODE>                                   node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
 ```
 
 说明：
@@ -1202,13 +1204,13 @@ $ cloud-config append-k8s --node localhost:40002:node2:k8s
 node_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed validator_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed
 $ ls test-chain-node*
 test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
 #### delete-k8s
@@ -1228,8 +1230,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml 
 $ cloud-config delete-k8s --domain node2
 $ ls test-chain-node*
 test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 
 test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  consensus-log4rs.yaml  controller-log4rs.yaml  crypto-log4rs.yaml  executor-log4rs.yaml  network-log4rs.yaml  node_address  node_config.toml  private_key  storage-log4rs.yaml  validator_address
+accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```

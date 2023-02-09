@@ -16,8 +16,12 @@ use crate::constant::{CONSENSUS, CONSENSUS_OVERLORD};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ConsensusOverlord {
+    pub domain: String,
+
     pub controller_port: u16,
 
     pub consensus_port: u16,
@@ -27,22 +31,28 @@ pub struct ConsensusOverlord {
     pub metrics_port: u16,
 
     pub enable_metrics: bool,
+
+    pub log_config: LogConfig,
 }
 
 impl ConsensusOverlord {
     pub fn new(
+        domain: String,
         controller_port: u16,
         consensus_port: u16,
         network_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
+        log_config: LogConfig,
     ) -> Self {
         Self {
+            domain,
             controller_port,
             consensus_port,
             network_port,
             metrics_port,
             enable_metrics,
+            log_config,
         }
     }
 }

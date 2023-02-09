@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::consensus_bft::ConsensusBft;
 use crate::config::consensus_overlord::ConsensusOverlord;
 use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
 use crate::config::crypto_eth::CryptoEthConfig;
 use crate::config::crypto_sm::CryptoSmConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
+use crate::config::log_config::LogConfig;
 use crate::config::network_zenoh::{ModuleConfig, PeerConfig as ZenohPeerConfig, ZenohConfig};
 use crate::config::storage_rocksdb::StorageRocksdbConfig;
 use crate::constant::{
-    ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS_BFT,
-    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM, EXECUTOR_EVM, KEY_PEM,
-    NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
+    ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS,
+    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO, CRYPTO_ETH, CRYPTO_SM, EXECUTOR,
+    EXECUTOR_EVM, KEY_PEM, NETWORK, NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY,
+    STORAGE, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
-use crate::traits::YmlWriter;
 use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
 use clap::Parser;
 use std::fs;
@@ -48,9 +48,6 @@ pub struct UpdateNodeOpts {
     /// domain of node
     #[clap(long = "domain")]
     pub domain: String,
-    /// disable output to stdout
-    #[clap(long = "no-stdout")]
-    pub no_stdout: bool,
     /// is for dev env
     #[clap(long = "is-dev")]
     pub is_dev: bool,
@@ -58,7 +55,6 @@ pub struct UpdateNodeOpts {
 
 /// generate node config files by chain_config and node_config
 pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
-    let is_stdout = !opts.no_stdout;
     let is_k8s = !opts.is_dev;
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
@@ -108,6 +104,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         fs::copy(from, to).unwrap();
     }
 
+    let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
+
     // network config file
     if find_micro_service(&chain_config, NETWORK_ZENOH) {
         let mut zenoh_peers: Vec<ZenohPeerConfig> = Vec::new();
@@ -140,8 +138,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         ))
         .unwrap();
 
-        let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
-
         // modules
         let modules = vec![
             ModuleConfig {
@@ -163,7 +159,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             cert,
             priv_key: key,
             peers: zenoh_peers,
-            domain: real_domain,
+            domain: real_domain.clone(),
             protocol: "quic".to_string(),
             node_address: if is_k8s {
                 format!("/mnt/{NODE_ADDRESS}")
@@ -179,9 +175,15 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             modules,
             metrics_port: node_config.metrics_ports.network_metrics_port,
             enable_metrics: node_config.enable_metrics,
+            log_config: LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: NETWORK.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
+                ..Default::default()
+            },
         };
         network_config.write(&config_file_name);
-        network_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport network service");
     }
@@ -202,33 +204,23 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.enable_metrics,
         );
         consensus_config.write(&config_file_name);
-        consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
-    } else if find_micro_service(&chain_config, CONSENSUS_BFT) {
-        let consensus_config = ConsensusBft::new(
-            node_config.grpc_ports.controller_port,
-            node_config.grpc_ports.consensus_port,
-            node_config.grpc_ports.network_port,
-            node_config.grpc_ports.crypto_port,
-            if is_k8s {
-                format!("/mnt/{NODE_ADDRESS}")
-            } else {
-                NODE_ADDRESS.to_string()
-            },
-            node_config.metrics_ports.consensus_metrics_port,
-            node_config.enable_metrics,
-        );
-        consensus_config.write(&config_file_name);
-        consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
         let consensus_config = ConsensusOverlord::new(
+            real_domain.clone(),
             node_config.grpc_ports.controller_port,
             node_config.grpc_ports.consensus_port,
             node_config.grpc_ports.network_port,
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
+            LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: CONSENSUS.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
+                ..Default::default()
+            },
         );
         consensus_config.write(&config_file_name);
-        consensus_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport consensus service");
     }
@@ -237,12 +229,19 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // if executor_evm
     if find_micro_service(&chain_config, EXECUTOR_EVM) {
         let executor_config = ExecutorEvmConfig::new(
+            real_domain.clone(),
             node_config.grpc_ports.executor_port,
             node_config.metrics_ports.executor_metrics_port,
             node_config.enable_metrics,
+            LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: EXECUTOR.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
+                ..Default::default()
+            },
         );
         executor_config.write(&config_file_name);
-        executor_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport executor service");
     }
@@ -251,13 +250,20 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // if storage_rocksdb
     if find_micro_service(&chain_config, STORAGE_ROCKSDB) {
         let storage_config = StorageRocksdbConfig::new(
+            real_domain.clone(),
             node_config.grpc_ports.crypto_port,
             node_config.grpc_ports.storage_port,
             node_config.metrics_ports.storage_metrics_port,
             node_config.enable_metrics,
+            LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: STORAGE.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
+                ..Default::default()
+            },
         );
         storage_config.write(&config_file_name);
-        storage_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport storage service");
     }
@@ -267,6 +273,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         chain_config.genesis_block.write(&config_file_name);
         chain_config.system_config.write(&config_file_name);
         let controller_config = ControllerConfig {
+            domain: real_domain.clone(),
             network_port: node_config.grpc_ports.network_port,
             consensus_port: node_config.grpc_ports.consensus_port,
             executor_port: node_config.grpc_ports.executor_port,
@@ -285,9 +292,15 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             },
             metrics_port: node_config.metrics_ports.controller_metrics_port,
             enable_metrics: node_config.enable_metrics,
+            log_config: LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: CONTROLLER.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
+                ..Default::default()
+            },
         };
         controller_config.write(&config_file_name);
-        controller_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport controller service");
     }
@@ -296,20 +309,34 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     // if crypto_sm
     if find_micro_service(&chain_config, CRYPTO_SM) {
         let crypto_config = CryptoSmConfig::new(
+            real_domain,
             node_config.grpc_ports.crypto_port,
             node_config.metrics_ports.crypto_metrics_port,
             node_config.enable_metrics,
+            LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: CRYPTO.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint,
+                ..Default::default()
+            },
         );
         crypto_config.write(&config_file_name);
-        crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else if find_micro_service(&chain_config, CRYPTO_ETH) {
         let crypto_config = CryptoEthConfig::new(
+            real_domain,
             node_config.grpc_ports.crypto_port,
             node_config.metrics_ports.crypto_metrics_port,
             node_config.enable_metrics,
+            LogConfig {
+                max_level: node_config.log_level.clone(),
+                service_name: CRYPTO.to_owned(),
+                rolling_file_path: node_config.log_file_path.clone(),
+                agent_endpoint: node_config.jaeger_agent_endpoint,
+                ..Default::default()
+            },
         );
         crypto_config.write(&config_file_name);
-        crypto_config.write_log4rs(&node_dir, is_stdout, &node_config.log_level);
     } else {
         panic!("unsupport crypto service");
     }
