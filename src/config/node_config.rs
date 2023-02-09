@@ -184,6 +184,7 @@ pub struct NodeConfig {
     pub jaeger_agent_endpoint: Option<String>,
     pub account: String,
     pub enable_metrics: bool,
+    pub is_danger: bool,
 }
 
 pub struct NodeConfigBuilder {
@@ -195,6 +196,7 @@ pub struct NodeConfigBuilder {
     pub jaeger_agent_endpoint: Option<String>,
     pub account: String,
     pub enable_metrics: bool,
+    pub is_danger: bool,
 }
 
 impl Default for NodeConfigBuilder {
@@ -208,6 +210,7 @@ impl Default for NodeConfigBuilder {
             jaeger_agent_endpoint: None,
             account: "".to_string(),
             enable_metrics: true,
+            is_danger: false,
         }
     }
 }
@@ -256,6 +259,11 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn is_danger(&mut self, is_danger: bool) -> &mut NodeConfigBuilder {
+        self.is_danger = is_danger;
+        self
+    }
+
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
@@ -266,6 +274,7 @@ impl NodeConfigBuilder {
             jaeger_agent_endpoint: self.jaeger_agent_endpoint.clone(),
             account: self.account.clone(),
             enable_metrics: self.enable_metrics,
+            is_danger: self.is_danger,
         }
     }
 }

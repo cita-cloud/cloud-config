@@ -699,68 +699,50 @@ test-chain
 参数：
 
 ```
-        --account <ACCOUNT>
-            account of node
-
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory [default: .]
-
-        --consensus-metrics-port <CONSENSUS_METRICS_PORT>
-            consensus metrics port of node [default: 60001]
-
-        --consensus-port <CONSENSUS_PORT>
-            grpc consensus_port of node [default: 50001]
-
-        --controller-metrics-port <CONTROLLER_METRICS_PORT>
-            controller metrics port of node [default: 60004]
-
-        --controller-port <CONTROLLER_PORT>
-            grpc controller_port of node [default: 50004]
-
-        --crypto-metrics-port <CRYPTO_METRICS_PORT>
-            crypto metrics port of node [default: 60005]
-
-        --crypto-port <CRYPTO_PORT>
-            grpc crypto_port of node [default: 50005]
-
-        --disable-metrics
-            disable metrics exporter
-
-        --domain <DOMAIN>
-            domain of node
-
-        --executor-metrics-port <EXECUTOR_METRICS_PORT>
-            executor metrics port of node [default: 60002]
-
-        --executor-port <EXECUTOR_PORT>
-            grpc executor_port of node [default: 50002]
-
-        --log-level <LOG_LEVEL>
-            log level [default: info]
-
-        --log-file-path <LOG_FILE_PATH>
-            log file path
-
-        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
-            jaeger agent endpoint
-
-        --network-listen-port <NETWORK_LISTEN_PORT>
-            network listen port of node [default: 40000]
-
-        --network-metrics-port <NETWORK_METRICS_PORT>
-            network metrics port of node [default: 60000]
-
-        --network-port <NETWORK_PORT>
-            grpc network_port of node [default: 50000]
-
-        --storage-metrics-port <STORAGE_METRICS_PORT>
-            storage metrics port of node [default: 60003]
-
-        --storage-port <STORAGE_PORT>
-            grpc storage_port of node [default: 50003]
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --domain <DOMAIN>
+          domain of node
+      --network-port <NETWORK_PORT>
+          grpc network_port of node [default: 50000]
+      --consensus-port <CONSENSUS_PORT>
+          grpc consensus_port of node [default: 50001]
+      --executor-port <EXECUTOR_PORT>
+          grpc executor_port of node [default: 50002]
+      --storage-port <STORAGE_PORT>
+          grpc storage_port of node [default: 50003]
+      --controller-port <CONTROLLER_PORT>
+          grpc controller_port of node [default: 50004]
+      --crypto-port <CRYPTO_PORT>
+          grpc crypto_port of node [default: 50005]
+      --network-listen-port <NETWORK_LISTEN_PORT>
+          network listen port of node [default: 40000]
+      --log-level <LOG_LEVEL>
+          log level [default: info]
+      --log-file-path <LOG_FILE_PATH>
+          log file path
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+          jaeger agent endpoint
+      --account <ACCOUNT>
+          account of node
+      --network-metrics-port <NETWORK_METRICS_PORT>
+          network metrics port of node [default: 60000]
+      --consensus-metrics-port <CONSENSUS_METRICS_PORT>
+          consensus metrics port of node [default: 60001]
+      --executor-metrics-port <EXECUTOR_METRICS_PORT>
+          executor metrics port of node [default: 60002]
+      --storage-metrics-port <STORAGE_METRICS_PORT>
+          storage metrics port of node [default: 60003]
+      --controller-metrics-port <CONTROLLER_METRICS_PORT>
+          controller metrics port of node [default: 60004]
+      --crypto-metrics-port <CRYPTO_METRICS_PORT>
+          crypto metrics port of node [default: 60005]
+      --disable-metrics
+          disable metrics exporter
+      --is-danger
+          is chain in danger mode
 ```
 
 说明：
@@ -944,22 +926,31 @@ cm-account.yaml  cm-config.yaml  cm-log.yaml  node-svc.yaml  statefulset.yaml
 参数：
 ```
 $ cloud-config create-dev -h
-cloud-config-create-dev
 create config in env dev
 
-USAGE:
-    cloud-config create-dev [OPTIONS]
+Usage: cloud-config create-dev [OPTIONS]
 
-OPTIONS:
-        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory [default: .]
-    -h, --help                                          Print help information
-        --is-raft                                       is consensus raft
-        --is-eth                                        is crypto eth
-        --log-level <LOG_LEVEL>                         log level [default: info]
-        --log-file-path <LOG_FILE_PATH>                 log file path [default: ./logs]
-        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
-        --peers-count <PEERS_COUNT>                     set initial node number [default: 4]
+Options:
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --peers-count <PEERS_COUNT>
+          set initial node number [default: 4]
+      --log-level <LOG_LEVEL>
+          log level [default: info]
+      --log-file-path <LOG_FILE_PATH>
+          log file path [default: ./logs]
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+          jaeger agent endpoint
+      --is-raft
+          is consensus raft
+      --is-eth
+          is crypto eth
+      --is-danger
+          is chain in danger mode
+  -h, --help
+          Print help
 ```
 
 说明：
@@ -993,19 +984,25 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 参数：
 ```
 $ cloud-config append-dev -h
-cloud-config-append-dev
 append node in env dev
 
-USAGE:
-    cloud-config append-dev [OPTIONS]
+Usage: cloud-config append-dev [OPTIONS]
 
-OPTIONS:
-        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory [default: .]
-    -h, --help                                          Print help information
-        --log-level <LOG_LEVEL>                         log level [default: info]
-        --log-file-path <LOG_FILE_PATH>                 log file path
-        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
+Options:
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --log-level <LOG_LEVEL>
+          log level [default: info]
+      --log-file-path <LOG_FILE_PATH>
+          log file path
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+          jaeger agent endpoint
+      --is-danger
+          is chain in danger mode
+  -h, --help
+          Print help
 ```
 
 ```
@@ -1079,86 +1076,60 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 参数：
 
 ```
-        --admin <ADMIN>
-            set admin
-
-        --block_interval <BLOCK_INTERVAL>
-            set system config block_interval [default: 3]
-
-        --block_limit <BLOCK_LIMIT>
-            set system config block_limit [default: 100]
-
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --chain_id <CHAIN_ID>
-            set system config chain_id [default: ]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory [default: .]
-
-        --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_raft/consensus_overlord)
-            [default: consensus_overlord]
-
-        --consensus_tag <CONSENSUS_TAG>
-            set consensus micro service image tag [default: latest]
-
-        --controller_image <CONTROLLER_IMAGE>
-            set controller micro service image name (controller) [default: controller]
-
-        --controller_tag <CONTROLLER_TAG>
-            set controller micro service image tag [default: latest]
-
-        --crypto_image <CRYPTO_IMAGE>
-            set crypto micro service image name (crypto_eth/crypto_sm) [default: crypto_sm]
-
-        --crypto_tag <CRYPTO_TAG>
-            set crypto micro service image tag [default: latest]
-
-        --executor_image <EXECUTOR_IMAGE>
-            set executor micro service image name (executor_evm) [default: executor_evm]
-
-        --executor_tag <EXECUTOR_TAG>
-            set executor micro service image tag [default: latest]
-
-        --log-level <LOG_LEVEL>
-            log level [default: info]
-
-        --log-file-path <LOG_FILE_PATH>
-            log file path
-        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
-            jaeger agent endpoint
-
-        --network_image <NETWORK_IMAGE>
-            set network micro service image name (network_zenoh) [default: network_zenoh]
-
-        --network_tag <NETWORK_TAG>
-            set network micro service image tag [default: latest]
-
-        --nodelist <NODE_LIST>
-            node list looks like
-            localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000 last
-            slice is optional, none means not k8s env
-
-        --prevhash <PREVHASH>
-            set genesis prevhash [default:
-            0x0000000000000000000000000000000000000000000000000000000000000000]
-
-        --quota-limit <QUOTA_LIMIT>
-            set one block contains tx limit, default 1073741824 [default: 1073741824]
-
-        --storage_image <STORAGE_IMAGE>
-            set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
-
-        --storage_tag <STORAGE_TAG>
-            set storage micro service image tag [default: latest]
-
-        --timestamp <TIMESTAMP>
-            set genesis timestamp [default: 0]
-
-        --version <VERSION>
-            set system config version [default: 0]
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --timestamp <TIMESTAMP>
+          set genesis timestamp [default: 0]
+      --prevhash <PREVHASH>
+          set genesis prevhash [default: 0x0000000000000000000000000000000000000000000000000000000000000000]
+      --version <VERSION>
+          set system config version [default: 0]
+      --chain_id <CHAIN_ID>
+          set system config chain_id [default: ]
+      --block_interval <BLOCK_INTERVAL>
+          set system config block_interval [default: 3]
+      --block_limit <BLOCK_LIMIT>
+          set system config block_limit [default: 100]
+      --quota-limit <QUOTA_LIMIT>
+          set one block contains quota limit, default 1073741824 [default: 1073741824]
+      --network_image <NETWORK_IMAGE>
+          set network micro service image name (network_zenoh) [default: network_zenoh]
+      --network_tag <NETWORK_TAG>
+          set network micro service image tag [default: latest]
+      --consensus_image <CONSENSUS_IMAGE>
+          set consensus micro service image name (consensus_raft/consensus_overlord) [default: consensus_overlord]
+      --consensus_tag <CONSENSUS_TAG>
+          set consensus micro service image tag [default: latest]
+      --executor_image <EXECUTOR_IMAGE>
+          set executor micro service image name (executor_evm) [default: executor_evm]
+      --executor_tag <EXECUTOR_TAG>
+          set executor micro service image tag [default: latest]
+      --storage_image <STORAGE_IMAGE>
+          set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
+      --storage_tag <STORAGE_TAG>
+          set storage micro service image tag [default: latest]
+      --controller_image <CONTROLLER_IMAGE>
+          set controller micro service image name (controller) [default: controller]
+      --controller_tag <CONTROLLER_TAG>
+          set controller micro service image tag [default: latest]
+      --crypto_image <CRYPTO_IMAGE>
+          set crypto micro service image name (crypto_eth/crypto_sm) [default: crypto_sm]
+      --crypto_tag <CRYPTO_TAG>
+          set crypto micro service image tag [default: latest]
+      --admin <ADMIN>
+          set admin
+      --nodelist <NODE_LIST>
+          node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000 last slice is optional, none means not k8s env
+      --log-level <LOG_LEVEL>
+          log level [default: info]
+      --log-file-path <LOG_FILE_PATH>
+          log file path
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+          jaeger agent endpoint
+      --is-danger
+          is chain in danger mode
 ```
 
 说明:
@@ -1182,16 +1153,20 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 
 参数：
 ```
-        --chain-name <CHAIN_NAME>                       set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>                       set config file directory, default means current directory
-                                                        [default: .]
-        --log-level <LOG_LEVEL>                         log level [default: info]
-
-        --log-file-path <LOG_FILE_PATH>                 log file path
-
-        --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT> jaeger agent endpoint
-
-        --node <NODE>                                   node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --log-level <LOG_LEVEL>
+          log level [default: info]
+      --log-file-path <LOG_FILE_PATH>
+          log file path
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
+          jaeger agent endpoint
+      --node <NODE>
+          node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
+      --is-danger
+          is chain in danger mode
 ```
 
 说明：

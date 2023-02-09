@@ -87,6 +87,9 @@ pub struct InitNodeOpts {
     /// disable metrics exporter
     #[clap(long = "disable-metrics", action = ArgAction::SetTrue)]
     pub(crate) disable_metrics: bool,
+    /// is chain in danger mode
+    #[clap(long = "is-danger", action = ArgAction::SetTrue)]
+    pub(crate) is_danger: bool,
 }
 
 /// execute init node
@@ -131,6 +134,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .jaeger_agent_endpoint(opts.jaeger_agent_endpoint)
         .account(opts.account)
         .enable_metrics(!opts.disable_metrics)
+        .is_danger(opts.is_danger)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
