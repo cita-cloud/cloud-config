@@ -125,6 +125,10 @@ pub struct CreateK8sOpts {
     /// jaeger agent endpoint
     #[clap(long = "jaeger-agent-endpoint")]
     pub jaeger_agent_endpoint: Option<String>,
+
+    /// is chain in danger mode
+    #[clap(long = "is-danger")]
+    pub is_danger: bool,
 }
 
 impl Default for CreateK8sOpts {
@@ -157,6 +161,7 @@ impl Default for CreateK8sOpts {
             log_level: "info".to_string(),
             log_file_path: Default::default(),
             jaeger_agent_endpoint: Default::default(),
+            is_danger: Default::default(),
         }
     }
 }
@@ -319,6 +324,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             controller_metrics_port: network_metrics_port + 4,
             crypto_metrics_port: network_metrics_port + 5,
             disable_metrics: false,
+            is_danger: opts.is_danger,
         })
         .unwrap();
 
@@ -355,7 +361,10 @@ pub struct AppendK8sOpts {
     /// node network address looks like localhost:40002:node2:k8s_cluster1
     /// last slice is optional, none means not k8s env.
     #[clap(long = "node")]
-    pub(crate) node: String,
+    node: String,
+    /// is chain in danger mode
+    #[clap(long = "is-danger")]
+    is_danger: bool,
 }
 
 /// append a new node into chain
@@ -463,6 +472,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         controller_metrics_port: network_metrics_port + 4,
         crypto_metrics_port: network_metrics_port + 5,
         disable_metrics: false,
+        is_danger: opts.is_danger,
     })
     .unwrap();
 
@@ -573,6 +583,7 @@ mod k8s_test {
             log_level: "info".to_string(),
             log_file_path: None,
             jaeger_agent_endpoint: None,
+            is_danger: false,
         })
         .unwrap();
 
@@ -605,6 +616,7 @@ mod k8s_test {
             log_level: "info".to_string(),
             log_file_path: None,
             jaeger_agent_endpoint: None,
+            is_danger: false,
         })
         .unwrap();
 
@@ -615,6 +627,7 @@ mod k8s_test {
             node: "localhost:40002:node2:k8s:40000".to_string(),
             log_file_path: None,
             jaeger_agent_endpoint: None,
+            is_danger: false,
         })
         .unwrap();
 

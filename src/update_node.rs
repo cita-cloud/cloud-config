@@ -299,6 +299,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
                 ..Default::default()
             },
+            is_danger: node_config.is_danger,
         };
         controller_config.write(&config_file_name);
     } else {
