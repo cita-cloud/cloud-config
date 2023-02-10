@@ -422,11 +422,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     ..Default::default()
                 },
                 VolumeMount {
-                    mount_path: "/etc/cita-cloud/log".to_string(),
-                    name: "node-log".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
                     mount_path: "/mnt".to_string(),
                     name: "node-account".to_string(),
                     ..Default::default()
@@ -495,11 +490,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 VolumeMount {
                     mount_path: "/etc/cita-cloud/config".to_string(),
                     name: "node-config".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
-                    mount_path: "/etc/cita-cloud/log".to_string(),
-                    name: "node-log".to_string(),
                     ..Default::default()
                 },
                 VolumeMount {
@@ -590,11 +580,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     name: "node-config".to_string(),
                     ..Default::default()
                 },
-                VolumeMount {
-                    mount_path: "/etc/cita-cloud/log".to_string(),
-                    name: "node-log".to_string(),
-                    ..Default::default()
-                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: if opts.disable_health_check {
@@ -661,11 +646,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     name: "node-config".to_string(),
                     ..Default::default()
                 },
-                VolumeMount {
-                    mount_path: "/etc/cita-cloud/log".to_string(),
-                    name: "node-log".to_string(),
-                    ..Default::default()
-                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: if opts.disable_health_check {
@@ -730,11 +710,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 VolumeMount {
                     mount_path: "/etc/cita-cloud/config".to_string(),
                     name: "node-config".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
-                    mount_path: "/etc/cita-cloud/log".to_string(),
-                    name: "node-log".to_string(),
                     ..Default::default()
                 },
                 VolumeMount {
@@ -809,11 +784,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     ..Default::default()
                 },
                 VolumeMount {
-                    mount_path: "/etc/cita-cloud/log".to_string(),
-                    name: "node-log".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
                     mount_path: "/mnt".to_string(),
                     name: "node-account".to_string(),
                     ..Default::default()
@@ -884,11 +854,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         ..Default::default()
                     },
                     VolumeMount {
-                        mount_path: "/etc/cita-cloud/log".to_string(),
-                        name: "node-log".to_string(),
-                        ..Default::default()
-                    },
-                    VolumeMount {
                         mount_path: "/mnt".to_string(),
                         name: "node-account".to_string(),
                         ..Default::default()
@@ -918,14 +883,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 name: "node-config".to_string(),
                 config_map: Some(ConfigMapVolumeSource {
                     name: Some(format!("{}-config", &node_name)),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            },
-            Volume {
-                name: "node-log".to_string(),
-                config_map: Some(ConfigMapVolumeSource {
-                    name: Some(format!("{}-log", &node_name)),
                     ..Default::default()
                 }),
                 ..Default::default()
