@@ -26,8 +26,8 @@ use k8s_openapi::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
             Affinity, ConfigMap, ConfigMapVolumeSource, Container, ContainerPort, ExecAction,
-            HostAlias, PersistentVolumeClaim, PersistentVolumeClaimSpec, PodAffinityTerm,
-            PodAntiAffinity, PodSecurityContext, PodSpec, PodTemplateSpec, Probe,
+            HostAlias, HostPathVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            PodAffinityTerm, PodAntiAffinity, PodSecurityContext, PodSpec, PodTemplateSpec, Probe,
             ResourceRequirements, Service, ServicePort, ServiceSpec, Volume, VolumeMount,
             WeightedPodAffinityTerm,
         },
@@ -426,6 +426,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     name: "node-account".to_string(),
                     ..Default::default()
                 },
+                VolumeMount {
+                    mount_path: "/etc/timezone".to_string(),
+                    name: "node-timezone".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/localtime".to_string(),
+                    name: "node-localtime".to_string(),
+                    ..Default::default()
+                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: if opts.disable_health_check {
@@ -495,6 +505,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 VolumeMount {
                     mount_path: "/mnt".to_string(),
                     name: "node-account".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/timezone".to_string(),
+                    name: "node-timezone".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/localtime".to_string(),
+                    name: "node-localtime".to_string(),
                     ..Default::default()
                 },
             ]),
@@ -580,6 +600,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     name: "node-config".to_string(),
                     ..Default::default()
                 },
+                VolumeMount {
+                    mount_path: "/etc/timezone".to_string(),
+                    name: "node-timezone".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/localtime".to_string(),
+                    name: "node-localtime".to_string(),
+                    ..Default::default()
+                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: if opts.disable_health_check {
@@ -644,6 +674,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 VolumeMount {
                     mount_path: "/etc/cita-cloud/config".to_string(),
                     name: "node-config".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/timezone".to_string(),
+                    name: "node-timezone".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/localtime".to_string(),
+                    name: "node-localtime".to_string(),
                     ..Default::default()
                 },
             ]),
@@ -717,6 +757,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     name: "node-account".to_string(),
                     ..Default::default()
                 },
+                VolumeMount {
+                    mount_path: "/etc/timezone".to_string(),
+                    name: "node-timezone".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/localtime".to_string(),
+                    name: "node-localtime".to_string(),
+                    ..Default::default()
+                },
             ]),
             working_dir: Some("/data".to_string()),
             liveness_probe: if opts.disable_health_check {
@@ -786,6 +836,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 VolumeMount {
                     mount_path: "/mnt".to_string(),
                     name: "node-account".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/timezone".to_string(),
+                    name: "node-timezone".to_string(),
+                    ..Default::default()
+                },
+                VolumeMount {
+                    mount_path: "/etc/localtime".to_string(),
+                    name: "node-localtime".to_string(),
                     ..Default::default()
                 },
             ]),
@@ -858,6 +918,16 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         name: "node-account".to_string(),
                         ..Default::default()
                     },
+                    VolumeMount {
+                        mount_path: "/etc/timezone".to_string(),
+                        name: "node-timezone".to_string(),
+                        ..Default::default()
+                    },
+                    VolumeMount {
+                        mount_path: "/etc/localtime".to_string(),
+                        name: "node-localtime".to_string(),
+                        ..Default::default()
+                    },
                 ]),
                 working_dir: Some("/data".to_string()),
                 ..Default::default()
@@ -883,6 +953,22 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 name: "node-config".to_string(),
                 config_map: Some(ConfigMapVolumeSource {
                     name: Some(format!("{}-config", &node_name)),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            Volume {
+                name: "node-timezone".to_string(),
+                host_path: Some(HostPathVolumeSource {
+                    path: "/etc/timezone".to_string(),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            Volume {
+                name: "node-localtime".to_string(),
+                host_path: Some(HostPathVolumeSource {
+                    path: "/etc/localtime".to_string(),
                     ..Default::default()
                 }),
                 ..Default::default()
