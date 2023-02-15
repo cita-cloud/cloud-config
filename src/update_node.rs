@@ -180,7 +180,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: NETWORK.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
-                ..Default::default()
+                filter: node_config.log_level.clone(),
             },
         };
         network_config.write(&config_file_name);
@@ -217,7 +217,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: CONSENSUS.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
-                ..Default::default()
+                filter: node_config.log_level.clone(),
             },
         );
         consensus_config.write(&config_file_name);
@@ -238,7 +238,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: EXECUTOR.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
-                ..Default::default()
+                filter: node_config.log_level.clone(),
             },
         );
         executor_config.write(&config_file_name);
@@ -260,7 +260,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: STORAGE.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
-                ..Default::default()
+                filter: node_config.log_level.clone(),
             },
         );
         storage_config.write(&config_file_name);
@@ -297,7 +297,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: CONTROLLER.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
-                ..Default::default()
+                filter: node_config.log_level.clone(),
             },
             is_danger: node_config.is_danger,
         };
@@ -319,7 +319,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: CRYPTO.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint,
-                ..Default::default()
+                filter: node_config.log_level,
             },
         );
         crypto_config.write(&config_file_name);
@@ -334,7 +334,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 service_name: CRYPTO.to_owned(),
                 rolling_file_path: node_config.log_file_path.clone(),
                 agent_endpoint: node_config.jaeger_agent_endpoint,
-                ..Default::default()
+                filter: node_config.log_level,
             },
         );
         crypto_config.write(&config_file_name);
