@@ -84,7 +84,7 @@ pub struct InitNodeOpts {
     /// crypto metrics port of node
     #[clap(long = "crypto-metrics-port", default_value = "60005")]
     pub(crate) crypto_metrics_port: u16,
-    /// disable metrics exporter
+    /// disable metrics
     #[clap(long = "disable-metrics", action = ArgAction::SetTrue)]
     pub(crate) disable_metrics: bool,
     /// is chain in danger mode

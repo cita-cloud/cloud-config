@@ -740,7 +740,7 @@ test-chain
       --crypto-metrics-port <CRYPTO_METRICS_PORT>
           crypto metrics port of node [default: 60005]
       --disable-metrics
-          disable metrics exporter
+          disable metrics
       --is-danger
           is chain in danger mode
 ```
@@ -949,6 +949,8 @@ Options:
           is crypto eth
       --is-danger
           is chain in danger mode
+      --disable-metrics
+          disable metrics
   -h, --help
           Print help
 ```
@@ -1001,6 +1003,8 @@ Options:
           jaeger agent endpoint
       --is-danger
           is chain in danger mode
+      --disable-metrics
+          disable metrics
   -h, --help
           Print help
 ```
@@ -1130,6 +1134,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           jaeger agent endpoint
       --is-danger
           is chain in danger mode
+      --disable-metrics
+          disable metrics
 ```
 
 说明:
@@ -1167,6 +1173,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
       --is-danger
           is chain in danger mode
+      --disable-metrics
+          disable metrics
 ```
 
 说明：

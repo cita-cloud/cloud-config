@@ -129,6 +129,10 @@ pub struct CreateK8sOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     pub is_danger: bool,
+
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
 }
 
 impl Default for CreateK8sOpts {
@@ -162,6 +166,7 @@ impl Default for CreateK8sOpts {
             log_file_path: Default::default(),
             jaeger_agent_endpoint: Default::default(),
             is_danger: Default::default(),
+            disable_metrics: Default::default(),
         }
     }
 }
@@ -323,7 +328,7 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             storage_metrics_port: network_metrics_port + 3,
             controller_metrics_port: network_metrics_port + 4,
             crypto_metrics_port: network_metrics_port + 5,
-            disable_metrics: false,
+            disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
         })
         .unwrap();
@@ -365,6 +370,9 @@ pub struct AppendK8sOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
 }
 
 /// append a new node into chain
@@ -471,7 +479,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         storage_metrics_port: network_metrics_port + 3,
         controller_metrics_port: network_metrics_port + 4,
         crypto_metrics_port: network_metrics_port + 5,
-        disable_metrics: false,
+        disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
     })
     .unwrap();
@@ -584,6 +592,7 @@ mod k8s_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            disable_metrics: false,
         })
         .unwrap();
 
@@ -617,6 +626,7 @@ mod k8s_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            disable_metrics: false,
         })
         .unwrap();
 
@@ -628,6 +638,7 @@ mod k8s_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            disable_metrics: false,
         })
         .unwrap();
 
