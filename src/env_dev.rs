@@ -61,6 +61,9 @@ pub struct CreateDevOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
 }
 
 /// node network ip is 127.0.0.1
@@ -192,7 +195,7 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             storage_metrics_port: network_metrics_port + 3,
             controller_metrics_port: network_metrics_port + 4,
             crypto_metrics_port: network_metrics_port + 5,
-            disable_metrics: false,
+            disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
         })
         .unwrap();
@@ -230,6 +233,9 @@ pub struct AppendDevOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
 }
 
 /// append a new node into chain
@@ -323,7 +329,7 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         storage_metrics_port: network_metrics_port + 3,
         controller_metrics_port: network_metrics_port + 4,
         crypto_metrics_port: network_metrics_port + 5,
-        disable_metrics: false,
+        disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
     })
     .unwrap();
@@ -414,6 +420,7 @@ mod dev_test {
             is_raft: false,
             is_eth: false,
             is_danger: false,
+            disable_metrics: false,
         })
         .unwrap();
 
@@ -427,6 +434,7 @@ mod dev_test {
             is_raft: true,
             is_eth: true,
             is_danger: false,
+            disable_metrics: false,
         })
         .unwrap();
 
@@ -437,6 +445,7 @@ mod dev_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            disable_metrics: false,
         })
         .unwrap();
 
