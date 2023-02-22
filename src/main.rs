@@ -43,6 +43,7 @@ use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
 use crate::update_yaml::{execute_update_yaml, UpdateYamlOpts};
+use crate::util::clap_about;
 
 mod append_node;
 mod append_validator;
@@ -74,7 +75,7 @@ mod update_yaml;
 mod util;
 
 #[derive(Parser)]
-#[clap(version, author)]
+#[clap(version, about = clap_about())]
 struct Opts {
     #[clap(subcommand)]
     sub_cmd: SubCommand,

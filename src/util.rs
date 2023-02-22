@@ -204,3 +204,10 @@ pub fn rand_string() -> String {
 pub fn svc_name(chain_name: &str, domain: &str) -> String {
     format!("{chain_name}-{domain}")
 }
+
+pub fn clap_about() -> String {
+    let name = env!("CARGO_PKG_NAME").to_string();
+    let version = env!("CARGO_PKG_VERSION");
+    let authors = env!("CARGO_PKG_AUTHORS");
+    name + " " + version + "\n" + authors
+}
