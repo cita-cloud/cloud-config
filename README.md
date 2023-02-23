@@ -478,7 +478,7 @@ stage = 'Finalize'
         --config-dir <CONFIG_DIR>    set config file directory, default means current directory
                                      [default: .]
         --nodelist <NODE_LIST>       node list looks like
-                                     localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2
+                                     localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
                                      last slice is optional, none means not k8s env
 ```
 
@@ -1128,7 +1128,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
       --admin <ADMIN>
           set admin
       --nodelist <NODE_LIST>
-          node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000 last slice is optional, none means not k8s env
+          node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2 last slice is optional, none means not k8s env
       --log-level <LOG_LEVEL>
           log level [default: info]
       --log-file-path <LOG_FILE_PATH>
