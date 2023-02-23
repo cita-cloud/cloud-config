@@ -109,7 +109,7 @@ pub struct CreateK8sOpts {
     #[clap(long = "admin")]
     pub admin: String,
 
-    /// node list looks like localhost:40000:node0:k8s_cluster1:40000,localhost:40001:node1:k8s_cluster2:40000
+    /// node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
     /// last slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
     pub node_list: String,
