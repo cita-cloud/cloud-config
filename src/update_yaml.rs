@@ -866,12 +866,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             let mut debug_container = Container {
                 name: "debug".to_string(),
                 image_pull_policy: Some(opts.pull_policy.clone()),
-                ports: Some(vec![ContainerPort {
-                    container_port: 9999,
-                    name: Some("debug".to_string()),
-                    protocol: Some("TCP".to_string()),
-                    ..Default::default()
-                }]),
                 volume_mounts: Some(vec![
                     VolumeMount {
                         mount_path: "/data".to_string(),
@@ -895,6 +889,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     },
                 ]),
                 working_dir: Some("/data".to_string()),
+                command: Some(vec![
+                    "/bin/bash".to_string(),
+                    "-c".to_string(),
+                    "while true;do sleep 100;done".to_string(),
+                ]),
                 ..Default::default()
             };
 
