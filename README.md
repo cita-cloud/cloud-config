@@ -840,50 +840,38 @@ test-chain-node1
 参数：
 
 ```
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory [default: .]
-
-        --config-name <CONFIG_NAME>
-            set config file name [default: config.toml]
-
-        --docker-registry <DOCKER_REGISTRY>
-            docker registry [default: docker.io]
-
-        --docker-repo <DOCKER_REPO>
-            docker repo [default: citacloud]
-
-        --domain <DOMAIN>
-            domain of node
-
-        --disable-health-check
-            is disable health-check
-
-        --enable-debug
-            is enable debug
-
-        --limits-cpu <LIMITS_CPU>
-            container resource requirements -- limits cpu [default: 4000m]
-
-        --limits-memory <LIMITS_MEMORY>
-            container resource requirements -- limits memory [default: 8192Mi]
-
-        --pull-policy <PULL_POLICY>
-            image pull policy: IfNotPresent or Always [default: IfNotPresent]
-
-        --requests-cpu <REQUESTS_CPU>
-            container resource requirements -- requests cpu [default: 10m]
-
-        --requests-memory <REQUESTS_MEMORY>
-            container resource requirements -- requests memory [default: 32Mi]
-
-        --storage-capacity <STORAGE_CAPACITY>
-            storage capacity [default: 10Gi]
-
-        --storage-class <STORAGE_CLASS>
-            storage class
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --config-name <CONFIG_NAME>
+          set config file name [default: config.toml]
+      --domain <DOMAIN>
+          domain of node
+      --pull-policy <PULL_POLICY>
+          image pull policy: IfNotPresent or Always [default: IfNotPresent]
+      --docker-registry <DOCKER_REGISTRY>
+          docker registry [default: docker.io]
+      --docker-repo <DOCKER_REPO>
+          docker repo [default: citacloud]
+      --storage-class <STORAGE_CLASS>
+          storage class
+      --storage-capacity <STORAGE_CAPACITY>
+          storage capacity [default: 10Gi]
+      --requests-cpu <REQUESTS_CPU>
+          container resource requirements -- requests cpu [default: 10m]
+      --requests-memory <REQUESTS_MEMORY>
+          container resource requirements -- requests memory [default: 32Mi]
+      --limits-cpu <LIMITS_CPU>
+          container resource requirements -- limits cpu [default: 4000m]
+      --limits-memory <LIMITS_MEMORY>
+          container resource requirements -- limits memory [default: 8192Mi]
+      --enable-debug
+          is enable debug
+      --disable-health-check
+          is disable health-check
+      --enable-kustomize
+          is gen kustomization
 
 ```
 
@@ -891,6 +879,7 @@ test-chain-node1
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
 2. `storage-class`为必选参数，指定节点在`k8s`集群中的持久化存储使用的存储类。
 3. `limits-cpu`,`limits-memory`,`requests-cpu`,`requests-memory`用于设定微服务的硬件资源需求。请根据实际运行环境的硬件配置进行调整，以获得最佳性能体验。
+4. `enable-kustomize`开启之后会在节点目录下生成`kustomization`相关的文件，方便修改基础环境相关的配置而不用重新生成节点配置文件。保留原来的用法(`kubectl apply -f test-chain-node/yamls`)不变，增加新的用法(`kubectl apply -k test-chain-node`)。
 
 ```
 $ cloud-config update-yaml --domain node0 --storage-class nfs-client

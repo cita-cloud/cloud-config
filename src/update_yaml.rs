@@ -94,6 +94,9 @@ pub struct UpdateYamlOpts {
     /// is disable health-check
     #[clap(long = "disable-health-check")]
     pub disable_health_check: bool,
+    /// is gen kustomization
+    #[clap(long = "enable-kustomize")]
+    pub enable_kustomize: bool,
 }
 
 impl Default for UpdateYamlOpts {
@@ -114,6 +117,7 @@ impl Default for UpdateYamlOpts {
             limits_memory: "8192Mi".to_string(),
             enable_debug: false,
             disable_health_check: false,
+            enable_kustomize: false,
         }
     }
 }
@@ -971,7 +975,10 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
         let mut match_labels = BTreeMap::new();
         match_labels.insert("app.kubernetes.io/chain-name".to_string(), opts.chain_name);
-        match_labels.insert("app.kubernetes.io/chain-node".to_string(), node_name);
+        match_labels.insert(
+            "app.kubernetes.io/chain-node".to_string(),
+            node_name.clone(),
+        );
         svc_spec.selector = Some(match_labels);
 
         svc_spec.ports = Some(vec![
@@ -1006,6 +1013,40 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             yaml_file_name,
         );
         node_k8s_config.node_svc = node_svc;
+    }
+
+    if opts.enable_kustomize {
+        let kustomization = include_str!("../kustomization/kustomization.yaml");
+        let yaml_file_name = format!("{}/kustomization.yaml", &node_dir);
+        write_file(kustomization.as_bytes(), yaml_file_name);
+
+        let patch_liveness_probe = include_str!("../kustomization/statefulset-livenessprobe.yaml");
+        let yaml_file_name = format!("{}/statefulset-livenessprobe.yaml", &node_dir);
+        write_file(
+            patch_liveness_probe.replace("xxx", &node_name).as_bytes(),
+            yaml_file_name,
+        );
+
+        let patch_pullpolicy = include_str!("../kustomization/statefulset-pullpolicy.yaml");
+        let yaml_file_name = format!("{}/statefulset-pullpolicy.yaml", &node_dir);
+        write_file(
+            patch_pullpolicy.replace("xxx", &node_name).as_bytes(),
+            yaml_file_name,
+        );
+
+        let patch_pvc = include_str!("../kustomization/statefulset-pvc.yaml");
+        let yaml_file_name = format!("{}/statefulset-pvc.yaml", &node_dir);
+        write_file(
+            patch_pvc.replace("xxx", &node_name).as_bytes(),
+            yaml_file_name,
+        );
+
+        let patch_resource = include_str!("../kustomization/statefulset-resource.yaml");
+        let yaml_file_name = format!("{}/statefulset-resource.yaml", &node_dir);
+        write_file(
+            patch_resource.replace("xxx", &node_name).as_bytes(),
+            yaml_file_name,
+        );
     }
 
     Ok(node_k8s_config)

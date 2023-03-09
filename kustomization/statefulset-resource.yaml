@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: xxx
+spec:
+  template:
+    spec:
+      containers:
+      - name: network
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 8192Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      - name: consensus
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 8192Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      - name: executor
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 8192Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      - name: storage
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 8192Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      - name: controller
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 8192Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+      - name: crypto
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 8192Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi

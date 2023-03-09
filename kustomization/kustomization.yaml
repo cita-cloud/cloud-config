@@ -1,0 +1,37 @@
+resources:
+- yamls/statefulset.yaml
+- yamls/node-svc.yaml
+- yamls/cm-config.yaml
+- yamls/cm-account.yaml
+
+patchesStrategicMerge:
+- statefulset-pvc.yaml
+- statefulset-resource.yaml
+- statefulset-pullpolicy.yaml
+- statefulset-livenessprobe.yaml
+
+images:
+- name: network_zenoh
+  newName: registry.devops.rivtower.com/cita-cloud/network_zenoh
+  newTag: latest
+- name: consensus_raft
+  newName: registry.devops.rivtower.com/cita-cloud/consensus_raft
+  newTag: latest
+- name: consensus_overlord
+  newName: registry.devops.rivtower.com/cita-cloud/consensus_overlord
+  newTag: latest
+- name: executor_evm
+  newName: registry.devops.rivtower.com/cita-cloud/executor_evm
+  newTag: latest
+- name: storage_rocksdb
+  newName: registry.devops.rivtower.com/cita-cloud/storage_rocksdb
+  newTag: latest
+- name: controller
+  newName: registry.devops.rivtower.com/cita-cloud/controller
+  newTag: latest
+- name: crypto_sm
+  newName: registry.devops.rivtower.com/cita-cloud/crypto_sm
+  newTag: latest
+- name: crypto_eth
+  newName: registry.devops.rivtower.com/cita-cloud/crypto_eth
+  newTag: latest
