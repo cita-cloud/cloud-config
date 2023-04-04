@@ -16,7 +16,7 @@ cargo install --path .
 
 ```
 $ cloud-config -h
-cloud-config 6.6.4
+cloud-config 6.6.5
 Rivtower Technologies <contact@rivtower.com>
 
 Usage: cloud-config <COMMAND>
