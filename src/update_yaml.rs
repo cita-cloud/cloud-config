@@ -782,6 +782,8 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "run".to_string(),
                         "-c".to_string(),
                         "/etc/cita-cloud/config/config.toml".to_string(),
+                        "-p".to_string(),
+                        "/mnt/private_key".to_string(),
                     ]);
                 } else {
                     panic!("Unkonwn controller service!");
