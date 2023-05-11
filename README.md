@@ -184,12 +184,6 @@ test-chain/
         --controller_tag <CONTROLLER_TAG>
             set controller micro service image tag [default: latest]
 
-        --crypto_image <CRYPTO_IMAGE>
-            set crypto micro service image name (crypto_eth/crypto_sm) [default: crypto_sm]
-
-        --crypto_tag <CRYPTO_TAG>
-            set crypto micro service image tag [default: latest]
-
         --executor_image <EXECUTOR_IMAGE>
             set executor micro service image name (executor_evm) [default: executor_evm]
 
@@ -210,7 +204,7 @@ test-chain/
             set one block contains tx limit, default 1073741824 [default: 1073741824]
 
         --storage_image <STORAGE_IMAGE>
-            set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
+            set storage micro service image name (storage_opendal) [default: storage_opendal]
 
         --storage_tag <STORAGE_TAG>
             set storage micro service image tag [default: latest]
@@ -253,15 +247,11 @@ image = 'executor_evm'
 tag = 'latest'
 
 [[micro_service_list]]
-image = 'storage_rocksdb'
+image = 'storage_opendal'
 tag = 'latest'
 
 [[micro_service_list]]
 image = 'controller'
-tag = 'latest'
-
-[[micro_service_list]]
-image = 'crypto_sm'
 tag = 'latest'
 
 [genesis_block]
@@ -718,8 +708,6 @@ test-chain
           grpc storage_port of node [default: 50003]
       --controller-port <CONTROLLER_PORT>
           grpc controller_port of node [default: 50004]
-      --crypto-port <CRYPTO_PORT>
-          grpc crypto_port of node [default: 50005]
       --network-listen-port <NETWORK_LISTEN_PORT>
           network listen port of node [default: 40000]
       --log-level <LOG_LEVEL>
@@ -740,8 +728,6 @@ test-chain
           storage metrics port of node [default: 60003]
       --controller-metrics-port <CONTROLLER_METRICS_PORT>
           controller metrics port of node [default: 60004]
-      --crypto-metrics-port <CRYPTO_METRICS_PORT>
-          crypto metrics port of node [default: 60005]
       --disable-metrics
           disable metrics
       --is-danger
@@ -781,7 +767,6 @@ network_listen_port = 40000
 [grpc_ports]
 consensus_port = 50001
 controller_port = 50004
-crypto_port = 50005
 executor_port = 50002
 network_port = 50000
 storage_port = 50003
@@ -789,7 +774,6 @@ storage_port = 50003
 [metrics_ports]
 consensus_metrics_port = 60001
 controller_metrics_port = 60004
-crypto_metrics_port = 60005
 executor_metrics_port = 60002
 network_metrics_port = 60000
 storage_metrics_port = 60003
@@ -937,8 +921,6 @@ Options:
           jaeger agent endpoint
       --is-raft
           is consensus raft
-      --is-eth
-          is crypto eth
       --is-danger
           is chain in danger mode
       --disable-metrics
@@ -949,7 +931,6 @@ Options:
 
 说明：
 1. `--is-raft`标识`consensus`微服务是否选择了`consensus_raft`。
-2. `--is-eth`标识`crypto`微服务是否选择了`crypto_eth`。
 
 ```
 $ cloud-config create-dev
@@ -1103,17 +1084,13 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
       --executor_tag <EXECUTOR_TAG>
           set executor micro service image tag [default: latest]
       --storage_image <STORAGE_IMAGE>
-          set storage micro service image name (storage_rocksdb) [default: storage_rocksdb]
+          set storage micro service image name (storage_opendal) [default: storage_opendal]
       --storage_tag <STORAGE_TAG>
           set storage micro service image tag [default: latest]
       --controller_image <CONTROLLER_IMAGE>
           set controller micro service image name (controller) [default: controller]
       --controller_tag <CONTROLLER_TAG>
           set controller micro service image tag [default: latest]
-      --crypto_image <CRYPTO_IMAGE>
-          set crypto micro service image name (crypto_eth/crypto_sm) [default: crypto_sm]
-      --crypto_tag <CRYPTO_TAG>
-          set crypto micro service image tag [default: latest]
       --admin <ADMIN>
           set admin
       --nodelist <NODE_LIST>

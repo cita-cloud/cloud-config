@@ -16,5 +16,3 @@ spec:
         imagePullPolicy: IfNotPresent
       - name: controller
         imagePullPolicy: IfNotPresent
-      - name: crypto
-        imagePullPolicy: IfNotPresent

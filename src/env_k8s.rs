@@ -86,8 +86,8 @@ pub struct CreateK8sOpts {
     /// set executor micro service image tag
     #[clap(long = "executor_tag", default_value = "latest")]
     pub executor_tag: String,
-    /// set storage micro service image name (storage_rocksdb)
-    #[clap(long = "storage_image", default_value = "storage_rocksdb")]
+    /// set storage micro service image name (storage_opendal)
+    #[clap(long = "storage_image", default_value = "storage_opendal")]
     pub storage_image: String,
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
@@ -98,12 +98,6 @@ pub struct CreateK8sOpts {
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
     pub controller_tag: String,
-    /// set crypto micro service image name (crypto_eth/crypto_sm)
-    #[clap(long = "crypto_image", default_value = "crypto_sm")]
-    pub crypto_image: String,
-    /// set crypto micro service image tag
-    #[clap(long = "crypto_tag", default_value = "latest")]
-    pub crypto_tag: String,
 
     /// set admin
     #[clap(long = "admin")]
@@ -154,12 +148,10 @@ impl Default for CreateK8sOpts {
             consensus_tag: "latest".to_string(),
             executor_image: "executor_evm".to_string(),
             executor_tag: "latest".to_string(),
-            storage_image: "storage_rocksdb".to_string(),
+            storage_image: "storage_opendal".to_string(),
             storage_tag: "latest".to_string(),
             controller_image: "controller".to_string(),
             controller_tag: "latest".to_string(),
-            crypto_image: "crypto_sm".to_string(),
-            crypto_tag: "latest".to_string(),
             admin: Default::default(),
             node_list: Default::default(),
             log_level: "info".to_string(),
@@ -204,8 +196,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         storage_tag: opts.storage_tag.clone(),
         controller_image: opts.controller_image.clone(),
         controller_tag: opts.controller_tag.clone(),
-        crypto_image: opts.crypto_image.clone(),
-        crypto_tag: opts.crypto_tag.clone(),
     })
     .unwrap();
 
@@ -316,7 +306,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            crypto_port: network_port + 5,
             network_listen_port,
             log_level: opts.log_level.clone(),
             log_file_path: opts.log_file_path.clone(),
@@ -327,7 +316,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             executor_metrics_port: network_metrics_port + 2,
             storage_metrics_port: network_metrics_port + 3,
             controller_metrics_port: network_metrics_port + 4,
-            crypto_metrics_port: network_metrics_port + 5,
             disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
         })
@@ -467,7 +455,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        crypto_port: network_port + 5,
         network_listen_port,
         log_level: opts.log_level,
         log_file_path: opts.log_file_path,
@@ -478,7 +465,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         executor_metrics_port: network_metrics_port + 2,
         storage_metrics_port: network_metrics_port + 3,
         controller_metrics_port: network_metrics_port + 4,
-        crypto_metrics_port: network_metrics_port + 5,
         disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
     })
@@ -579,12 +565,10 @@ mod k8s_test {
             consensus_tag: "latest".to_string(),
             executor_image: "executor_evm".to_string(),
             executor_tag: "latest".to_string(),
-            storage_image: "storage_rocksdb".to_string(),
+            storage_image: "storage_opendal".to_string(),
             storage_tag: "latest".to_string(),
             controller_image: "controller".to_string(),
             controller_tag: "latest".to_string(),
-            crypto_image: "crypto_sm".to_string(),
-            crypto_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
                 .to_string(),
@@ -613,12 +597,10 @@ mod k8s_test {
             consensus_tag: "latest".to_string(),
             executor_image: "executor_evm".to_string(),
             executor_tag: "latest".to_string(),
-            storage_image: "storage_rocksdb".to_string(),
+            storage_image: "storage_opendal".to_string(),
             storage_tag: "latest".to_string(),
             controller_image: "controller".to_string(),
             controller_tag: "latest".to_string(),
-            crypto_image: "crypto_eth".to_string(),
-            crypto_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
                 .to_string(),

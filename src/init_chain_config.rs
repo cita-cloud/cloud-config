@@ -72,8 +72,8 @@ pub struct InitChainConfigOpts {
     /// set executor micro service image tag
     #[clap(long = "executor_tag", default_value = "latest")]
     pub(crate) executor_tag: String,
-    /// set storage micro service image name (storage_rocksdb)
-    #[clap(long = "storage_image", default_value = "storage_rocksdb")]
+    /// set storage micro service image name (storage_opendal)
+    #[clap(long = "storage_image", default_value = "storage_opendal")]
     pub(crate) storage_image: String,
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
@@ -84,12 +84,6 @@ pub struct InitChainConfigOpts {
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
     pub(crate) controller_tag: String,
-    /// set crypto micro service image name (crypto_eth/crypto_sm)
-    #[clap(long = "crypto_image", default_value = "crypto_sm")]
-    pub(crate) crypto_image: String,
-    /// set crypto micro service image tag
-    #[clap(long = "crypto_tag", default_value = "latest")]
-    pub(crate) crypto_tag: String,
 }
 
 /// init chain config
@@ -123,7 +117,7 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         opts.chain_id
     };
 
-    // proc six micro service
+    // proc five micro service
     let network_micro_service = MicroServiceBuilder::default()
         .image(opts.network_image)
         .tag(opts.network_tag)
@@ -144,17 +138,13 @@ pub fn execute_init_chain_config(opts: InitChainConfigOpts) -> Result<(), Error>
         .image(opts.controller_image)
         .tag(opts.controller_tag)
         .build();
-    let crypto_micro_service = MicroServiceBuilder::default()
-        .image(opts.crypto_image)
-        .tag(opts.crypto_tag)
-        .build();
+
     let micro_service_list: Vec<MicroService> = vec![
         network_micro_service,
         consensus_micro_service,
         executor_micro_service,
         storage_micro_service,
         controller_micro_service,
-        crypto_micro_service,
     ];
 
     // genesis block

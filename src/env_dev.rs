@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT, CRYPTO_ETH};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -55,9 +55,6 @@ pub struct CreateDevOpts {
     /// is consensus raft
     #[clap(long = "is-raft")]
     is_raft: bool,
-    /// is crypto eth
-    #[clap(long = "is-eth")]
-    is_eth: bool,
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
@@ -90,9 +87,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     // is_raft will override overlord
     if opts.is_raft {
         init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
-    }
-    if opts.is_eth {
-        init_chain_config_opts.crypto_image = CRYPTO_ETH.to_string();
     }
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
@@ -183,7 +177,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            crypto_port: network_port + 5,
             network_listen_port: listen_port,
             log_level: opts.log_level.clone(),
             log_file_path: opts.log_file_path.clone(),
@@ -194,7 +187,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             executor_metrics_port: network_metrics_port + 2,
             storage_metrics_port: network_metrics_port + 3,
             controller_metrics_port: network_metrics_port + 4,
-            crypto_metrics_port: network_metrics_port + 5,
             disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
         })
@@ -317,7 +309,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        crypto_port: network_port + 5,
         network_listen_port: listen_port,
         log_level: opts.log_level.clone(),
         log_file_path: opts.log_file_path.clone(),
@@ -328,7 +319,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         executor_metrics_port: network_metrics_port + 2,
         storage_metrics_port: network_metrics_port + 3,
         controller_metrics_port: network_metrics_port + 4,
-        crypto_metrics_port: network_metrics_port + 5,
         disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
     })
@@ -418,7 +408,6 @@ mod dev_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_raft: false,
-            is_eth: false,
             is_danger: false,
             disable_metrics: false,
         })
@@ -432,7 +421,6 @@ mod dev_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_raft: true,
-            is_eth: true,
             is_danger: false,
             disable_metrics: false,
         })

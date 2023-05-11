@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO_ETH, CRYPTO_SM,
-    EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM, NETWORK_ZENOH,
+    NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -693,7 +693,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
         for micro_service in &chain_config.micro_service_list {
             if micro_service.image.starts_with("storage") {
-                if micro_service.image == STORAGE_ROCKSDB {
+                if micro_service.image == STORAGE_OPENDAL {
                     storage_container.image = Some(format!(
                         "{}/{}/{}:{}",
                         &opts.docker_registry,
@@ -763,7 +763,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     ..Default::default()
                 })
             },
-            resources: Some(container_resources_requirements.clone()),
+            resources: Some(container_resources_requirements),
             ..Default::default()
         };
 
@@ -792,80 +792,6 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
         }
 
         containers.push(controller_container);
-
-        // crypto
-        let mut crypto_container = Container {
-            name: "crypto".to_string(),
-            image_pull_policy: Some(opts.pull_policy.clone()),
-            ports: Some(vec![ContainerPort {
-                container_port: 50005,
-                name: Some("grpc".to_string()),
-                protocol: Some("TCP".to_string()),
-                ..Default::default()
-            }]),
-            volume_mounts: Some(vec![
-                VolumeMount {
-                    mount_path: "/data".to_string(),
-                    name: "datadir".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
-                    mount_path: "/etc/cita-cloud/config".to_string(),
-                    name: "node-config".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
-                    mount_path: "/mnt".to_string(),
-                    name: "node-account".to_string(),
-                    ..Default::default()
-                },
-                VolumeMount {
-                    mount_path: "/etc/localtime".to_string(),
-                    name: "node-localtime".to_string(),
-                    ..Default::default()
-                },
-            ]),
-            working_dir: Some("/data".to_string()),
-            liveness_probe: if opts.disable_health_check {
-                None
-            } else {
-                Some(Probe {
-                    exec: Some(ExecAction {
-                        command: Some(vec![
-                            "grpc_health_probe".to_string(),
-                            "-addr=127.0.0.1:50005".to_string(),
-                        ]),
-                    }),
-                    initial_delay_seconds: Some(30),
-                    period_seconds: Some(10),
-                    ..Default::default()
-                })
-            },
-            resources: Some(container_resources_requirements),
-            ..Default::default()
-        };
-
-        for micro_service in &chain_config.micro_service_list {
-            if micro_service.image == CRYPTO_ETH || micro_service.image == CRYPTO_SM {
-                crypto_container.image = Some(format!(
-                    "{}/{}/{}:{}",
-                    &opts.docker_registry,
-                    &opts.docker_repo,
-                    &micro_service.image,
-                    &micro_service.tag
-                ));
-                crypto_container.command = Some(vec![
-                    "crypto".to_string(),
-                    "run".to_string(),
-                    "-c".to_string(),
-                    "/etc/cita-cloud/config/config.toml".to_string(),
-                    "-p".to_string(),
-                    "/mnt/private_key".to_string(),
-                ]);
-            }
-        }
-
-        containers.push(crypto_container);
 
         // debug
         if opts.enable_debug {

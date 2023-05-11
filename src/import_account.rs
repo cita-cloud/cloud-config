@@ -18,7 +18,7 @@ use clap::Parser;
 
 use crate::{
     constant::{
-        ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, NODE_ADDRESS, PRIVATE_KEY,
+        ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, NODE_ADDRESS, PRIVATE_KEY,
         VALIDATOR_ADDRESS,
     },
     error::Error,
@@ -56,12 +56,7 @@ pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String
     };
 
     // generate node_address
-    let is_eth = find_micro_service(&chain_config, CRYPTO_ETH);
-    let address = if is_eth {
-        crypto_eth::eth::sk2address(&private_key[..])
-    } else {
-        crypto_sm::sm::sk2address(&private_key[..])
-    };
+    let address = crypto_sm::sm::sk2address(&private_key[..]);
     let address = hex::encode(address);
 
     // gen a folder to store account info

@@ -48,9 +48,6 @@ pub struct InitNodeOpts {
     /// grpc controller_port of node
     #[clap(long = "controller-port", default_value = "50004")]
     pub(crate) controller_port: u16,
-    /// grpc crypto_port of node
-    #[clap(long = "crypto-port", default_value = "50005")]
-    pub(crate) crypto_port: u16,
     /// network listen port of node
     #[clap(long = "network-listen-port", default_value = "40000")]
     pub(crate) network_listen_port: u16,
@@ -81,9 +78,6 @@ pub struct InitNodeOpts {
     /// controller metrics port of node
     #[clap(long = "controller-metrics-port", default_value = "60004")]
     pub(crate) controller_metrics_port: u16,
-    /// crypto metrics port of node
-    #[clap(long = "crypto-metrics-port", default_value = "60005")]
-    pub(crate) crypto_metrics_port: u16,
     /// disable metrics
     #[clap(long = "disable-metrics", action = ArgAction::SetTrue)]
     pub(crate) disable_metrics: bool,
@@ -115,7 +109,6 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .executor_port(opts.executor_port)
         .storage_port(opts.storage_port)
         .controller_port(opts.controller_port)
-        .crypto_port(opts.crypto_port)
         .build();
     let metrics_ports = MetricsPortsBuilder::default()
         .network_metrics_port(opts.network_metrics_port)
@@ -123,7 +116,6 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .executor_metrics_port(opts.executor_metrics_port)
         .storage_metrics_port(opts.storage_metrics_port)
         .controller_metrics_port(opts.controller_metrics_port)
-        .crypto_metrics_port(opts.crypto_metrics_port)
         .build();
     let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)

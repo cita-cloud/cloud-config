@@ -22,7 +22,6 @@ pub struct GrpcPorts {
     pub executor_port: u16,
     pub storage_port: u16,
     pub controller_port: u16,
-    pub crypto_port: u16,
 }
 
 pub struct GrpcPortsBuilder {
@@ -31,7 +30,6 @@ pub struct GrpcPortsBuilder {
     pub executor_port: u16,
     pub storage_port: u16,
     pub controller_port: u16,
-    pub crypto_port: u16,
 }
 
 impl Default for GrpcPortsBuilder {
@@ -42,7 +40,6 @@ impl Default for GrpcPortsBuilder {
             executor_port: 50002,
             storage_port: 50003,
             controller_port: 50004,
-            crypto_port: 50005,
         }
     }
 }
@@ -73,11 +70,6 @@ impl GrpcPortsBuilder {
         self
     }
 
-    pub fn crypto_port(&mut self, crypto_port: u16) -> &mut GrpcPortsBuilder {
-        self.crypto_port = crypto_port;
-        self
-    }
-
     pub fn build(&self) -> GrpcPorts {
         GrpcPorts {
             network_port: self.network_port,
@@ -85,7 +77,6 @@ impl GrpcPortsBuilder {
             executor_port: self.executor_port,
             storage_port: self.storage_port,
             controller_port: self.controller_port,
-            crypto_port: self.crypto_port,
         }
     }
 }
@@ -97,7 +88,6 @@ pub struct MetricsPorts {
     pub executor_metrics_port: u16,
     pub storage_metrics_port: u16,
     pub controller_metrics_port: u16,
-    pub crypto_metrics_port: u16,
 }
 
 pub struct MetricsPortsBuilder {
@@ -106,7 +96,6 @@ pub struct MetricsPortsBuilder {
     pub executor_metrics_port: u16,
     pub storage_metrics_port: u16,
     pub controller_metrics_port: u16,
-    pub crypto_metrics_port: u16,
 }
 
 impl Default for MetricsPortsBuilder {
@@ -117,7 +106,6 @@ impl Default for MetricsPortsBuilder {
             executor_metrics_port: 60002,
             storage_metrics_port: 60003,
             controller_metrics_port: 60004,
-            crypto_metrics_port: 60005,
         }
     }
 }
@@ -157,11 +145,6 @@ impl MetricsPortsBuilder {
         self
     }
 
-    pub fn crypto_metrics_port(&mut self, crypto_metrics_port: u16) -> &mut MetricsPortsBuilder {
-        self.crypto_metrics_port = crypto_metrics_port;
-        self
-    }
-
     pub fn build(&self) -> MetricsPorts {
         MetricsPorts {
             network_metrics_port: self.network_metrics_port,
@@ -169,7 +152,6 @@ impl MetricsPortsBuilder {
             executor_metrics_port: self.executor_metrics_port,
             storage_metrics_port: self.storage_metrics_port,
             controller_metrics_port: self.controller_metrics_port,
-            crypto_metrics_port: self.crypto_metrics_port,
         }
     }
 }
