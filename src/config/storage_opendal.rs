@@ -25,15 +25,25 @@ pub struct StorageOpendalConfig {
     pub metrics_port: u16,
     pub enable_metrics: bool,
     pub log_config: LogConfig,
+    // cloud storage
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub endpoint: String,
+    pub bucket: String,
 }
 
 impl StorageOpendalConfig {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         domain: String,
         storage_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
         log_config: LogConfig,
+        access_key_id: String,
+        secret_access_key: String,
+        endpoint: String,
+        bucket: String,
     ) -> Self {
         Self {
             domain,
@@ -41,6 +51,10 @@ impl StorageOpendalConfig {
             metrics_port,
             enable_metrics,
             log_config,
+            access_key_id,
+            secret_access_key,
+            endpoint,
+            bucket,
         }
     }
 }

@@ -156,6 +156,63 @@ impl MetricsPortsBuilder {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudStorage {
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub endpoint: String,
+    pub bucket: String,
+}
+
+pub struct CloudStorageBuilder {
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub endpoint: String,
+    pub bucket: String,
+}
+
+impl Default for CloudStorageBuilder {
+    fn default() -> Self {
+        Self {
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            endpoint: "".to_string(),
+            bucket: "".to_string(),
+        }
+    }
+}
+
+impl CloudStorageBuilder {
+    pub fn access_key_id(&mut self, access_key_id: String) -> &mut CloudStorageBuilder {
+        self.access_key_id = access_key_id;
+        self
+    }
+
+    pub fn secret_access_key(&mut self, secret_access_key: String) -> &mut CloudStorageBuilder {
+        self.secret_access_key = secret_access_key;
+        self
+    }
+
+    pub fn endpoint(&mut self, endpoint: String) -> &mut CloudStorageBuilder {
+        self.endpoint = endpoint;
+        self
+    }
+
+    pub fn bucket(&mut self, bucket: String) -> &mut CloudStorageBuilder {
+        self.bucket = bucket;
+        self
+    }
+
+    pub fn build(&self) -> CloudStorage {
+        CloudStorage {
+            access_key_id: self.access_key_id.clone(),
+            secret_access_key: self.secret_access_key.clone(),
+            endpoint: self.endpoint.clone(),
+            bucket: self.bucket.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
@@ -167,6 +224,7 @@ pub struct NodeConfig {
     pub account: String,
     pub enable_metrics: bool,
     pub is_danger: bool,
+    pub cloud_storage: CloudStorage,
 }
 
 pub struct NodeConfigBuilder {
@@ -179,6 +237,7 @@ pub struct NodeConfigBuilder {
     pub account: String,
     pub enable_metrics: bool,
     pub is_danger: bool,
+    pub cloud_storage: CloudStorage,
 }
 
 impl Default for NodeConfigBuilder {
@@ -193,6 +252,7 @@ impl Default for NodeConfigBuilder {
             account: "".to_string(),
             enable_metrics: true,
             is_danger: false,
+            cloud_storage: CloudStorageBuilder::default().build(),
         }
     }
 }
@@ -246,6 +306,11 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn cloud_storage(&mut self, cloud_storage: CloudStorage) -> &mut NodeConfigBuilder {
+        self.cloud_storage = cloud_storage;
+        self
+    }
+
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
@@ -257,6 +322,7 @@ impl NodeConfigBuilder {
             account: self.account.clone(),
             enable_metrics: self.enable_metrics,
             is_danger: self.is_danger,
+            cloud_storage: self.cloud_storage.clone(),
         }
     }
 }

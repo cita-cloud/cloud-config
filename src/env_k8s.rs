@@ -127,6 +127,19 @@ pub struct CreateK8sOpts {
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
+
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
 }
 
 impl Default for CreateK8sOpts {
@@ -159,6 +172,10 @@ impl Default for CreateK8sOpts {
             jaeger_agent_endpoint: Default::default(),
             is_danger: Default::default(),
             disable_metrics: Default::default(),
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         }
     }
 }
@@ -318,6 +335,10 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             controller_metrics_port: network_metrics_port + 4,
             disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
+            access_key_id: opts.access_key_id.clone(),
+            secret_access_key: opts.secret_access_key.clone(),
+            s3_endpoint: opts.s3_endpoint.clone(),
+            s3_bucket: opts.s3_bucket.clone(),
         })
         .unwrap();
 
@@ -361,6 +382,18 @@ pub struct AppendK8sOpts {
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
 }
 
 /// append a new node into chain
@@ -467,6 +500,10 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         controller_metrics_port: network_metrics_port + 4,
         disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
+        access_key_id: opts.access_key_id.clone(),
+        secret_access_key: opts.secret_access_key.clone(),
+        s3_endpoint: opts.s3_endpoint.clone(),
+        s3_bucket: opts.s3_bucket.clone(),
     })
     .unwrap();
 
@@ -577,6 +614,10 @@ mod k8s_test {
             jaeger_agent_endpoint: None,
             is_danger: false,
             disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         })
         .unwrap();
 
@@ -609,6 +650,10 @@ mod k8s_test {
             jaeger_agent_endpoint: None,
             is_danger: false,
             disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         })
         .unwrap();
 
@@ -621,6 +666,10 @@ mod k8s_test {
             jaeger_agent_endpoint: None,
             is_danger: false,
             disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         })
         .unwrap();
 
