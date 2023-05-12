@@ -52,8 +52,8 @@ Commands:
   help               Print this message or the help of the given subcommand(s)
 
 Options:
-  -h, --help     Print help information
-  -V, --version  Print version informatio
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ### 设计
@@ -73,10 +73,55 @@ Options:
 #### 配置项与数据结构
 
 当前版本的配置项如下图所示：
-![configuration](/img/configurations.png)
 
-数据结构如下图所示：
-![struct](/img/struct.png)
+```mermaid
+mindmap
+  root((链配置))
+    id(链级配置)
+        id(genesis)
+            id[timestamp]
+            id[prevhash]
+        id(system_config)
+            id[version]
+            id[chain_id]
+            id[admin]
+            id[block_interval]
+            id[validators]
+            id[block_limit]
+            id[quota_limit]
+        id(node_network_address_list)
+            id[host]
+            id[port]
+            id[domain]
+            id[cluster]
+            id[svc_port]
+        id(micro_service_list)
+            id[image]
+            id[tag]
+        id(证书体系)
+            id[根证书]
+            id[节点证书]
+    id(节点配置)
+        id(grpc_ports)
+            id[port]
+        id(metrics_ports)
+            id[port]
+        id[network_listen_port]
+        id[log_level]
+        id[log_file_path]
+        id[jaeger_agent_endpoint]
+        id[account]
+        id[enable_metrics]
+        id[is_danger]
+        id(cloud_storage)
+            id[access_key_id]
+            id[secret_access_key]
+            id[endpoint]
+            id[bucket]
+    id(杂项)
+        id[config-dir]
+        id[chain_name]
+```
 
 #### 流程
 
@@ -156,64 +201,44 @@ test-chain/
 参数：
 
 ```
-        --block_interval <BLOCK_INTERVAL>
-            set system config block_interval [default: 3]
-
-        --block_limit <BLOCK_LIMIT>
-            set system config block_limit [default: 100]
-
-        --chain-name <CHAIN_NAME>
-            set chain name [default: test-chain]
-
-        --chain_id <CHAIN_ID>
-            set system config chain_id [default: ]
-
-        --config-dir <CONFIG_DIR>
-            set config file directory, default means current directory [default: .]
-
-        --consensus_image <CONSENSUS_IMAGE>
-            set consensus micro service image name (consensus_raft/consensus_overlord)
-            [default: consensus_overlord]
-
-        --consensus_tag <CONSENSUS_TAG>
-            set consensus micro service image tag [default: latest]
-
-        --controller_image <CONTROLLER_IMAGE>
-            set controller micro service image name (controller) [default: controller]
-
-        --controller_tag <CONTROLLER_TAG>
-            set controller micro service image tag [default: latest]
-
-        --executor_image <EXECUTOR_IMAGE>
-            set executor micro service image name (executor_evm) [default: executor_evm]
-
-        --executor_tag <EXECUTOR_TAG>
-            set executor micro service image tag [default: latest]
-
-        --network_image <NETWORK_IMAGE>
-            set network micro service image name (network_zenoh) [default: network_zenoh]
-
-        --network_tag <NETWORK_TAG>
-            set network micro service image tag [default: latest]
-
-        --prevhash <PREVHASH>
-            set genesis prevhash [default:
-            0x0000000000000000000000000000000000000000000000000000000000000000]
-
-        --quota-limit <QUOTA_LIMIT>
-            set one block contains tx limit, default 1073741824 [default: 1073741824]
-
-        --storage_image <STORAGE_IMAGE>
-            set storage micro service image name (storage_opendal) [default: storage_opendal]
-
-        --storage_tag <STORAGE_TAG>
-            set storage micro service image tag [default: latest]
-
-        --timestamp <TIMESTAMP>
-            set genesis timestamp [default: 0]
-
-        --version <VERSION>
-            set system config version [default: 0]
+      --chain-name <CHAIN_NAME>
+          set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>
+          set config file directory, default means current directory [default: .]
+      --timestamp <TIMESTAMP>
+          set genesis timestamp [default: 0]
+      --prevhash <PREVHASH>
+          set genesis prevhash [default: 0x0000000000000000000000000000000000000000000000000000000000000000]
+      --version <VERSION>
+          set system config version [default: 0]
+      --chain_id <CHAIN_ID>
+          set system config chain_id [default: ]
+      --block_interval <BLOCK_INTERVAL>
+          set system config block_interval [default: 3]
+      --block_limit <BLOCK_LIMIT>
+          set system config block_limit [default: 100]
+      --quota-limit <QUOTA_LIMIT>
+          set one block contains quota limit, default 1073741824 [default: 1073741824]
+      --network_image <NETWORK_IMAGE>
+          set network micro service image name (network_zenoh) [default: network_zenoh]
+      --network_tag <NETWORK_TAG>
+          set network micro service image tag [default: latest]
+      --consensus_image <CONSENSUS_IMAGE>
+          set consensus micro service image name (consensus_raft/consensus_overlord) [default: consensus_overlord]
+      --consensus_tag <CONSENSUS_TAG>
+          set consensus micro service image tag [default: latest]
+      --executor_image <EXECUTOR_IMAGE>
+          set executor micro service image name (executor_evm) [default: executor_evm]
+      --executor_tag <EXECUTOR_TAG>
+          set executor micro service image tag [default: latest]
+      --storage_image <STORAGE_IMAGE>
+          set storage micro service image name (storage_opendal) [default: storage_opendal]
+      --storage_tag <STORAGE_TAG>
+          set storage micro service image tag [default: latest]
+      --controller_image <CONTROLLER_IMAGE>
+          set controller micro service image name (controller) [default: controller]
+      --controller_tag <CONTROLLER_TAG>
+          set controller micro service image tag [default: latest]
 ```
 
 说明：
@@ -286,37 +311,34 @@ version = 0
 
 ```
 $ cloud-config new-account   
-node_address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5 validator_address: aeaa6e333b8ed911f89acd01e88e3d9892da87b5
+node_address: 29b4da67ecb5591f1c5cfba6509142678d266e79 validator_address: a14bbda941cb707e1979ad96a01bf5b25c0916805cde2c4d418e8831ab57df186174c32d765aa6f0da4c686c258ff5d1
 
 $ cloud-config new-account
-node_address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa validator_address: 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
-
-$ cloud-config new-account
-node_address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd validator_address: 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+node_address: 5bf591636c7efc27cd855c2282a1652bfa14a1bc validator_address: b2a2f83851454504f66d20846c48dc1f6fbe71d0b7ba89b5b9483ca7417be3bd86a75b64e7fa5b13d0ef8f80a4c14a69
 
 $ tree test-chain 
-test-chain
+test-chain/
+├── .gitignore
 ├── accounts
-│   ├── 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+│   ├── .gitkeep
+│   ├── 29b4da67ecb5591f1c5cfba6509142678d266e79
 │   │   ├── node_address
 │   │   ├── private_key
 │   │   └── validator_address
-│   ├── 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
-│   │   ├── node_address
-│   │   ├── private_key
-│   │   └── validator_address
-│   └── aeaa6e333b8ed911f89acd01e88e3d9892da87b5
-│   │   ├── node_address
-│   │   ├── private_key
-│   │   └── validator_address
+│   └── 5bf591636c7efc27cd855c2282a1652bfa14a1bc
+│       ├── node_address
+│       ├── private_key
+│       └── validator_address
 ├── ca_cert
+│   └── .gitkeep
 ├── certs
+│   └── .gitkeep
 └── chain_config.toml
 ```
 
 说明：
 1. 这里会创建两个地址，一个用于标识节点的`node_address`，一个用于共识`validator`的`validator_address`。
-2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
+2. 默认情况下两个地址是不一样的。但是当共识微服务选择`consensus_raft`时两者是一样的，注意区分。
 
 
 #### import-account
@@ -336,13 +358,13 @@ test-chain
 
 ```
 $ cloud-config import-account --privkey 60e7b47ee260516dbfedf8e80ff38830bae8663cc498a900a610c147cae94344
-node_address: 097913007f2c8d9ac87f89664fc70977fee6bf9a validator_address: 097913007f2c8d9ac87f89664fc70977fee6bf9a
+node_address: 097913007f2c8d9ac87f89664fc70977fee6bf9a validator_address: 965e7f200043a8ae543478330faf1c751f4c4d8040f93a7d0b8881085b8583bea6f7166ddc0c5bb9adff8563f7b3cbd2
 
 $ tree test-chain/
 test-chain/
 ├── accounts
 │   └── 097913007f2c8d9ac87f89664fc70977fee6bf9a
-│   │   ├── node_address
+│       ├── node_address
 │       ├── private_key
 │       └── validator_address
 ├── ca_cert
@@ -353,7 +375,7 @@ test-chain/
 说明：
 
 1. 这里会创建两个地址，一个用于标识节点的`node_address`，一个用于共识`validator`的`validator_address`。
-2. 默认情况下两个地址是一样的。但是当共识微服务选择`consensus_overlord`时两者不一样，注意区分。
+2. 默认情况下两个地址是不一样的。但是当共识微服务选择`consensus_raft`时两者是一样的，注意区分。
 
 #### set-admin
 
@@ -394,12 +416,12 @@ admin = 'aeaa6e333b8ed911f89acd01e88e3d9892da87b5'
 1. `validators`为必选参数。值为多个之前用`new-account`创建的`validator_address`地址,用逗号分隔。
 
 ```
-$ cloud-config set-validators --validators 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa,344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+$ cloud-config set-validators --validators a14bbda941cb707e1979ad96a01bf5b25c0916805cde2c4d418e8831ab57df186174c32d765aa6f0da4c686c258ff5d1,b2a2f83851454504f66d20846c48dc1f6fbe71d0b7ba89b5b9483ca7417be3bd86a75b64e7fa5b13d0ef8f80a4c14a69
 
 $ cat test-chain/chain_config.toml | grep -A3 validators
 validators = [
-    '1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa',
-    '344a9d7c390ea5f884e7c0ebf30abb17bd8785cd',
+    "a14bbda941cb707e1979ad96a01bf5b25c0916805cde2c4d418e8831ab57df186174c32d765aa6f0da4c686c258ff5d1",
+    "b2a2f83851454504f66d20846c48dc1f6fbe71d0b7ba89b5b9483ca7417be3bd86a75b64e7fa5b13d0ef8f80a4c14a69",
 ]
 ```
 
@@ -588,7 +610,7 @@ test-chain
 2. 证书中真正使用的`domain`是`$(chain-name)-$(domain)`。
 
 ```
-$ cloud-config create-csr --domain node0 
+$ cloud-config create-csr --domain node0
 
 $ cloud-config create-csr --domain node1
 
@@ -627,7 +649,7 @@ test-chain
 1. `domain`为必选参数。值为前面执行`create-csr`时节点的`domain`。
 
 ```
-$ cloud-config sign-csr --domain node0 
+$ cloud-config sign-csr --domain node0
 
 $ cloud-config sign-csr --domain node1
 
@@ -732,6 +754,14 @@ test-chain
           disable metrics
       --is-danger
           is chain in danger mode
+      --access-key-id <ACCESS_KEY_ID>
+          cloud_storage.access_key_id [default: ]
+      --secret-access-key <SECRET_ACCESS_KEY>
+          cloud_storage.secret_access_key [default: ]
+      --s3-endpoint <S3_ENDPOINT>
+          cloud_storage.endpoint [default: ]
+      --s3-bucket <S3_BUCKET>
+          cloud_storage.bucket [default: ]
 ```
 
 说明：
@@ -740,9 +770,9 @@ test-chain
 3. `account`为必选参数，表示该节点要使用的账户地址。值为之前用`new-account`创建的`node_address`地址。
 
 ```
-$ cloud-config init-node --domain node0 --account 1b3b5e847f5f4a7ff2842f1b0c72a8940e4adcfa
+$ cloud-config init-node --domain node0 --account 5bf591636c7efc27cd855c2282a1652bfa14a1bc
  
-$ cloud-config init-node --domain node1 --account 344a9d7c390ea5f884e7c0ebf30abb17bd8785cd
+$ cloud-config init-node --domain node1 --account 29b4da67ecb5591f1c5cfba6509142678d266e79
 
 $ tree test-chain-node* 
 test-chain-node0
@@ -760,9 +790,17 @@ test-chain-node1
 
 
 $ cat test-chain-node0/node_config.toml
-account = '5274d0171fd28a76d98f1e743298adf0c9b7d771'
-log_level = 'info'
+account = "5bf591636c7efc27cd855c2282a1652bfa14a1bc"
+enable_metrics = true
+is_danger = false
+log_level = "info"
 network_listen_port = 40000
+
+[cloud_storage]
+access_key_id = ""
+bucket = ""
+endpoint = ""
+secret_access_key = ""
 
 [grpc_ports]
 consensus_port = 50001
@@ -856,14 +894,13 @@ test-chain-node1
           is disable health-check
       --enable-kustomize
           is gen kustomization
-
 ```
 
 说明：
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
 2. `storage-class`为必选参数，指定节点在`k8s`集群中的持久化存储使用的存储类。
 3. `limits-cpu`,`limits-memory`,`requests-cpu`,`requests-memory`用于设定微服务的硬件资源需求。请根据实际运行环境的硬件配置进行调整，以获得最佳性能体验。
-4. `enable-kustomize`开启之后会在节点目录下生成`kustomization`相关的文件，方便修改基础环境相关的配置而不用重新生成节点配置文件。保留原来的用法(`kubectl apply -f test-chain-node/yamls`)不变，增加新的用法(`kubectl apply -k test-chain-node`)。
+4. `enable-kustomize`开启之后会在节点目录下生成`kustomization`相关的文件，方便修改基础环境相关的配置而不用重新生成节点配置文件。保留原来的用法(`kubectl apply -f test-chain-node0/yamls`)不变，增加新的用法(`kubectl apply -k test-chain-node0`)。
 
 ```
 $ cloud-config update-yaml --domain node0 --storage-class nfs-client
@@ -925,6 +962,14 @@ Options:
           is chain in danger mode
       --disable-metrics
           disable metrics
+      --access-key-id <ACCESS_KEY_ID>
+          cloud_storage.access_key_id [default: ]
+      --secret-access-key <SECRET_ACCESS_KEY>
+          cloud_storage.secret_access_key [default: ]
+      --s3-endpoint <S3_ENDPOINT>
+          cloud_storage.endpoint [default: ]
+      --s3-bucket <S3_BUCKET>
+          cloud_storage.bucket [default: ]
   -h, --help
           Print help
 ```
@@ -934,11 +979,11 @@ Options:
 
 ```
 $ cloud-config create-dev
-node_address: fca6ddc659665f94294bb73ef79c0f825b30ffed validator_address: fca6ddc659665f94294bb73ef79c0f825b30ffed
-node_address: 4e85201492995fb4d5995540165bc1af7e4df958 validator_address: 4e85201492995fb4d5995540165bc1af7e4df958
-node_address: f7e55b05b93399b0c61f71063123bc6ecfa62b48 validator_address: f7e55b05b93399b0c61f71063123bc6ecfa62b48
-node_address: 856c583be3b82e171feba44a991319e9a989deed validator_address: 856c583be3b82e171feba44a991319e9a989deed
-node_address: 804f620d1cb955f10381501da12e985fd76ab96d validator_address: 804f620d1cb955f10381501da12e985fd76ab96d
+node_address: bde21c1bcc73817c8af033e37bf3177bff7be1e1 validator_address: a9714aa3f9ac195602fac77baf6b4a42a7d8508fe8db722633e652216fd4c3af2eda15a5eceb85a4c0046e64cda40060
+node_address: 3c3965e120b0399bda0be0b68f9569520f13ef26 validator_address: 8804bca2e919d9e487d05d88e447c488fa51f74ad1171a5dcba5cdcdf7e72c0a605d97697f3189a23ba11a0f83af560e
+node_address: 3dbd135e3fedb84db5fa95e256d5d650196bed91 validator_address: b418e9dc46731dca35bad2296ac15e788c5eee84ce3c0fcb108158cd78e0bc9cca75e00c7a0e76dca8ea7c5d0240c6bc
+node_address: 9be90a72f73f9ab6d03278545fe6fa26244c8e90 validator_address: adb23083ce21e1c86d864bfa708689c13495e26484d1a9ba6b0462808dd1c689251767d81ef9e4b28091290baafd81e1
+node_address: bc822df3270b5bc22453f7b43aad01cd55dc12f4 validator_address: a3871975a50261f803f362515ffbb1324538cd6ea6fa53c8bb3ae6627d78bdefe39d5e06ab9985b7d237713cfdcb756c
 
 $ ls test-chain-*
 test-chain-0:
@@ -978,13 +1023,21 @@ Options:
           is chain in danger mode
       --disable-metrics
           disable metrics
+      --access-key-id <ACCESS_KEY_ID>
+          cloud_storage.access_key_id [default: ]
+      --secret-access-key <SECRET_ACCESS_KEY>
+          cloud_storage.secret_access_key [default: ]
+      --s3-endpoint <S3_ENDPOINT>
+          cloud_storage.endpoint [default: ]
+      --s3-bucket <S3_BUCKET>
+          cloud_storage.bucket [default: ]
   -h, --help
           Print help
 ```
 
 ```
 $ cloud-config append-dev
-node_address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e validator_address: 48eb184fe084387a6d03d78c8b5cd2794a58de5e
+node_address: 021dcd4e8f1607840337eaf51d345d88366b4693 validator_address: a2607ccc77e15ec4629a0875cfac42dc1465dc10808d0d840ede9ee93c75dc65897cdda5d3bb899ad351945016b68662
 
 $ ls test-chain-*
 test-chain-0:
@@ -1105,6 +1158,14 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           is chain in danger mode
       --disable-metrics
           disable metrics
+      --access-key-id <ACCESS_KEY_ID>
+          cloud_storage.access_key_id [default: ]
+      --secret-access-key <SECRET_ACCESS_KEY>
+          cloud_storage.secret_access_key [default: ]
+      --s3-endpoint <S3_ENDPOINT>
+          cloud_storage.endpoint [default: ]
+      --s3-bucket <S3_BUCKET>
+          cloud_storage.bucket [default: ]
 ```
 
 说明:
@@ -1112,9 +1173,9 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 2. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。`cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
 
 ```
-$ ./target/debug/cloud-config create-k8s --admin 0xff8456931c10a9b02ec4a657ee05e724ecad9372 --nodelist localhost:40000:node0:k8s,localhost:40001:node1:k8s
-node_address: 0467a471d83343ce99888180ca8cabe0e49a0ae3 validator_address: 0467a471d83343ce99888180ca8cabe0e49a0ae3
-node_address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41 validator_address: 24bec821e0ba3ea1e8d35c60a6debb57daa9fa41
+$ cloud-config create-k8s --admin 0xff8456931c10a9b02ec4a657ee05e724ecad9372 --nodelist localhost:40000:node0:k8s,localhost:40001:node1:k8s
+node_address: 7585747d549aeb4717504275e71daa23b540bf3d validator_address: a338859941e202548af9200ab82697f3d78f22924c640eb3f6b207718f0a99abfda21c65a0ffa8bcac055ac38358469a
+node_address: 517cf02e4735135331d211c84bf2114c8607299c validator_address: 95ef7dabc79069b485a8ae478cc791674325f9f8bbbd15bfa8e6087d5eb2e2cdabbef4e92a24d6b62696dd111e2afded
 
 $ ls test-chain-node*
 test-chain-node0:
@@ -1144,6 +1205,14 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           is chain in danger mode
       --disable-metrics
           disable metrics
+      --access-key-id <ACCESS_KEY_ID>
+          cloud_storage.access_key_id [default: ]
+      --secret-access-key <SECRET_ACCESS_KEY>
+          cloud_storage.secret_access_key [default: ]
+      --s3-endpoint <S3_ENDPOINT>
+          cloud_storage.endpoint [default: ]
+      --s3-bucket <S3_BUCKET>
+          cloud_storage.bucket [default: ]
 ```
 
 说明：
@@ -1153,7 +1222,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 
 ```
 $ cloud-config append-k8s --node localhost:40002:node2:k8s
-node_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed validator_address: 1c35eecbba4619ae3edf6c0ea48c4ebdba5a85ed
+node_address: b6f2210e63331458f00a0aee58b83ddee1c36e83 validator_address: 9860b8a49b7f2016e1cfe3fe9dc053915cab92a8d58c9ab3082049fce949bb3c586ec2cf5c1590ab2c91884a0446cb69
 $ ls test-chain-node*
 test-chain-node0:
 accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
