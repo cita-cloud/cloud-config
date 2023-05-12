@@ -49,7 +49,11 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     let private_key = BlsPrivateKey::generate(&mut OsRng).to_bytes();
 
     // generate node_address
-    let address = crypto_sm::sm::sk2address(private_key.as_ref());
+    #[cfg(feature = "sm")]
+    let address = crypto_sm::sm::sk2address(&private_key[..]);
+    #[cfg(feature = "eth")]
+    let address = crypto_eth::eth::sk2address(&private_key[..]);
+
     let address = hex::encode(address);
 
     // gen a folder to store account info
