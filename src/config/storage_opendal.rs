@@ -12,47 +12,61 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CRYPTO, CRYPTO_SM};
+use crate::constant::{STORAGE, STORAGE_OPENDAL};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct CryptoSmConfig {
+pub struct StorageOpendalConfig {
     pub domain: String,
-    pub crypto_port: u16,
+    pub storage_port: u16,
     pub metrics_port: u16,
     pub enable_metrics: bool,
     pub log_config: LogConfig,
+    // cloud storage
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub endpoint: String,
+    pub bucket: String,
 }
 
-impl CryptoSmConfig {
+impl StorageOpendalConfig {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         domain: String,
-        crypto_port: u16,
+        storage_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
         log_config: LogConfig,
+        access_key_id: String,
+        secret_access_key: String,
+        endpoint: String,
+        bucket: String,
     ) -> Self {
         Self {
             domain,
-            crypto_port,
+            storage_port,
             metrics_port,
             enable_metrics,
             log_config,
+            access_key_id,
+            secret_access_key,
+            endpoint,
+            bucket,
         }
     }
 }
 
-impl TomlWriter for CryptoSmConfig {
+impl TomlWriter for StorageOpendalConfig {
     fn section(&self) -> String {
-        CRYPTO_SM.to_string()
+        STORAGE_OPENDAL.to_string()
     }
 }
 
-impl YmlWriter for CryptoSmConfig {
+impl YmlWriter for StorageOpendalConfig {
     fn service(&self) -> String {
-        CRYPTO.to_string()
+        STORAGE.to_string()
     }
 }

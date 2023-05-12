@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::constant::{
-    ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CRYPTO_ETH, NODE_ADDRESS, PRIVATE_KEY,
+    ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, NODE_ADDRESS, PRIVATE_KEY,
     VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
@@ -49,12 +49,11 @@ pub fn execute_new_account(opts: NewAccountOpts) -> Result<(String, String), Err
     let private_key = BlsPrivateKey::generate(&mut OsRng).to_bytes();
 
     // generate node_address
-    let is_eth = find_micro_service(&chain_config, CRYPTO_ETH);
-    let address = if is_eth {
-        crypto_eth::eth::sk2address(private_key.as_ref())
-    } else {
-        crypto_sm::sm::sk2address(private_key.as_ref())
-    };
+    #[cfg(feature = "sm")]
+    let address = crypto_sm::sm::sk2address(&private_key[..]);
+    #[cfg(feature = "eth")]
+    let address = crypto_eth::eth::sk2address(&private_key[..]);
+
     let address = hex::encode(address);
 
     // gen a folder to store account info

@@ -46,11 +46,3 @@ spec:
             - -addr=127.0.0.1:50004
           initialDelaySeconds: 60
           periodSeconds: 10
-      - name: crypto
-        livenessProbe:
-          exec:
-            command:
-            - grpc_health_probe
-            - -addr=127.0.0.1:50005
-          initialDelaySeconds: 30
-          periodSeconds: 10

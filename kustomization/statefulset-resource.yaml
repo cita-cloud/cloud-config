@@ -46,11 +46,3 @@ spec:
           requests:
             cpu: 10m
             memory: 32Mi
-      - name: crypto
-        resources:
-          limits:
-            cpu: 4000m
-            memory: 8192Mi
-          requests:
-            cpu: 10m
-            memory: 32Mi

@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT, CRYPTO_ETH};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -55,15 +55,24 @@ pub struct CreateDevOpts {
     /// is consensus raft
     #[clap(long = "is-raft")]
     is_raft: bool,
-    /// is crypto eth
-    #[clap(long = "is-eth")]
-    is_eth: bool,
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
 }
 
 /// node network ip is 127.0.0.1
@@ -90,9 +99,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     // is_raft will override overlord
     if opts.is_raft {
         init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
-    }
-    if opts.is_eth {
-        init_chain_config_opts.crypto_image = CRYPTO_ETH.to_string();
     }
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
@@ -183,7 +189,6 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            crypto_port: network_port + 5,
             network_listen_port: listen_port,
             log_level: opts.log_level.clone(),
             log_file_path: opts.log_file_path.clone(),
@@ -194,9 +199,12 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             executor_metrics_port: network_metrics_port + 2,
             storage_metrics_port: network_metrics_port + 3,
             controller_metrics_port: network_metrics_port + 4,
-            crypto_metrics_port: network_metrics_port + 5,
             disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
+            access_key_id: opts.access_key_id.clone(),
+            secret_access_key: opts.secret_access_key.clone(),
+            s3_endpoint: opts.s3_endpoint.clone(),
+            s3_bucket: opts.s3_bucket.clone(),
         })
         .unwrap();
 
@@ -236,6 +244,18 @@ pub struct AppendDevOpts {
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
 }
 
 /// append a new node into chain
@@ -317,7 +337,6 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        crypto_port: network_port + 5,
         network_listen_port: listen_port,
         log_level: opts.log_level.clone(),
         log_file_path: opts.log_file_path.clone(),
@@ -328,9 +347,12 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         executor_metrics_port: network_metrics_port + 2,
         storage_metrics_port: network_metrics_port + 3,
         controller_metrics_port: network_metrics_port + 4,
-        crypto_metrics_port: network_metrics_port + 5,
         disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
+        access_key_id: opts.access_key_id.clone(),
+        secret_access_key: opts.secret_access_key.clone(),
+        s3_endpoint: opts.s3_endpoint.clone(),
+        s3_bucket: opts.s3_bucket.clone(),
     })
     .unwrap();
 
@@ -418,9 +440,12 @@ mod dev_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_raft: false,
-            is_eth: false,
             is_danger: false,
             disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         })
         .unwrap();
 
@@ -432,9 +457,12 @@ mod dev_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_raft: true,
-            is_eth: true,
             is_danger: false,
             disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         })
         .unwrap();
 
@@ -446,6 +474,10 @@ mod dev_test {
             jaeger_agent_endpoint: None,
             is_danger: false,
             disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
         })
         .unwrap();
 

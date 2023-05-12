@@ -15,17 +15,15 @@
 use crate::config::consensus_overlord::ConsensusOverlord;
 use crate::config::consensus_raft::Consensus as RAFT_Consensus;
 use crate::config::controller::ControllerConfig;
-use crate::config::crypto_eth::CryptoEthConfig;
-use crate::config::crypto_sm::CryptoSmConfig;
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::log_config::LogConfig;
 use crate::config::network_zenoh::{ModuleConfig, PeerConfig as ZenohPeerConfig, ZenohConfig};
-use crate::config::storage_rocksdb::StorageRocksdbConfig;
+use crate::config::storage_opendal::StorageOpendalConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS,
-    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CRYPTO, CRYPTO_ETH, CRYPTO_SM, EXECUTOR,
-    EXECUTOR_EVM, KEY_PEM, NETWORK, NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY,
-    STORAGE, STORAGE_ROCKSDB, VALIDATOR_ADDRESS,
+    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR, EXECUTOR_EVM, KEY_PEM, NETWORK,
+    NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE, STORAGE_OPENDAL,
+    VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
@@ -247,11 +245,10 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     }
 
     // storage config file
-    // if storage_rocksdb
-    if find_micro_service(&chain_config, STORAGE_ROCKSDB) {
-        let storage_config = StorageRocksdbConfig::new(
+    // if storage_opendal
+    if find_micro_service(&chain_config, STORAGE_OPENDAL) {
+        let storage_config = StorageOpendalConfig::new(
             real_domain.clone(),
-            node_config.grpc_ports.crypto_port,
             node_config.grpc_ports.storage_port,
             node_config.metrics_ports.storage_metrics_port,
             node_config.enable_metrics,
@@ -262,6 +259,10 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
                 filter: node_config.log_level.clone(),
             },
+            node_config.cloud_storage.access_key_id,
+            node_config.cloud_storage.secret_access_key,
+            node_config.cloud_storage.endpoint,
+            node_config.cloud_storage.bucket,
         );
         storage_config.write(&config_file_name);
     } else {
@@ -273,13 +274,12 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         chain_config.genesis_block.write(&config_file_name);
         chain_config.system_config.write(&config_file_name);
         let controller_config = ControllerConfig {
-            domain: real_domain.clone(),
+            domain: real_domain,
             network_port: node_config.grpc_ports.network_port,
             consensus_port: node_config.grpc_ports.consensus_port,
             executor_port: node_config.grpc_ports.executor_port,
             storage_port: node_config.grpc_ports.storage_port,
             controller_port: node_config.grpc_ports.controller_port,
-            crypto_port: node_config.grpc_ports.crypto_port,
             node_address: if is_k8s {
                 format!("/mnt/{NODE_ADDRESS}")
             } else {
@@ -304,42 +304,6 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         controller_config.write(&config_file_name);
     } else {
         panic!("unsupport controller service");
-    }
-
-    // crypto config file
-    // if crypto_sm
-    if find_micro_service(&chain_config, CRYPTO_SM) {
-        let crypto_config = CryptoSmConfig::new(
-            real_domain,
-            node_config.grpc_ports.crypto_port,
-            node_config.metrics_ports.crypto_metrics_port,
-            node_config.enable_metrics,
-            LogConfig {
-                max_level: node_config.log_level.clone(),
-                service_name: CRYPTO.to_owned(),
-                rolling_file_path: node_config.log_file_path.clone(),
-                agent_endpoint: node_config.jaeger_agent_endpoint,
-                filter: node_config.log_level,
-            },
-        );
-        crypto_config.write(&config_file_name);
-    } else if find_micro_service(&chain_config, CRYPTO_ETH) {
-        let crypto_config = CryptoEthConfig::new(
-            real_domain,
-            node_config.grpc_ports.crypto_port,
-            node_config.metrics_ports.crypto_metrics_port,
-            node_config.enable_metrics,
-            LogConfig {
-                max_level: node_config.log_level.clone(),
-                service_name: CRYPTO.to_owned(),
-                rolling_file_path: node_config.log_file_path.clone(),
-                agent_endpoint: node_config.jaeger_agent_endpoint,
-                filter: node_config.log_level,
-            },
-        );
-        crypto_config.write(&config_file_name);
-    } else {
-        panic!("unsupport crypto service");
     }
 
     Ok(())

@@ -22,7 +22,6 @@ pub struct GrpcPorts {
     pub executor_port: u16,
     pub storage_port: u16,
     pub controller_port: u16,
-    pub crypto_port: u16,
 }
 
 pub struct GrpcPortsBuilder {
@@ -31,7 +30,6 @@ pub struct GrpcPortsBuilder {
     pub executor_port: u16,
     pub storage_port: u16,
     pub controller_port: u16,
-    pub crypto_port: u16,
 }
 
 impl Default for GrpcPortsBuilder {
@@ -42,7 +40,6 @@ impl Default for GrpcPortsBuilder {
             executor_port: 50002,
             storage_port: 50003,
             controller_port: 50004,
-            crypto_port: 50005,
         }
     }
 }
@@ -73,11 +70,6 @@ impl GrpcPortsBuilder {
         self
     }
 
-    pub fn crypto_port(&mut self, crypto_port: u16) -> &mut GrpcPortsBuilder {
-        self.crypto_port = crypto_port;
-        self
-    }
-
     pub fn build(&self) -> GrpcPorts {
         GrpcPorts {
             network_port: self.network_port,
@@ -85,7 +77,6 @@ impl GrpcPortsBuilder {
             executor_port: self.executor_port,
             storage_port: self.storage_port,
             controller_port: self.controller_port,
-            crypto_port: self.crypto_port,
         }
     }
 }
@@ -97,7 +88,6 @@ pub struct MetricsPorts {
     pub executor_metrics_port: u16,
     pub storage_metrics_port: u16,
     pub controller_metrics_port: u16,
-    pub crypto_metrics_port: u16,
 }
 
 pub struct MetricsPortsBuilder {
@@ -106,7 +96,6 @@ pub struct MetricsPortsBuilder {
     pub executor_metrics_port: u16,
     pub storage_metrics_port: u16,
     pub controller_metrics_port: u16,
-    pub crypto_metrics_port: u16,
 }
 
 impl Default for MetricsPortsBuilder {
@@ -117,7 +106,6 @@ impl Default for MetricsPortsBuilder {
             executor_metrics_port: 60002,
             storage_metrics_port: 60003,
             controller_metrics_port: 60004,
-            crypto_metrics_port: 60005,
         }
     }
 }
@@ -157,11 +145,6 @@ impl MetricsPortsBuilder {
         self
     }
 
-    pub fn crypto_metrics_port(&mut self, crypto_metrics_port: u16) -> &mut MetricsPortsBuilder {
-        self.crypto_metrics_port = crypto_metrics_port;
-        self
-    }
-
     pub fn build(&self) -> MetricsPorts {
         MetricsPorts {
             network_metrics_port: self.network_metrics_port,
@@ -169,7 +152,63 @@ impl MetricsPortsBuilder {
             executor_metrics_port: self.executor_metrics_port,
             storage_metrics_port: self.storage_metrics_port,
             controller_metrics_port: self.controller_metrics_port,
-            crypto_metrics_port: self.crypto_metrics_port,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudStorage {
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub endpoint: String,
+    pub bucket: String,
+}
+
+pub struct CloudStorageBuilder {
+    pub access_key_id: String,
+    pub secret_access_key: String,
+    pub endpoint: String,
+    pub bucket: String,
+}
+
+impl Default for CloudStorageBuilder {
+    fn default() -> Self {
+        Self {
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            endpoint: "".to_string(),
+            bucket: "".to_string(),
+        }
+    }
+}
+
+impl CloudStorageBuilder {
+    pub fn access_key_id(&mut self, access_key_id: String) -> &mut CloudStorageBuilder {
+        self.access_key_id = access_key_id;
+        self
+    }
+
+    pub fn secret_access_key(&mut self, secret_access_key: String) -> &mut CloudStorageBuilder {
+        self.secret_access_key = secret_access_key;
+        self
+    }
+
+    pub fn endpoint(&mut self, endpoint: String) -> &mut CloudStorageBuilder {
+        self.endpoint = endpoint;
+        self
+    }
+
+    pub fn bucket(&mut self, bucket: String) -> &mut CloudStorageBuilder {
+        self.bucket = bucket;
+        self
+    }
+
+    pub fn build(&self) -> CloudStorage {
+        CloudStorage {
+            access_key_id: self.access_key_id.clone(),
+            secret_access_key: self.secret_access_key.clone(),
+            endpoint: self.endpoint.clone(),
+            bucket: self.bucket.clone(),
         }
     }
 }
@@ -185,6 +224,7 @@ pub struct NodeConfig {
     pub account: String,
     pub enable_metrics: bool,
     pub is_danger: bool,
+    pub cloud_storage: CloudStorage,
 }
 
 pub struct NodeConfigBuilder {
@@ -197,6 +237,7 @@ pub struct NodeConfigBuilder {
     pub account: String,
     pub enable_metrics: bool,
     pub is_danger: bool,
+    pub cloud_storage: CloudStorage,
 }
 
 impl Default for NodeConfigBuilder {
@@ -211,6 +252,7 @@ impl Default for NodeConfigBuilder {
             account: "".to_string(),
             enable_metrics: true,
             is_danger: false,
+            cloud_storage: CloudStorageBuilder::default().build(),
         }
     }
 }
@@ -264,6 +306,11 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn cloud_storage(&mut self, cloud_storage: CloudStorage) -> &mut NodeConfigBuilder {
+        self.cloud_storage = cloud_storage;
+        self
+    }
+
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
@@ -275,6 +322,7 @@ impl NodeConfigBuilder {
             account: self.account.clone(),
             enable_metrics: self.enable_metrics,
             is_danger: self.is_danger,
+            cloud_storage: self.cloud_storage.clone(),
         }
     }
 }

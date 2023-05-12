@@ -16,7 +16,7 @@ use crate::config::consensus_raft::Consensus;
 use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
 use crate::config::executor_evm::ExecutorEvmConfig;
 use crate::config::network_zenoh::ZenohConfig;
-use crate::config::storage_rocksdb::StorageRocksdbConfig;
+use crate::config::storage_opendal::StorageOpendalConfig;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::path;
@@ -44,7 +44,7 @@ pub struct AggregateConfig {
     pub genesis_block: GenesisBlock,
     pub network_zenoh: Option<ZenohConfig>,
     pub controller: Option<ControllerConfig>,
-    pub storage_rocksdb: Option<StorageRocksdbConfig>,
+    pub storage_opendal: Option<StorageOpendalConfig>,
     pub executor_evm: Option<ExecutorEvmConfig>,
     pub consensus_raft: Option<Consensus>,
 }

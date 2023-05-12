@@ -23,15 +23,9 @@ images:
 - name: executor_evm
   newName: registry.devops.rivtower.com/cita-cloud/executor_evm
   newTag: latest
-- name: storage_rocksdb
-  newName: registry.devops.rivtower.com/cita-cloud/storage_rocksdb
+- name: storage_opendal
+  newName: registry.devops.rivtower.com/cita-cloud/storage_opendal
   newTag: latest
 - name: controller
   newName: registry.devops.rivtower.com/cita-cloud/controller
-  newTag: latest
-- name: crypto_sm
-  newName: registry.devops.rivtower.com/cita-cloud/crypto_sm
-  newTag: latest
-- name: crypto_eth
-  newName: registry.devops.rivtower.com/cita-cloud/crypto_eth
   newTag: latest

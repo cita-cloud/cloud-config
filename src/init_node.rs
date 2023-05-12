@@ -13,7 +13,9 @@
 // limitations under the License.
 
 use crate::config::chain_config::ConfigStage;
-use crate::config::node_config::{GrpcPortsBuilder, MetricsPortsBuilder, NodeConfigBuilder};
+use crate::config::node_config::{
+    CloudStorageBuilder, GrpcPortsBuilder, MetricsPortsBuilder, NodeConfigBuilder,
+};
 use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{copy_dir_all, read_chain_config, write_toml};
@@ -48,9 +50,6 @@ pub struct InitNodeOpts {
     /// grpc controller_port of node
     #[clap(long = "controller-port", default_value = "50004")]
     pub(crate) controller_port: u16,
-    /// grpc crypto_port of node
-    #[clap(long = "crypto-port", default_value = "50005")]
-    pub(crate) crypto_port: u16,
     /// network listen port of node
     #[clap(long = "network-listen-port", default_value = "40000")]
     pub(crate) network_listen_port: u16,
@@ -81,15 +80,24 @@ pub struct InitNodeOpts {
     /// controller metrics port of node
     #[clap(long = "controller-metrics-port", default_value = "60004")]
     pub(crate) controller_metrics_port: u16,
-    /// crypto metrics port of node
-    #[clap(long = "crypto-metrics-port", default_value = "60005")]
-    pub(crate) crypto_metrics_port: u16,
     /// disable metrics
     #[clap(long = "disable-metrics", action = ArgAction::SetTrue)]
     pub(crate) disable_metrics: bool,
     /// is chain in danger mode
     #[clap(long = "is-danger", action = ArgAction::SetTrue)]
     pub(crate) is_danger: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
 }
 
 /// execute init node
@@ -115,7 +123,6 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .executor_port(opts.executor_port)
         .storage_port(opts.storage_port)
         .controller_port(opts.controller_port)
-        .crypto_port(opts.crypto_port)
         .build();
     let metrics_ports = MetricsPortsBuilder::default()
         .network_metrics_port(opts.network_metrics_port)
@@ -123,7 +130,12 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .executor_metrics_port(opts.executor_metrics_port)
         .storage_metrics_port(opts.storage_metrics_port)
         .controller_metrics_port(opts.controller_metrics_port)
-        .crypto_metrics_port(opts.crypto_metrics_port)
+        .build();
+    let cloud_storage = CloudStorageBuilder::default()
+        .access_key_id(opts.access_key_id.clone())
+        .secret_access_key(opts.secret_access_key.clone())
+        .endpoint(opts.s3_endpoint.clone())
+        .bucket(opts.s3_bucket.clone())
         .build();
     let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)
@@ -135,6 +147,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .account(opts.account)
         .enable_metrics(!opts.disable_metrics)
         .is_danger(opts.is_danger)
+        .cloud_storage(cloud_storage)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
