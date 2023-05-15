@@ -184,6 +184,15 @@ pub fn copy_dir_all(src: impl AsRef<path::Path>, dst: impl AsRef<path::Path>) ->
     for entry in fs::read_dir(src)? {
         let entry = entry?;
         let path = entry.path();
+
+        if let Ok(file_name) = entry.file_name().into_string() {
+            if file_name.starts_with('.') {
+                continue;
+            }
+        } else {
+            continue;
+        }
+
         if path.is_dir() {
             copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
         } else {
