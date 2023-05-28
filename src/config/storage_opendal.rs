@@ -17,6 +17,7 @@ use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
+use super::node_config::{CloudStorage, CloudStorageBuilder};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageOpendalConfig {
@@ -26,10 +27,7 @@ pub struct StorageOpendalConfig {
     pub enable_metrics: bool,
     pub log_config: LogConfig,
     // cloud storage
-    pub access_key_id: String,
-    pub secret_access_key: String,
-    pub endpoint: String,
-    pub bucket: String,
+    pub cloud_storage: CloudStorage,
 }
 
 impl StorageOpendalConfig {
@@ -51,10 +49,12 @@ impl StorageOpendalConfig {
             metrics_port,
             enable_metrics,
             log_config,
-            access_key_id,
-            secret_access_key,
-            endpoint,
-            bucket,
+            cloud_storage: CloudStorageBuilder::default()
+                .access_key_id(access_key_id)
+                .secret_access_key(secret_access_key)
+                .endpoint(endpoint)
+                .bucket(bucket)
+                .build(),
         }
     }
 }
