@@ -98,6 +98,12 @@ pub struct InitNodeOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type
+    #[clap(long = "service-type", default_value = "s3")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// execute init node
@@ -136,6 +142,8 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .secret_access_key(opts.secret_access_key.clone())
         .endpoint(opts.s3_endpoint.clone())
         .bucket(opts.s3_bucket.clone())
+        .service_type(opts.service_type.clone())
+        .root(opts.s3_root.clone())
         .build();
     let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)
