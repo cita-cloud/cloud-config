@@ -17,7 +17,7 @@ use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
-use super::node_config::{CloudStorage, CloudStorageBuilder};
+use super::node_config::CloudStorage;
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageOpendalConfig {
@@ -31,17 +31,13 @@ pub struct StorageOpendalConfig {
 }
 
 impl StorageOpendalConfig {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         domain: String,
         storage_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
         log_config: LogConfig,
-        access_key_id: String,
-        secret_access_key: String,
-        endpoint: String,
-        bucket: String,
+        cloud_storage: CloudStorage,
     ) -> Self {
         Self {
             domain,
@@ -49,12 +45,7 @@ impl StorageOpendalConfig {
             metrics_port,
             enable_metrics,
             log_config,
-            cloud_storage: CloudStorageBuilder::default()
-                .access_key_id(access_key_id)
-                .secret_access_key(secret_access_key)
-                .endpoint(endpoint)
-                .bucket(bucket)
-                .build(),
+            cloud_storage,
         }
     }
 }

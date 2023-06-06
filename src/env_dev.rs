@@ -73,6 +73,12 @@ pub struct CreateDevOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type
+    #[clap(long = "service-type", default_value = "s3")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// node network ip is 127.0.0.1
@@ -205,6 +211,8 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             secret_access_key: opts.secret_access_key.clone(),
             s3_endpoint: opts.s3_endpoint.clone(),
             s3_bucket: opts.s3_bucket.clone(),
+            service_type: opts.service_type.clone(),
+            s3_root: opts.s3_root.clone(),
         })
         .unwrap();
 
@@ -256,6 +264,12 @@ pub struct AppendDevOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type
+    #[clap(long = "service-type", default_value = "s3")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// append a new node into chain
@@ -353,6 +367,8 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         secret_access_key: opts.secret_access_key.clone(),
         s3_endpoint: opts.s3_endpoint.clone(),
         s3_bucket: opts.s3_bucket.clone(),
+        service_type: opts.service_type.clone(),
+        s3_root: opts.s3_root.clone(),
     })
     .unwrap();
 
@@ -446,6 +462,8 @@ mod dev_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         })
         .unwrap();
 
@@ -463,6 +481,8 @@ mod dev_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         })
         .unwrap();
 
@@ -478,6 +498,8 @@ mod dev_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         })
         .unwrap();
 

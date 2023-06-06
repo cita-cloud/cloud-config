@@ -259,10 +259,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 agent_endpoint: node_config.jaeger_agent_endpoint.clone(),
                 filter: node_config.log_level.clone(),
             },
-            node_config.cloud_storage.access_key_id,
-            node_config.cloud_storage.secret_access_key,
-            node_config.cloud_storage.endpoint,
-            node_config.cloud_storage.bucket,
+            node_config.cloud_storage.clone(),
         );
         storage_config.write(&config_file_name);
     } else {

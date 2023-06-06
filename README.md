@@ -118,6 +118,8 @@ mindmap
             id[secret_access_key]
             id[endpoint]
             id[bucket]
+            id[service_type]
+            id[root]
     id(杂项)
         id[config-dir]
         id[chain_name]
@@ -762,6 +764,10 @@ test-chain
           cloud_storage.endpoint [default: ]
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
+      --service-type <SERVICE_TYPE>
+          cloud_storage.service_type [default: s3]
+      --s3-root <S3_ROOT>
+          cloud_storage.root [default: ]
 ```
 
 说明：
@@ -800,7 +806,9 @@ network_listen_port = 40000
 access_key_id = ""
 bucket = ""
 endpoint = ""
+root = ""
 secret_access_key = ""
+service_type = "s3"
 
 [grpc_ports]
 consensus_port = 50001
@@ -970,6 +978,10 @@ Options:
           cloud_storage.endpoint [default: ]
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
+      --service-type <SERVICE_TYPE>
+          cloud_storage.service_type [default: s3]
+      --s3-root <S3_ROOT>
+          cloud_storage.root [default: ]
   -h, --help
           Print help
 ```
@@ -1031,6 +1043,10 @@ Options:
           cloud_storage.endpoint [default: ]
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
+      --service-type <SERVICE_TYPE>
+          cloud_storage.service_type [default: s3]
+      --s3-root <S3_ROOT>
+          cloud_storage.root [default: ]
   -h, --help
           Print help
 ```
@@ -1166,6 +1182,10 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           cloud_storage.endpoint [default: ]
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
+      --service-type <SERVICE_TYPE>
+          cloud_storage.service_type [default: s3]
+      --s3-root <S3_ROOT>
+          cloud_storage.root [default: ]
 ```
 
 说明:
@@ -1213,6 +1233,10 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           cloud_storage.endpoint [default: ]
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
+      --service-type <SERVICE_TYPE>
+          cloud_storage.service_type [default: s3]
+      --s3-root <S3_ROOT>
+          cloud_storage.root [default: ]
 ```
 
 说明：

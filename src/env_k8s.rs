@@ -140,6 +140,12 @@ pub struct CreateK8sOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type
+    #[clap(long = "service-type", default_value = "s3")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 impl Default for CreateK8sOpts {
@@ -176,6 +182,8 @@ impl Default for CreateK8sOpts {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         }
     }
 }
@@ -339,6 +347,8 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             secret_access_key: opts.secret_access_key.clone(),
             s3_endpoint: opts.s3_endpoint.clone(),
             s3_bucket: opts.s3_bucket.clone(),
+            service_type: opts.service_type.clone(),
+            s3_root: opts.s3_root.clone(),
         })
         .unwrap();
 
@@ -394,6 +404,12 @@ pub struct AppendK8sOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type
+    #[clap(long = "service-type", default_value = "s3")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// append a new node into chain
@@ -504,6 +520,8 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         secret_access_key: opts.secret_access_key.clone(),
         s3_endpoint: opts.s3_endpoint.clone(),
         s3_bucket: opts.s3_bucket.clone(),
+        service_type: opts.service_type.clone(),
+        s3_root: opts.s3_root.clone(),
     })
     .unwrap();
 
@@ -618,6 +636,8 @@ mod k8s_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         })
         .unwrap();
 
@@ -654,6 +674,8 @@ mod k8s_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         })
         .unwrap();
 
@@ -670,6 +692,8 @@ mod k8s_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            s3_root: "".to_string(),
         })
         .unwrap();
 

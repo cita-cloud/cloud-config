@@ -162,6 +162,8 @@ pub struct CloudStorage {
     pub secret_access_key: String,
     pub endpoint: String,
     pub bucket: String,
+    pub service_type: String,
+    pub root: String,
 }
 
 pub struct CloudStorageBuilder {
@@ -169,6 +171,8 @@ pub struct CloudStorageBuilder {
     pub secret_access_key: String,
     pub endpoint: String,
     pub bucket: String,
+    pub service_type: String,
+    pub root: String,
 }
 
 impl Default for CloudStorageBuilder {
@@ -178,6 +182,8 @@ impl Default for CloudStorageBuilder {
             secret_access_key: "".to_string(),
             endpoint: "".to_string(),
             bucket: "".to_string(),
+            service_type: "s3".to_string(),
+            root: "".to_string(),
         }
     }
 }
@@ -203,12 +209,24 @@ impl CloudStorageBuilder {
         self
     }
 
+    pub fn service_type(&mut self, service_type: String) -> &mut CloudStorageBuilder {
+        self.service_type = service_type;
+        self
+    }
+
+    pub fn root(&mut self, root: String) -> &mut CloudStorageBuilder {
+        self.root = root;
+        self
+    }
+
     pub fn build(&self) -> CloudStorage {
         CloudStorage {
             access_key_id: self.access_key_id.clone(),
             secret_access_key: self.secret_access_key.clone(),
             endpoint: self.endpoint.clone(),
             bucket: self.bucket.clone(),
+            service_type: self.service_type.clone(),
+            root: self.root.clone(),
         }
     }
 }
