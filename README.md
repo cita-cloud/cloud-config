@@ -765,7 +765,7 @@ test-chain
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
       --service-type <SERVICE_TYPE>
-          cloud_storage.service_type [default: s3]
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
 ```
@@ -808,7 +808,7 @@ bucket = ""
 endpoint = ""
 root = ""
 secret_access_key = ""
-service_type = "s3"
+service_type = ""
 
 [grpc_ports]
 consensus_port = 50001
@@ -979,7 +979,7 @@ Options:
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
       --service-type <SERVICE_TYPE>
-          cloud_storage.service_type [default: s3]
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
   -h, --help
@@ -1044,7 +1044,7 @@ Options:
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
       --service-type <SERVICE_TYPE>
-          cloud_storage.service_type [default: s3]
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
   -h, --help
@@ -1183,7 +1183,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
       --service-type <SERVICE_TYPE>
-          cloud_storage.service_type [default: s3]
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
 ```
@@ -1234,7 +1234,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
       --s3-bucket <S3_BUCKET>
           cloud_storage.bucket [default: ]
       --service-type <SERVICE_TYPE>
-          cloud_storage.service_type [default: s3]
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
 ```

@@ -182,7 +182,7 @@ impl Default for CloudStorageBuilder {
             secret_access_key: "".to_string(),
             endpoint: "".to_string(),
             bucket: "".to_string(),
-            service_type: "s3".to_string(),
+            service_type: "".to_string(),
             root: "".to_string(),
         }
     }

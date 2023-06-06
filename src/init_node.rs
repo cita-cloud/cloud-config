@@ -98,8 +98,8 @@ pub struct InitNodeOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
-    /// cloud_storage.service_type
-    #[clap(long = "service-type", default_value = "s3")]
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
     pub(crate) service_type: String,
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
