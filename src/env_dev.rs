@@ -73,8 +73,8 @@ pub struct CreateDevOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
-    /// cloud_storage.service_type
-    #[clap(long = "service-type", default_value = "s3")]
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
     pub(crate) service_type: String,
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
@@ -264,8 +264,8 @@ pub struct AppendDevOpts {
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
     pub(crate) s3_bucket: String,
-    /// cloud_storage.service_type
-    #[clap(long = "service-type", default_value = "s3")]
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
     pub(crate) service_type: String,
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
@@ -462,7 +462,7 @@ mod dev_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
-            service_type: "s3".to_string(),
+            service_type: "".to_string(),
             s3_root: "".to_string(),
         })
         .unwrap();
@@ -481,7 +481,7 @@ mod dev_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
-            service_type: "s3".to_string(),
+            service_type: "".to_string(),
             s3_root: "".to_string(),
         })
         .unwrap();
@@ -498,7 +498,7 @@ mod dev_test {
             secret_access_key: "".to_string(),
             s3_endpoint: "".to_string(),
             s3_bucket: "".to_string(),
-            service_type: "s3".to_string(),
+            service_type: "".to_string(),
             s3_root: "".to_string(),
         })
         .unwrap();
