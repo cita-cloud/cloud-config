@@ -903,6 +903,9 @@ test-chain-node1
         --storage-class <STORAGE_CLASS>
             storage class
 
+        --access-mode <ACCESS_MODE>
+            pvc access mode: ReadWriteOnce/ReadWriteMany [default: ReadWriteMany]
+
 ```
 
 说明：

@@ -72,6 +72,9 @@ pub struct UpdateYamlOpts {
     /// storage class
     #[clap(long = "storage-class")]
     pub(crate) storage_class: String,
+    /// pvc access mode: ReadWriteOnce/ReadWriteMany
+    #[clap(long = "access-mode", default_value = "ReadWriteMany")]
+    pub(crate) access_mode: String,
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
     pub(crate) storage_capacity: String,
@@ -303,7 +306,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<(), Error> {
             ..Default::default()
         };
         let mut pvc_spec = PersistentVolumeClaimSpec {
-            access_modes: Some(vec!["ReadWriteOnce".to_string()]),
+            access_modes: Some(vec![opts.access_mode.clone()]),
             ..Default::default()
         };
         let mut resources = ResourceRequirements::default();
