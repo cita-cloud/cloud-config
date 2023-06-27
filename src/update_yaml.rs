@@ -73,6 +73,9 @@ pub struct UpdateYamlOpts {
     /// storage class
     #[clap(long = "storage-class")]
     pub storage_class: String,
+    /// pvc access mode: ReadWriteOnce/ReadWriteMany
+    #[clap(long = "access-mode", default_value = "ReadWriteMany")]
+    pub(crate) access_mode: String,
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
     pub storage_capacity: String,
@@ -110,6 +113,7 @@ impl Default for UpdateYamlOpts {
             docker_registry: "docker.io".to_string(),
             docker_repo: "citacloud".to_string(),
             storage_class: Default::default(),
+            access_mode: "ReadWriteMany".to_string(),
             storage_capacity: "10Gi".to_string(),
             requests_cpu: "10m".to_string(),
             requests_memory: "32Mi".to_string(),
@@ -290,7 +294,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             ..Default::default()
         };
         let mut pvc_spec = PersistentVolumeClaimSpec {
-            access_modes: Some(vec!["ReadWriteOnce".to_string()]),
+            access_modes: Some(vec![opts.access_mode.clone()]),
             ..Default::default()
         };
         let mut resources = ResourceRequirements::default();
