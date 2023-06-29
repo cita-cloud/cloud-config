@@ -12,67 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{EXECUTOR, EXECUTOR_EVM};
+use crate::constant::{STORAGE, STORAGE_OPENDAL};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
+use super::node_config::CloudStorage;
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct ExecutorEvmConfig {
+pub struct StorageOpendalConfig {
     pub domain: String,
-    pub executor_port: u16,
+    pub storage_port: u16,
     pub metrics_port: u16,
     pub enable_metrics: bool,
     pub log_config: LogConfig,
+    // cloud storage
+    pub cloud_storage: CloudStorage,
 }
 
-impl ExecutorEvmConfig {
+impl StorageOpendalConfig {
     pub fn new(
         domain: String,
-        executor_port: u16,
+        storage_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
         log_config: LogConfig,
+        cloud_storage: CloudStorage,
     ) -> Self {
         Self {
             domain,
-            executor_port,
+            storage_port,
             metrics_port,
             enable_metrics,
             log_config,
+            cloud_storage,
         }
     }
 }
 
-impl TomlWriter for ExecutorEvmConfig {
+impl TomlWriter for StorageOpendalConfig {
     fn section(&self) -> String {
-        EXECUTOR_EVM.to_string()
+        STORAGE_OPENDAL.to_string()
     }
 }
 
-impl YmlWriter for ExecutorEvmConfig {
+impl YmlWriter for StorageOpendalConfig {
     fn service(&self) -> String {
-        EXECUTOR.to_string()
-    }
-}
-
-#[cfg(test)]
-mod executor_test {
-    use super::*;
-
-    #[test]
-    fn basic_test() {
-        let _ = std::fs::remove_file("example/config.toml");
-
-        let config = ExecutorEvmConfig {
-            domain: "test-chain-0".to_string(),
-            executor_port: 51232,
-            metrics_port: 61232,
-            enable_metrics: true,
-            log_config: LogConfig::default(),
-        };
-
-        config.write("example");
+        STORAGE.to_string()
     }
 }

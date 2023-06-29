@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: xxx
+spec:
+  template:
+    spec:
+      containers:
+      - name: network
+        livenessProbe:
+          exec:
+            command:
+            - grpc_health_probe
+            - -addr=127.0.0.1:50000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      - name: consensus
+        livenessProbe:
+          exec:
+            command:
+            - grpc_health_probe
+            - -addr=127.0.0.1:50001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      - name: executor
+        livenessProbe:
+          exec:
+            command:
+            - grpc_health_probe
+            - -addr=127.0.0.1:50002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      - name: storage
+        livenessProbe:
+          exec:
+            command:
+            - grpc_health_probe
+            - -addr=127.0.0.1:50003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      - name: controller
+        livenessProbe:
+          exec:
+            command:
+            - grpc_health_probe
+            - -addr=127.0.0.1:50004
+          initialDelaySeconds: 60
+          periodSeconds: 10

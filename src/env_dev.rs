@@ -14,7 +14,7 @@
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
-use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_BFT, KMS_ETH, NETWORK_TLS};
+use crate::constant::{CHAIN_CONFIG_FILE, CONSENSUS_RAFT};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -24,10 +24,12 @@ use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
+use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
-use crate::util::{find_micro_service, read_chain_config};
+use crate::util::read_chain_config;
 use clap::Parser;
+use std::fs;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -44,26 +46,49 @@ pub struct CreateDevOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
-    /// is network tls
-    #[clap(long = "is-tls")]
-    is_tls: bool,
-    /// is consensus bft
-    #[clap(long = "is-bft")]
-    is_bft: bool,
-    /// is kms eth
-    #[clap(long = "is-eth")]
-    is_eth: bool,
+    /// log file path
+    #[clap(long = "log-file-path", default_value = "./logs")]
+    log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    jaeger_agent_endpoint: Option<String>,
+    /// is consensus raft
+    #[clap(long = "is-raft")]
+    is_raft: bool,
+    /// is chain in danger mode
+    #[clap(long = "is-danger")]
+    is_danger: bool,
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// node network ip is 127.0.0.1
 /// node network port is 40000 + i
 /// node domain is i
-/// kms password is 123456
 /// grpc ports start from 50000 + i*1000
+/// metrics ports start from 60000 + i*100
 /// node network listen port is 40000 + i
 /// is stdout is false
 pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
-    let is_tls = opts.is_tls;
     let peers_count = opts.peers_count as usize;
 
     // init chain
@@ -77,22 +102,16 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     let mut init_chain_config_opts = InitChainConfigOpts::parse_from(vec![""]);
     init_chain_config_opts.chain_name = opts.chain_name.clone();
     init_chain_config_opts.config_dir = opts.config_dir.clone();
-    if is_tls {
-        init_chain_config_opts.network_image = NETWORK_TLS.to_string();
-    }
-    if opts.is_bft {
-        init_chain_config_opts.consensus_image = CONSENSUS_BFT.to_string();
-    }
-    if opts.is_eth {
-        init_chain_config_opts.kms_image = KMS_ETH.to_string();
+    // is_raft will override overlord
+    if opts.is_raft {
+        init_chain_config_opts.consensus_image = CONSENSUS_RAFT.to_string();
     }
     execute_init_chain_config(init_chain_config_opts).unwrap();
 
     // gen admin addr and set admin
-    let (_admin_key_id, admin_addr) = execute_new_account(NewAccountOpts {
+    let (admin_addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        kms_password: "123456".to_string(),
     })
     .unwrap();
     execute_set_admin(SetAdminOpts {
@@ -105,19 +124,18 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
     // gen validator addr and append validator
     let mut node_accounts = Vec::new();
     for _ in 0..peers_count {
-        let (key_id, addr) = execute_new_account(NewAccountOpts {
+        let (addr, validator_addr) = execute_new_account(NewAccountOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            kms_password: "123456".to_string(),
         })
         .unwrap();
         execute_append_validator(AppendValidatorOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            validator: addr.clone(),
+            validator: validator_addr.clone(),
         })
         .unwrap();
-        node_accounts.push((key_id, addr));
+        node_accounts.push(addr);
     }
 
     // append node
@@ -131,37 +149,42 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
         .unwrap();
     }
 
-    // if network is tls
     // gen ca and gen cert for each node
-    if is_tls {
-        execute_create_ca(CreateCAOpts {
+    execute_create_ca(CreateCAOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+    })
+    .unwrap();
+    for i in 0..peers_count {
+        let domain = format!("{i}");
+        execute_create_csr(CreateCSROpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
         })
         .unwrap();
-        for i in 0..peers_count {
-            let domain = format!("{}", i);
-            execute_create_csr(CreateCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-            execute_sign_csr(SignCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-        }
+        execute_sign_csr(SignCSROpts {
+            chain_name: opts.chain_name.clone(),
+            config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
+        })
+        .unwrap();
     }
+
+    execute_set_stage(SetStageOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        stage: "finalize".to_string(),
+    })
+    .unwrap();
 
     #[allow(clippy::needless_range_loop)]
     for i in 0..peers_count {
         let network_port = (50000 + i * 1000) as u16;
-        let domain = format!("{}", i);
+        let network_metrics_port = (60000 + i * 100) as u16;
+        let domain = format!("{i}");
         let listen_port = (40000 + i) as u16;
-        let node = node_accounts[i].clone();
+        let node_addr = node_accounts[i].clone();
 
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -172,13 +195,24 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            kms_port: network_port + 5,
             network_listen_port: listen_port,
-            kms_password: "123456".to_string(),
-            key_id: node.0,
             log_level: opts.log_level.clone(),
-            account: node.1,
-            package_limit: 30000,
+            log_file_path: opts.log_file_path.clone(),
+            jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
+            account: node_addr,
+            network_metrics_port,
+            consensus_metrics_port: network_metrics_port + 1,
+            executor_metrics_port: network_metrics_port + 2,
+            storage_metrics_port: network_metrics_port + 3,
+            controller_metrics_port: network_metrics_port + 4,
+            disable_metrics: opts.disable_metrics,
+            is_danger: opts.is_danger,
+            access_key_id: opts.access_key_id.clone(),
+            secret_access_key: opts.secret_access_key.clone(),
+            s3_endpoint: opts.s3_endpoint.clone(),
+            s3_bucket: opts.s3_bucket.clone(),
+            service_type: opts.service_type.clone(),
+            s3_root: opts.s3_root.clone(),
         })
         .unwrap();
 
@@ -186,8 +220,8 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            is_stdout: false,
             config_name: "config.toml".to_string(),
+            is_dev: true,
         })
         .unwrap();
     }
@@ -206,6 +240,36 @@ pub struct AppendDevOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
+    /// log file path
+    #[clap(long = "log-file-path")]
+    log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    jaeger_agent_endpoint: Option<String>,
+    /// is chain in danger mode
+    #[clap(long = "is-danger")]
+    is_danger: bool,
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// append a new node into chain
@@ -214,16 +278,14 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
-    let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
+    let chain_config = read_chain_config(file_name).unwrap();
     let peers_count = chain_config.node_network_address_list.len();
     let new_node_id = peers_count;
 
     // create account for new node
-    let (key_id, addr) = execute_new_account(NewAccountOpts {
+    let (addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        kms_password: "123456".to_string(),
     })
     .unwrap();
 
@@ -236,41 +298,48 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    // if network is tls
     // gen cert for new node
-    if is_tls {
-        let domain = format!("{}", new_node_id);
-        execute_create_csr(CreateCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain: domain.clone(),
-        })
-        .unwrap();
-        execute_sign_csr(SignCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain,
-        })
-        .unwrap();
-    }
+    let domain = format!("{new_node_id}");
+    execute_create_csr(CreateCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain: domain.clone(),
+    })
+    .unwrap();
+    execute_sign_csr(SignCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain,
+    })
+    .unwrap();
 
     // update old nodes
     for i in 0..peers_count {
-        let domain = format!("{}", i);
+        let domain = format!("{i}");
+
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(from, to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            is_stdout: false,
             config_name: "config.toml".to_string(),
+            is_dev: true,
         })
         .unwrap();
     }
 
     // new node need init and update
     let network_port = (50000 + new_node_id * 1000) as u16;
-    let domain = format!("{}", new_node_id);
+    let network_metrics_port = (60000 + new_node_id * 100) as u16;
+    let domain = format!("{new_node_id}");
     let listen_port = (40000 + new_node_id) as u16;
 
     execute_init_node(InitNodeOpts {
@@ -282,13 +351,24 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        kms_port: network_port + 5,
         network_listen_port: listen_port,
-        kms_password: "123456".to_string(),
-        key_id,
         log_level: opts.log_level.clone(),
+        log_file_path: opts.log_file_path.clone(),
+        jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
         account: addr,
-        package_limit: 30000,
+        network_metrics_port,
+        consensus_metrics_port: network_metrics_port + 1,
+        executor_metrics_port: network_metrics_port + 2,
+        storage_metrics_port: network_metrics_port + 3,
+        controller_metrics_port: network_metrics_port + 4,
+        disable_metrics: opts.disable_metrics,
+        is_danger: opts.is_danger,
+        access_key_id: opts.access_key_id.clone(),
+        secret_access_key: opts.secret_access_key.clone(),
+        s3_endpoint: opts.s3_endpoint.clone(),
+        s3_bucket: opts.s3_bucket.clone(),
+        service_type: opts.service_type.clone(),
+        s3_root: opts.s3_root.clone(),
     })
     .unwrap();
 
@@ -296,8 +376,8 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir,
         domain,
-        is_stdout: false,
         config_name: "config.toml".to_string(),
+        is_dev: true,
     })
     .unwrap();
 
@@ -319,11 +399,11 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
     let peers_count = chain_config.node_network_address_list.len();
     let delete_node_id = peers_count - 1;
 
-    let domain = format!("{}", delete_node_id);
+    let domain = format!("{delete_node_id}");
     execute_delete_node(DeleteNodeOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
@@ -335,14 +415,23 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
 
     // update reserve nodes
     for i in 0..delete_node_id {
-        let domain = format!("{}", i);
+        let domain = format!("{i}");
+
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(from, to).unwrap();
 
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain,
-            is_stdout: false,
             config_name: "config.toml".to_string(),
+            is_dev: true,
         })
         .unwrap();
     }
@@ -353,37 +442,71 @@ pub fn execute_delete_dev(opts: DeleteDevOpts) -> Result<(), Error> {
 #[cfg(test)]
 mod dev_test {
     use super::*;
+    use crate::util::rand_string;
 
     #[test]
-    fn create_test() {
+    fn dev_test() {
+        let name = rand_string();
+        let name1 = rand_string();
         execute_create_dev(CreateDevOpts {
-            chain_name: "test-chain".to_string(),
-            config_dir: ".".to_string(),
+            chain_name: name.clone(),
+            config_dir: ".tmp".to_string(),
             peers_count: 2,
             log_level: "info".to_string(),
-            is_tls: false,
-            is_bft: false,
-            is_eth: true,
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
+            is_raft: false,
+            is_danger: false,
+            disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
         })
-        .unwrap()
-    }
+        .unwrap();
 
-    #[test]
-    fn append_test() {
-        execute_append_dev(AppendDevOpts {
-            chain_name: "test-chain".to_string(),
-            config_dir: ".".to_string(),
+        execute_create_dev(CreateDevOpts {
+            chain_name: name1,
+            config_dir: ".tmp".to_string(),
+            peers_count: 2,
             log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
+            is_raft: true,
+            is_danger: false,
+            disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
         })
-        .unwrap()
-    }
+        .unwrap();
 
-    #[test]
-    fn delete_test() {
-        execute_delete_dev(DeleteDevOpts {
-            chain_name: "test-chain".to_string(),
-            config_dir: ".".to_string(),
+        execute_append_dev(AppendDevOpts {
+            chain_name: name.clone(),
+            config_dir: ".tmp".to_string(),
+            log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
+            is_danger: false,
+            disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
         })
-        .unwrap()
+        .unwrap();
+
+        execute_delete_dev(DeleteDevOpts {
+            chain_name: name,
+            config_dir: ".tmp".to_string(),
+        })
+        .unwrap();
     }
 }

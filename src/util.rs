@@ -14,15 +14,15 @@
 
 use crate::config::chain_config::ChainConfig;
 use crate::config::node_config::NodeConfig;
-use crate::constant::KMS_DB;
-use crate::traits::Kms;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, IsCa, KeyPair,
-    PKCS_ECDSA_P256_SHA256,
+    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, DistinguishedName,
+    DnType, DnValue, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
 };
 use std::io::{Read, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{fs, path};
+use std::{fs, io, path};
 use toml::de::Error;
 use toml::Value;
 
@@ -44,13 +44,13 @@ pub fn write_to_file<T: serde::Serialize>(content: T, path: impl AsRef<path::Pat
 
 pub fn read_chain_config(path: impl AsRef<path::Path>) -> Result<ChainConfig, Error> {
     let buffer = std::fs::read_to_string(path)
-        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+        .unwrap_or_else(|err| panic!("Error while loading config: [{err}]"));
     toml::from_str::<ChainConfig>(&buffer)
 }
 
 pub fn read_node_config(path: impl AsRef<path::Path>) -> Result<NodeConfig, Error> {
     let buffer = std::fs::read_to_string(path)
-        .unwrap_or_else(|err| panic!("Error while loading config: [{}]", err));
+        .unwrap_or_else(|err| panic!("Error while loading config: [{err}]"));
     toml::from_str::<NodeConfig>(&buffer)
 }
 
@@ -105,28 +105,20 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
     libsm::sm3::hash::Sm3Hash::new(input).get_hash()
 }
 
-pub fn key_pair_option(node_dir: String, kms_password: String, is_eth: bool) -> (u64, Vec<u8>) {
-    if is_eth {
-        crate::config::kms_eth::KmsEth::create_kms_db(
-            format!("{}/{}", node_dir, KMS_DB),
-            kms_password,
-        )
-        .generate_key_pair("create by cmd".to_string())
-    } else {
-        crate::config::kms_sm::KmsSm::create_kms_db(
-            format!("{}/{}", node_dir, KMS_DB),
-            kms_password,
-        )
-        .generate_key_pair("create by cmd".to_string())
-    }
-}
-
 pub fn ca_cert() -> (Certificate, String, String) {
-    let mut params = CertificateParams::new(vec![]);
+    let mut params = CertificateParams::default();
     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
 
     let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
     params.key_pair.replace(keypair);
+
+    let mut dn = DistinguishedName::new();
+    dn.push(DnType::OrganizationName, "CITAHub");
+    dn.push(
+        DnType::CommonName,
+        DnValue::PrintableString("CA".to_string()),
+    );
+    params.distinguished_name = dn;
 
     let cert = Certificate::from_params(params).unwrap();
     let cert_pem = cert.serialize_pem_with_signer(&cert).unwrap();
@@ -144,6 +136,11 @@ pub fn restore_ca_cert(ca_cert_pem: &str, ca_key_pem: &str) -> Certificate {
 pub fn create_csr(domain: &str) -> (String, String) {
     let subject_alt_names = vec![domain.into()];
     let mut params = CertificateParams::new(subject_alt_names);
+
+    let mut dn = DistinguishedName::new();
+    dn.push(DnType::OrganizationName, "CITAHub");
+    dn.push(DnType::CommonName, DnValue::PrintableString(domain.into()));
+    params.distinguished_name = dn;
 
     let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
     params.key_pair.replace(keypair);
@@ -176,8 +173,50 @@ pub fn remove_0x(s: &str) -> &str {
 
 pub fn check_address(s: &str) -> &str {
     let addr = s.strip_prefix("0x").unwrap_or(s);
-    if addr.len() != 40 {
+    if addr.len() != 40 && addr.len() != 96 {
         panic!("wrong address, please check!")
     };
     addr
+}
+
+pub fn copy_dir_all(src: impl AsRef<path::Path>, dst: impl AsRef<path::Path>) -> io::Result<()> {
+    let _ = fs::create_dir_all(&dst);
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if let Ok(file_name) = entry.file_name().into_string() {
+            if file_name.starts_with('.') {
+                continue;
+            }
+        } else {
+            continue;
+        }
+
+        if path.is_dir() {
+            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+pub fn rand_string() -> String {
+    thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(8)
+        .map(char::from)
+        .collect()
+}
+
+pub fn svc_name(chain_name: &str, domain: &str) -> String {
+    format!("{chain_name}-{domain}")
+}
+
+pub fn clap_about() -> String {
+    let name = env!("CARGO_PKG_NAME").to_string();
+    let version = env!("CARGO_PKG_VERSION");
+    let authors = env!("CARGO_PKG_AUTHORS");
+    name + " " + version + "\n" + authors
 }

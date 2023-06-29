@@ -12,33 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{STORAGE, STORAGE_ROCKSDB};
-use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct StorageRocksdbConfig {
-    pub kms_port: u16,
-    pub storage_port: u16,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogConfig {
+    pub max_level: String,
+    pub filter: String,
+    pub service_name: String,
+    pub rolling_file_path: Option<String>,
+    pub agent_endpoint: Option<String>,
 }
 
-impl StorageRocksdbConfig {
-    pub fn new(kms_port: u16, storage_port: u16) -> Self {
+impl Default for LogConfig {
+    fn default() -> Self {
         Self {
-            kms_port,
-            storage_port,
+            max_level: "info".to_owned(),
+            filter: "info".to_owned(),
+            service_name: Default::default(),
+            rolling_file_path: Default::default(),
+            agent_endpoint: Default::default(),
         }
-    }
-}
-
-impl TomlWriter for StorageRocksdbConfig {
-    fn section(&self) -> String {
-        STORAGE_ROCKSDB.to_string()
-    }
-}
-
-impl YmlWriter for StorageRocksdbConfig {
-    fn service(&self) -> String {
-        STORAGE.to_string()
     }
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::CONSENSUS_RAFT;
+use crate::constant::{CONSENSUS, CONSENSUS_RAFT};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +25,10 @@ pub struct Consensus {
     pub node_addr: String,
 
     pub grpc_listen_port: u16,
+
+    pub metrics_port: u16,
+
+    pub enable_metrics: bool,
 }
 
 impl Consensus {
@@ -33,19 +37,23 @@ impl Consensus {
         controller_port: u16,
         node_addr: String,
         grpc_listen_port: u16,
+        metrics_port: u16,
+        enable_metrics: bool,
     ) -> Self {
         Self {
             network_port,
             controller_port,
             node_addr,
             grpc_listen_port,
+            metrics_port,
+            enable_metrics,
         }
     }
 }
 
 impl YmlWriter for Consensus {
     fn service(&self) -> String {
-        CONSENSUS_RAFT.to_string()
+        CONSENSUS.to_string()
     }
 }
 

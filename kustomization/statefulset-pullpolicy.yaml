@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: xxx
+spec:
+  template:
+    spec:
+      containers:
+      - name: network
+        imagePullPolicy: IfNotPresent
+      - name: consensus
+        imagePullPolicy: IfNotPresent
+      - name: executor
+        imagePullPolicy: IfNotPresent
+      - name: storage
+        imagePullPolicy: IfNotPresent
+      - name: controller
+        imagePullPolicy: IfNotPresent

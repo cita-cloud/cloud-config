@@ -20,6 +20,7 @@ use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_chain::{execute_delete_chain, DeleteChainOpts};
 use crate::delete_node::{execute_delete_node, DeleteNodeOpts};
+use crate::delete_validator::{execute_delete_validator, DeleteValidatorOpts};
 use crate::env_dev::{
     execute_append_dev, execute_create_dev, execute_delete_dev, AppendDevOpts, CreateDevOpts,
     DeleteDevOpts,
@@ -29,16 +30,20 @@ use crate::env_k8s::{
     DeleteK8sOpts,
 };
 use crate::import_account::{execute_import_account, ImportAccountOpts};
+use crate::import_ca::{execute_import_ca, ImportCAOpts};
+use crate::import_cert::{execute_import_cert, ImportCertOpts};
 use crate::init_chain::{execute_init_chain, InitChainOpts};
 use crate::init_chain_config::{execute_init_chain_config, InitChainConfigOpts};
 use crate::init_node::{execute_init_node, InitNodeOpts};
-use crate::migrate::{execute_migrate, MigrateOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
+use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::set_validators::{execute_set_validators, SetValidatorsOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
+use crate::update_yaml::{execute_update_yaml, UpdateYamlOpts};
+use crate::util::clap_about;
 
 mod append_node;
 mod append_validator;
@@ -48,25 +53,29 @@ mod create_ca;
 mod create_csr;
 mod delete_chain;
 mod delete_node;
+mod delete_validator;
 mod env_dev;
 mod env_k8s;
 mod error;
 mod import_account;
+mod import_ca;
+mod import_cert;
 mod init_chain;
 mod init_chain_config;
 mod init_node;
-mod migrate;
 mod new_account;
 mod set_admin;
 mod set_nodelist;
+mod set_stage;
 mod set_validators;
 mod sign_csr;
 mod traits;
 mod update_node;
+mod update_yaml;
 mod util;
 
 #[derive(Parser)]
-#[clap(version = "6.3.0", author = "Rivtower Technologies.")]
+#[clap(version, about = clap_about())]
 struct Opts {
     #[clap(subcommand)]
     sub_cmd: SubCommand,
@@ -141,9 +150,21 @@ enum SubCommand {
     /// delete node in env k8s
     #[clap(name = "delete-k8s")]
     DeleteK8s(DeleteK8sOpts),
-    /// migrate CITA-Cloud chain from 6.1.0 to 6.3.0
-    #[clap(name = "migrate")]
-    Migrate(MigrateOpts),
+    /// set stage
+    #[clap(name = "set-stage")]
+    SetStage(SetStageOpts),
+    /// import ca
+    #[clap(name = "import-ca")]
+    ImportCA(ImportCAOpts),
+    /// import node cert
+    #[clap(name = "import-cert")]
+    ImportCert(ImportCertOpts),
+    /// update k8s yaml
+    #[clap(name = "update-yaml")]
+    UpdateYaml(UpdateYamlOpts),
+    /// delete a validator from chain
+    #[clap(name = "delete-validator")]
+    DeleteValidator(DeleteValidatorOpts),
 }
 
 fn main() {
@@ -174,6 +195,10 @@ fn main() {
         SubCommand::CreateK8s(opts) => execute_create_k8s(opts).unwrap(),
         SubCommand::AppendK8s(opts) => execute_append_k8s(opts).unwrap(),
         SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
-        SubCommand::Migrate(opts) => execute_migrate(opts).unwrap(),
+        SubCommand::SetStage(opts) => execute_set_stage(opts).unwrap(),
+        SubCommand::ImportCA(opts) => execute_import_ca(opts).map(|_| ()).unwrap(),
+        SubCommand::ImportCert(opts) => execute_import_cert(opts).map(|_| ()).unwrap(),
+        SubCommand::UpdateYaml(opts) => execute_update_yaml(opts).map(|_| ()).unwrap(),
+        SubCommand::DeleteValidator(opts) => execute_delete_validator(opts).unwrap(),
     }
 }

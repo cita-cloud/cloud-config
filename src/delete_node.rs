@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::constant::{ACCOUNT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{read_chain_config, read_node_config, write_toml};
@@ -43,13 +44,28 @@ pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 
+    if chain_config.stage == ConfigStage::Init {
+        return Err(Error::InvalidStage);
+    }
+
     let mut node_list = chain_config.node_network_address_list.clone();
 
-    match node_list.binary_search_by(|node| node.domain.cmp(&opts.domain)) {
-        Ok(index) => {
-            node_list.remove(index);
+    let mut pos_opt = None;
+    for (pos, node) in node_list.iter().enumerate() {
+        if node.domain.eq(&opts.domain) {
+            pos_opt = Some(pos);
+            break;
         }
-        Err(_) => panic!("Can't found node that want to delete!"),
+    }
+
+    match pos_opt {
+        Some(pos) => {
+            node_list.remove(pos);
+        }
+        None => panic!(
+            "Can't found node that want to delete! domain {} not in {:?}",
+            opts.domain, node_list
+        ),
     }
 
     chain_config.set_node_network_address_list(node_list);
@@ -61,7 +77,7 @@ pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {
 }
 
 pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
-    let node_dir = format!("{}/{}-{}", config_dir, chain_name, domain);
+    let node_dir = format!("{config_dir}/{chain_name}-{domain}");
 
     // load node_config
     let file_name = format!("{}/{}", &node_dir, NODE_CONFIG_FILE);
@@ -75,10 +91,10 @@ pub fn delete_node_folders(config_dir: &str, chain_name: &str, domain: &str) {
         "{}/{}/{}/{}",
         config_dir, chain_name, ACCOUNT_DIR, &node_config.account,
     );
-    fs::remove_dir_all(&account_path).unwrap();
+    fs::remove_dir_all(account_path).unwrap();
 
     // delete cert folder
     // ignore error because maybe cert folder doesn't exist
-    let cert_path = format!("{}/{}/{}/{}", config_dir, chain_name, CERTS_DIR, domain);
-    let _ = fs::remove_dir_all(&cert_path);
+    let cert_path = format!("{config_dir}/{chain_name}/{CERTS_DIR}/{domain}");
+    let _ = fs::remove_dir_all(cert_path);
 }

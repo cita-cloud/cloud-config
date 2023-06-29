@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
 use crate::util::{check_address, read_chain_config, write_toml};
@@ -31,7 +32,7 @@ pub struct AppendValidatorOpts {
     pub(crate) validator: String,
 }
 
-/// execute set validators
+/// execute append validator
 pub fn execute_append_validator(opts: AppendValidatorOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
@@ -39,6 +40,10 @@ pub fn execute_append_validator(opts: AppendValidatorOpts) -> Result<(), Error> 
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
+
+    if chain_config.stage != ConfigStage::Public {
+        return Err(Error::InvalidStage);
+    }
 
     let mut validators = chain_config.system_config.validators.clone();
 

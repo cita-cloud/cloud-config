@@ -15,7 +15,7 @@
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
 use crate::config::chain_config::{NodeNetworkAddress, NodeNetworkAddressBuilder};
-use crate::constant::{CHAIN_CONFIG_FILE, NETWORK_TLS};
+use crate::constant::CHAIN_CONFIG_FILE;
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_node::{delete_node_folders, execute_delete_node, DeleteNodeOpts};
@@ -26,97 +26,169 @@ use crate::init_node::{execute_init_node, InitNodeOpts};
 use crate::new_account::{execute_new_account, NewAccountOpts};
 use crate::set_admin::{execute_set_admin, SetAdminOpts};
 use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
+use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
-use crate::util::{find_micro_service, read_chain_config};
+use crate::util::{rand_string, read_chain_config};
 use clap::Parser;
+use serde::{Deserialize, Serialize};
+use std::fs;
 
 /// A subcommand for run
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct CreateK8sOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set genesis timestamp
     #[clap(long = "timestamp", default_value = "0")]
-    pub(crate) timestamp: u64,
+    pub timestamp: u64,
     /// set genesis prevhash
     #[clap(
         long = "prevhash",
         default_value = "0x0000000000000000000000000000000000000000000000000000000000000000"
     )]
-    pub(crate) prevhash: String,
+    pub prevhash: String,
     /// set system config version
     #[clap(long = "version", default_value = "0")]
-    pub(crate) version: u32,
+    pub version: u32,
     /// set system config chain_id
     #[clap(long = "chain_id", default_value = "")]
-    pub(crate) chain_id: String,
+    pub chain_id: String,
     /// set system config block_interval
     #[clap(long = "block_interval", default_value = "3")]
-    pub(crate) block_interval: u32,
+    pub block_interval: u32,
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
-    pub(crate) block_limit: u64,
-    /// set network micro service image name (network_tls/network_p2p)
-    #[clap(long = "network_image", default_value = "network_p2p")]
-    pub(crate) network_image: String,
+    pub block_limit: u64,
+    /// set one block contains quota limit, default 1073741824
+    #[clap(long = "quota-limit", default_value = "1073741824")]
+    pub quota_limit: u64,
+    /// set network micro service image name (network_zenoh)
+    #[clap(long = "network_image", default_value = "network_zenoh")]
+    pub network_image: String,
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
-    pub(crate) network_tag: String,
-    /// set consensus micro service image name (consensus_bft/consensus_raft)
-    #[clap(long = "consensus_image", default_value = "consensus_raft")]
-    pub(crate) consensus_image: String,
+    pub network_tag: String,
+    /// set consensus micro service image name (consensus_raft/consensus_overlord)
+    #[clap(long = "consensus_image", default_value = "consensus_overlord")]
+    pub consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]
-    pub(crate) consensus_tag: String,
+    pub consensus_tag: String,
     /// set executor micro service image name (executor_evm)
     #[clap(long = "executor_image", default_value = "executor_evm")]
-    pub(crate) executor_image: String,
+    pub executor_image: String,
     /// set executor micro service image tag
     #[clap(long = "executor_tag", default_value = "latest")]
-    pub(crate) executor_tag: String,
-    /// set storage micro service image name (storage_rocksdb)
-    #[clap(long = "storage_image", default_value = "storage_rocksdb")]
-    pub(crate) storage_image: String,
+    pub executor_tag: String,
+    /// set storage micro service image name (storage_opendal)
+    #[clap(long = "storage_image", default_value = "storage_opendal")]
+    pub storage_image: String,
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
-    pub(crate) storage_tag: String,
+    pub storage_tag: String,
     /// set controller micro service image name (controller)
     #[clap(long = "controller_image", default_value = "controller")]
-    pub(crate) controller_image: String,
+    pub controller_image: String,
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
-    pub(crate) controller_tag: String,
-    /// set kms micro service image name (kms_eth/kms_sm)
-    #[clap(long = "kms_image", default_value = "kms_sm")]
-    pub(crate) kms_image: String,
-    /// set kms micro service image tag
-    #[clap(long = "kms_tag", default_value = "latest")]
-    pub(crate) kms_tag: String,
+    pub controller_tag: String,
 
     /// set admin
     #[clap(long = "admin")]
-    pub(crate) admin: String,
+    pub admin: String,
 
-    /// kms db password list, splited by ,
-    #[clap(long = "kms-password-list")]
-    pub(crate) kms_password_list: String,
-
-    /// node list looks like localhost:40000:node0,localhost:40001:node1
+    /// node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
+    /// last slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
-    pub(crate) node_list: String,
+    pub node_list: String,
 
     /// log level
     #[clap(long = "log-level", default_value = "info")]
-    pub(crate) log_level: String,
+    pub log_level: String,
+
+    /// log file path
+    #[clap(long = "log-file-path")]
+    pub log_file_path: Option<String>,
+
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    pub jaeger_agent_endpoint: Option<String>,
+
+    /// is chain in danger mode
+    #[clap(long = "is-danger")]
+    pub is_danger: bool,
+
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
+
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
+}
+
+impl Default for CreateK8sOpts {
+    fn default() -> Self {
+        Self {
+            chain_name: "test-chain".to_string(),
+            config_dir: ".".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: Default::default(),
+            block_interval: 3,
+            block_limit: 100,
+            quota_limit: 1073741824,
+            network_image: "network_zenoh".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_overlord".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_opendal".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            admin: Default::default(),
+            node_list: Default::default(),
+            log_level: "info".to_string(),
+            log_file_path: Default::default(),
+            jaeger_agent_endpoint: Default::default(),
+            is_danger: Default::default(),
+            disable_metrics: Default::default(),
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
+        }
+    }
 }
 
 /// admin set by args
-/// kms password set by args
 /// grpc ports start from 50000
 /// node network listen port is 40000
 /// is stdout is true
@@ -138,8 +210,9 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         chain_id: opts.chain_id.clone(),
         block_interval: opts.block_interval,
         block_limit: opts.block_limit,
+        quota_limit: opts.quota_limit,
         network_image: opts.network_image.clone(),
-        network_tag: opts.network_image.clone(),
+        network_tag: opts.network_tag.clone(),
         consensus_image: opts.consensus_image.clone(),
         consensus_tag: opts.consensus_tag.clone(),
         executor_image: opts.executor_image.clone(),
@@ -148,8 +221,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         storage_tag: opts.storage_tag.clone(),
         controller_image: opts.controller_image.clone(),
         controller_tag: opts.controller_tag.clone(),
-        kms_image: opts.kms_image.clone(),
-        kms_tag: opts.kms_tag.clone(),
     })
     .unwrap();
 
@@ -161,41 +232,41 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    // parse kms password list and node list
-    let kms_password_list: Vec<&str> = opts.kms_password_list.split(',').collect();
+    // parse node list
     let node_list_str: Vec<&str> = opts.node_list.split(',').collect();
     let node_list: Vec<NodeNetworkAddress> = node_list_str
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
-            NodeNetworkAddressBuilder::new()
+            let cluster = if node_network_info.len() == 3 {
+                rand_string()
+            } else {
+                node_network_info[3].to_string()
+            };
+            NodeNetworkAddressBuilder::default()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())
+                .cluster(cluster)
                 .build()
         })
         .collect();
 
-    if node_list.len() != kms_password_list.len() {
-        return Err(Error::ListLenNotMatch);
-    }
-
     // gen validator addr and append validator
     let mut node_accounts = Vec::new();
-    for kms_password in kms_password_list.iter() {
-        let (key_id, addr) = execute_new_account(NewAccountOpts {
+    for _ in 0..node_list.len() {
+        let (addr, validator_addr) = execute_new_account(NewAccountOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            kms_password: kms_password.to_string(),
         })
         .unwrap();
         execute_append_validator(AppendValidatorOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            validator: addr.clone(),
+            validator: validator_addr.clone(),
         })
         .unwrap();
-        node_accounts.push((key_id, addr));
+        node_accounts.push(addr);
     }
 
     // set node list
@@ -206,40 +277,50 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    let is_tls = opts.network_image == NETWORK_TLS;
-
-    // if network is tls
     // gen ca and gen cert for each node
-    if is_tls {
-        execute_create_ca(CreateCAOpts {
+    execute_create_ca(CreateCAOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+    })
+    .unwrap();
+    for node in node_list.iter() {
+        let domain = node.domain.to_string();
+        execute_create_csr(CreateCSROpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
         })
         .unwrap();
-        for node in node_list.iter() {
-            let domain = node.domain.to_string();
-            execute_create_csr(CreateCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-            execute_sign_csr(SignCSROpts {
-                chain_name: opts.chain_name.clone(),
-                config_dir: opts.config_dir.clone(),
-                domain: domain.clone(),
-            })
-            .unwrap();
-        }
+        execute_sign_csr(SignCSROpts {
+            chain_name: opts.chain_name.clone(),
+            config_dir: opts.config_dir.clone(),
+            domain: domain.clone(),
+        })
+        .unwrap();
     }
 
+    execute_set_stage(SetStageOpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        stage: "finalize".to_string(),
+    })
+    .unwrap();
+
+    // reload chainconfig
+    let chain_config_file = format!(
+        "{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+    );
+
+    let chain_config = read_chain_config(chain_config_file).unwrap();
+
     // init node and update node
-    for (i, node) in node_list.iter().enumerate() {
+    for (i, node) in chain_config.node_network_address_list.iter().enumerate() {
         let network_port = 50000;
+        let network_metrics_port = 60000;
         let domain = node.domain.to_string();
         let network_listen_port = 40000;
         let node_account = node_accounts[i].clone();
-        let kms_password = kms_password_list[i].to_string();
 
         execute_init_node(InitNodeOpts {
             chain_name: opts.chain_name.clone(),
@@ -250,13 +331,24 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            kms_port: network_port + 5,
             network_listen_port,
-            kms_password,
-            key_id: node_account.0,
             log_level: opts.log_level.clone(),
-            account: node_account.1,
-            package_limit: 30000,
+            log_file_path: opts.log_file_path.clone(),
+            jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
+            account: node_account,
+            network_metrics_port,
+            consensus_metrics_port: network_metrics_port + 1,
+            executor_metrics_port: network_metrics_port + 2,
+            storage_metrics_port: network_metrics_port + 3,
+            controller_metrics_port: network_metrics_port + 4,
+            disable_metrics: opts.disable_metrics,
+            is_danger: opts.is_danger,
+            access_key_id: opts.access_key_id.clone(),
+            secret_access_key: opts.secret_access_key.clone(),
+            s3_endpoint: opts.s3_endpoint.clone(),
+            s3_bucket: opts.s3_bucket.clone(),
+            service_type: opts.service_type.clone(),
+            s3_root: opts.s3_root.clone(),
         })
         .unwrap();
 
@@ -264,8 +356,8 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
-            is_stdout: true,
             config_name: "config.toml".to_string(),
+            is_dev: false,
         })
         .unwrap();
     }
@@ -284,12 +376,40 @@ pub struct AppendK8sOpts {
     /// log level
     #[clap(long = "log-level", default_value = "info")]
     log_level: String,
-    /// kms db password
-    #[clap(long = "kms-password")]
-    pub(crate) kms_password: String,
-    /// node network address looks like localhost:40002:node2
+    /// log file path
+    #[clap(long = "log-file-path")]
+    log_file_path: Option<String>,
+    /// jaeger agent endpoint
+    #[clap(long = "jaeger-agent-endpoint")]
+    jaeger_agent_endpoint: Option<String>,
+    /// node network address looks like localhost:40002:node2:k8s_cluster1
+    /// last slice is optional, none means not k8s env.
     #[clap(long = "node")]
-    pub(crate) node: String,
+    node: String,
+    /// is chain in danger mode
+    #[clap(long = "is-danger")]
+    is_danger: bool,
+    /// disable metrics
+    #[clap(long = "disable-metrics")]
+    pub(crate) disable_metrics: bool,
+    /// cloud_storage.access_key_id
+    #[clap(long = "access-key-id", default_value = "")]
+    pub(crate) access_key_id: String,
+    /// cloud_storage.secret_access_key
+    #[clap(long = "secret-access-key", default_value = "")]
+    pub(crate) secret_access_key: String,
+    /// cloud_storage.endpoint
+    #[clap(long = "s3-endpoint", default_value = "")]
+    pub(crate) s3_endpoint: String,
+    /// cloud_storage.bucket
+    #[clap(long = "s3-bucket", default_value = "")]
+    pub(crate) s3_bucket: String,
+    /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
+    #[clap(long = "service-type", default_value = "")]
+    pub(crate) service_type: String,
+    /// cloud_storage.root
+    #[clap(long = "s3-root", default_value = "")]
+    pub(crate) s3_root: String,
 }
 
 /// append a new node into chain
@@ -298,23 +418,28 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
-    let is_tls = find_micro_service(&chain_config, NETWORK_TLS);
+    let chain_config = read_chain_config(file_name).unwrap();
 
     // create account for new node
-    let (key_id, addr) = execute_new_account(NewAccountOpts {
+    let (addr, _) = execute_new_account(NewAccountOpts {
         chain_name: opts.chain_name.clone(),
         config_dir: opts.config_dir.clone(),
-        kms_password: opts.kms_password.clone(),
     })
     .unwrap();
 
     // parse node network info
     let node_network_info: Vec<&str> = opts.node.split(':').collect();
-    let new_node = NodeNetworkAddressBuilder::new()
+    let cluster = if node_network_info.len() == 3 {
+        rand_string()
+    } else {
+        node_network_info[3].to_string()
+    };
+
+    let new_node = NodeNetworkAddressBuilder::default()
         .host(node_network_info[0].to_string())
         .port(node_network_info[1].parse::<u16>().unwrap())
         .domain(node_network_info[2].to_string())
+        .cluster(cluster)
         .build();
 
     // append node
@@ -325,41 +450,48 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     })
     .unwrap();
 
-    // if network is tls
     // gen cert for new node
-    if is_tls {
-        let domain = new_node.domain.clone();
-        execute_create_csr(CreateCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain: domain.clone(),
-        })
-        .unwrap();
-        execute_sign_csr(SignCSROpts {
-            chain_name: opts.chain_name.clone(),
-            config_dir: opts.config_dir.clone(),
-            domain,
-        })
-        .unwrap();
-    }
+    let domain = new_node.domain.clone();
+    execute_create_csr(CreateCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain: domain.clone(),
+    })
+    .unwrap();
+    execute_sign_csr(SignCSROpts {
+        chain_name: opts.chain_name.clone(),
+        config_dir: opts.config_dir.clone(),
+        domain,
+    })
+    .unwrap();
 
     // update old nodes
     // chain_config load befor append node, so it only contains old nodes
     for node in chain_config.node_network_address_list {
         let domain = node.domain.clone();
 
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(from, to).unwrap();
+
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            domain,
-            is_stdout: true,
+            domain: domain.clone(),
             config_name: "config.toml".to_string(),
+            is_dev: false,
         })
         .unwrap();
     }
 
     // new node need init and update
     let network_port = 50000;
+    let network_metrics_port = 60000;
     let network_listen_port = 40000;
     let domain = new_node.domain;
 
@@ -372,22 +504,33 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        kms_port: network_port + 5,
         network_listen_port,
-        kms_password: opts.kms_password.clone(),
-        key_id,
-        log_level: opts.log_level.clone(),
+        log_level: opts.log_level,
+        log_file_path: opts.log_file_path,
+        jaeger_agent_endpoint: opts.jaeger_agent_endpoint,
         account: addr,
-        package_limit: 30000,
+        network_metrics_port,
+        consensus_metrics_port: network_metrics_port + 1,
+        executor_metrics_port: network_metrics_port + 2,
+        storage_metrics_port: network_metrics_port + 3,
+        controller_metrics_port: network_metrics_port + 4,
+        disable_metrics: opts.disable_metrics,
+        is_danger: opts.is_danger,
+        access_key_id: opts.access_key_id.clone(),
+        secret_access_key: opts.secret_access_key.clone(),
+        s3_endpoint: opts.s3_endpoint.clone(),
+        s3_bucket: opts.s3_bucket.clone(),
+        service_type: opts.service_type.clone(),
+        s3_root: opts.s3_root.clone(),
     })
     .unwrap();
 
     execute_update_node(UpdateNodeOpts {
         chain_name: opts.chain_name.clone(),
-        config_dir: opts.config_dir,
+        config_dir: opts.config_dir.clone(),
         domain,
-        is_stdout: true,
         config_name: "config.toml".to_string(),
+        is_dev: false,
     })
     .unwrap();
 
@@ -423,21 +566,142 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
     // update reserve nodes
     for node in chain_config.node_network_address_list {
         let domain = node.domain.clone();
 
+        // chain_config modified, update for old nodes
+        let from = format!(
+            "{}/{}/{}",
+            &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
+        );
+        let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &domain);
+        let to = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
+        fs::copy(from, to).unwrap();
+
         execute_update_node(UpdateNodeOpts {
             chain_name: opts.chain_name.clone(),
             config_dir: opts.config_dir.clone(),
-            domain,
-            is_stdout: true,
+            domain: domain.clone(),
             config_name: "config.toml".to_string(),
+            is_dev: false,
         })
         .unwrap();
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod k8s_test {
+    use super::*;
+    use crate::util::rand_string;
+
+    #[test]
+    fn k8s_test() {
+        let name = rand_string();
+        let name1 = rand_string();
+        execute_create_k8s(CreateK8sOpts {
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: "".to_string(),
+            block_interval: 3,
+            block_limit: 100,
+            quota_limit: 1073741824,
+            network_image: "network_zenoh".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_overlord".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_opendal".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
+            node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
+                .to_string(),
+            log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
+            is_danger: false,
+            disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
+        })
+        .unwrap();
+
+        execute_create_k8s(CreateK8sOpts {
+            chain_name: name1,
+            config_dir: "/tmp".to_string(),
+            timestamp: 0,
+            prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                .to_string(),
+            version: 0,
+            chain_id: "".to_string(),
+            block_interval: 3,
+            block_limit: 100,
+            quota_limit: 1073741824,
+            network_image: "network_zenoh".to_string(),
+            network_tag: "latest".to_string(),
+            consensus_image: "consensus_raft".to_string(),
+            consensus_tag: "latest".to_string(),
+            executor_image: "executor_evm".to_string(),
+            executor_tag: "latest".to_string(),
+            storage_image: "storage_opendal".to_string(),
+            storage_tag: "latest".to_string(),
+            controller_image: "controller".to_string(),
+            controller_tag: "latest".to_string(),
+            admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
+            node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
+                .to_string(),
+            log_level: "info".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
+            is_danger: false,
+            disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
+        })
+        .unwrap();
+
+        execute_append_k8s(AppendK8sOpts {
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
+            log_level: "info".to_string(),
+            node: "localhost:40002:node2:k8s:40000".to_string(),
+            log_file_path: None,
+            jaeger_agent_endpoint: None,
+            is_danger: false,
+            disable_metrics: false,
+            access_key_id: "".to_string(),
+            secret_access_key: "".to_string(),
+            s3_endpoint: "".to_string(),
+            s3_bucket: "".to_string(),
+            service_type: "".to_string(),
+            s3_root: "".to_string(),
+        })
+        .unwrap();
+
+        execute_delete_k8s(DeleteK8sOpts {
+            chain_name: name,
+            config_dir: "/tmp".to_string(),
+            domain: "node2".to_string(),
+        })
+        .unwrap();
+    }
 }

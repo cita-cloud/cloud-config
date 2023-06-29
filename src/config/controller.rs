@@ -13,14 +13,19 @@
 // limitations under the License.
 
 use crate::constant::{
-    CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, GENESIS_BLOCK, PRE_HASH, SYSTEM_CONFIG,
+    CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, DEFAULT_QUOTA_LIMIT, GENESIS_BLOCK,
+    PRE_HASH, SYSTEM_CONFIG,
 };
 use crate::traits::{TomlWriter, YmlWriter};
 use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ControllerConfig {
+    pub domain: String,
+
     pub network_port: u16,
 
     pub consensus_port: u16,
@@ -31,13 +36,17 @@ pub struct ControllerConfig {
 
     pub controller_port: u16,
 
-    pub kms_port: u16,
-
-    pub key_id: u64,
-
     pub node_address: String,
 
-    pub package_limit: u64,
+    pub validator_address: String,
+
+    pub metrics_port: u16,
+
+    pub enable_metrics: bool,
+
+    pub log_config: LogConfig,
+
+    pub is_danger: bool,
 }
 
 impl TomlWriter for ControllerConfig {
@@ -61,6 +70,7 @@ pub struct SystemConfigFile {
     pub block_interval: u32,
     pub validators: Vec<String>,
     pub block_limit: u64,
+    pub quota_limit: u64,
 }
 
 impl SystemConfigFile {
@@ -88,10 +98,11 @@ pub struct SystemConfigBuilder {
     pub block_interval: u32,
     pub validators: Vec<String>,
     pub block_limit: u64,
+    pub quota_limit: u64,
 }
 
-impl SystemConfigBuilder {
-    pub fn new() -> Self {
+impl Default for SystemConfigBuilder {
+    fn default() -> Self {
         Self {
             version: 0,
             chain_id: "".to_string(),
@@ -99,9 +110,12 @@ impl SystemConfigBuilder {
             block_interval: DEFAULT_BLOCK_INTERVAL,
             validators: Vec::new(),
             block_limit: DEFAULT_BLOCK_LIMIT,
+            quota_limit: DEFAULT_QUOTA_LIMIT,
         }
     }
+}
 
+impl SystemConfigBuilder {
     pub fn version(&mut self, version: u32) -> &mut SystemConfigBuilder {
         self.version = version;
         self
@@ -134,6 +148,11 @@ impl SystemConfigBuilder {
         self
     }
 
+    pub fn quota_limit(&mut self, quota_limit: u64) -> &mut SystemConfigBuilder {
+        self.quota_limit = quota_limit;
+        self
+    }
+
     pub fn build(&self) -> SystemConfigFile {
         SystemConfigFile {
             version: self.version,
@@ -142,6 +161,7 @@ impl SystemConfigBuilder {
             block_interval: self.block_interval,
             validators: self.validators.clone(),
             block_limit: self.block_limit,
+            quota_limit: self.quota_limit,
         }
     }
 }
@@ -164,13 +184,16 @@ pub struct GenesisBlockBuilder {
     pub prevhash: String,
 }
 
-impl GenesisBlockBuilder {
-    pub fn new() -> Self {
+impl Default for GenesisBlockBuilder {
+    fn default() -> Self {
         Self {
             timestamp: 0,
             prevhash: PRE_HASH.to_string(),
         }
     }
+}
+
+impl GenesisBlockBuilder {
     pub fn timestamp(&mut self, timestamp: u64) -> &mut GenesisBlockBuilder {
         self.timestamp = timestamp;
         self
@@ -195,18 +218,19 @@ mod controller_test {
 
     #[test]
     fn basic_test() {
-        let _ = std::fs::remove_file("example/config.toml");
-
         let config = ControllerConfig {
+            domain: "test-chain-0".into(),
             network_port: 51230,
             consensus_port: 51231,
             executor_port: 51232,
             storage_port: 51233,
             controller_port: 51234,
-            kms_port: 51235,
-            key_id: 1,
-            node_address: "0xe7b14f079c1db897568883f0323af5887c2feebb".into(),
-            package_limit: 30000,
+            node_address: "/mnt/node_address".into(),
+            validator_address: "/mnt/validator_address".into(),
+            metrics_port: 61234,
+            enable_metrics: true,
+            log_config: LogConfig::default(),
+            is_danger: false,
         };
 
         config.write("example");
@@ -218,5 +242,7 @@ mod controller_test {
         };
 
         genesis.write("example");
+
+        let _ = std::fs::remove_file("example");
     }
 }

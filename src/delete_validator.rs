@@ -12,43 +12,63 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::read_chain_config;
+use crate::util::{read_chain_config, write_toml};
 use clap::Parser;
-use std::fs;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
-pub struct DeleteChainOpts {
+pub struct DeleteValidatorOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
     pub(crate) chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
+    /// validator account
+    #[clap(long = "validator")]
+    pub(crate) validator: String,
 }
 
-/// delete these folders
-/// $(config_dir)
-/// --  $(chain_name)
-/// --  $(chain_name)-xxx
-pub fn execute_delete_chain(opts: DeleteChainOpts) -> Result<(), Error> {
+/// execute delete validator
+pub fn execute_delete_validator(opts: DeleteValidatorOpts) -> Result<(), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(file_name).unwrap();
+    let mut chain_config = read_chain_config(&file_name).unwrap();
 
-    // delete node folders
-    for node in chain_config.node_network_address_list {
-        let path = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &node.domain);
-        fs::remove_dir_all(path).unwrap();
+    if chain_config.stage != ConfigStage::Public {
+        return Err(Error::InvalidStage);
     }
 
-    let path = format!("{}/{}", &opts.config_dir, &opts.chain_name);
-    fs::remove_dir_all(path).unwrap();
+    let mut validators = chain_config.system_config.validators.clone();
+
+    let mut pos_opt = None;
+    for (pos, validator) in validators.iter().enumerate() {
+        if validator.eq(&opts.validator) {
+            pos_opt = Some(pos);
+            break;
+        }
+    }
+
+    match pos_opt {
+        Some(pos) => {
+            validators.remove(pos);
+        }
+        None => panic!(
+            "Can't found validator that want to delete! validator {} not in {:?}",
+            opts.validator, validators
+        ),
+    }
+
+    chain_config.set_validators(validators);
+
+    // store chain_config
+    write_toml(&chain_config, file_name);
 
     Ok(())
 }

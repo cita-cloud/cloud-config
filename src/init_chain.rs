@@ -47,25 +47,23 @@ pub fn execute_init_chain(opts: InitChainOpts) -> Result<(), Error> {
     }
 
     let path = format!("{}/{}", &chain_path, ACCOUNT_DIR);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
     let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, ACCOUNT_DIR);
     touch_file(gitkeep_path);
 
     let path = format!("{}/{}", &chain_path, CERTS_DIR);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
     let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, CERTS_DIR);
     touch_file(gitkeep_path);
 
     let path = format!("{}/{}", &chain_path, CA_CERT_DIR);
-    fs::create_dir_all(&path).unwrap();
+    fs::create_dir_all(path).unwrap();
     let gitkeep_path = format!("{}/{}/.gitkeep", &chain_path, CA_CERT_DIR);
     touch_file(gitkeep_path);
 
     let git_ignore_path = format!("{}/.gitignore", &chain_path);
-    let git_ignore_content = format!(
-        "{}/*/\n{}/{}\n{}/*/{}\n",
-        ACCOUNT_DIR, CA_CERT_DIR, KEY_PEM, CERTS_DIR, KEY_PEM
-    );
+    let git_ignore_content =
+        format!("{ACCOUNT_DIR}/*/\n{CA_CERT_DIR}/{KEY_PEM}\n{CERTS_DIR}/*/{KEY_PEM}\n");
     write_file(git_ignore_content.as_bytes(), git_ignore_path);
     Ok(())
 }

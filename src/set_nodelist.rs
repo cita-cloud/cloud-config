@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::config::chain_config::ConfigStage;
 use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::{read_chain_config, write_toml};
+use crate::util::{rand_string, read_chain_config, write_toml};
 use clap::Parser;
 
 /// A subcommand for run
@@ -27,7 +28,8 @@ pub struct SetNodeListOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// node list looks like localhost:40000:node0,localhost:40001:node1
+    /// node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
+    /// last slice is optional, none means not k8s env.
     #[clap(long = "nodelist")]
     pub(crate) node_list: String,
 }
@@ -41,15 +43,27 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
     );
     let mut chain_config = read_chain_config(&file_name).unwrap();
 
+    // public and finalize is ok
+    if chain_config.stage == ConfigStage::Init {
+        return Err(Error::InvalidStage);
+    }
+
     let node_list_str: Vec<&str> = opts.node_list.split(',').collect();
     let node_list = node_list_str
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
-            NodeNetworkAddressBuilder::new()
+            let cluster = if node_network_info.len() == 3 {
+                rand_string()
+            } else {
+                node_network_info[3].to_string()
+            };
+
+            NodeNetworkAddressBuilder::default()
                 .host(node_network_info[0].to_string())
                 .port(node_network_info[1].parse::<u16>().unwrap())
                 .domain(node_network_info[2].to_string())
+                .cluster(cluster)
                 .build()
         })
         .collect();

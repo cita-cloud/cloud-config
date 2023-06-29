@@ -12,49 +12,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CONSENSUS, CONSENSUS_BFT};
+use crate::constant::{CONSENSUS, CONSENSUS_OVERLORD};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
+use super::log_config::LogConfig;
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
-pub struct ConsensusBft {
+pub struct ConsensusOverlord {
+    pub domain: String,
+
     pub controller_port: u16,
 
     pub consensus_port: u16,
 
     pub network_port: u16,
 
-    pub kms_port: u16,
+    pub metrics_port: u16,
 
-    pub node_address: String,
+    pub enable_metrics: bool,
+
+    pub log_config: LogConfig,
 }
 
-impl ConsensusBft {
+impl ConsensusOverlord {
     pub fn new(
+        domain: String,
         controller_port: u16,
         consensus_port: u16,
         network_port: u16,
-        kms_port: u16,
-        node_address: String,
+        metrics_port: u16,
+        enable_metrics: bool,
+        log_config: LogConfig,
     ) -> Self {
         Self {
+            domain,
             controller_port,
             consensus_port,
             network_port,
-            kms_port,
-            node_address,
+            metrics_port,
+            enable_metrics,
+            log_config,
         }
     }
 }
 
-impl YmlWriter for ConsensusBft {
+impl YmlWriter for ConsensusOverlord {
     fn service(&self) -> String {
         CONSENSUS.to_string()
     }
 }
 
-impl TomlWriter for ConsensusBft {
+impl TomlWriter for ConsensusOverlord {
     fn section(&self) -> String {
-        CONSENSUS_BFT.to_string()
+        CONSENSUS_OVERLORD.to_string()
     }
 }

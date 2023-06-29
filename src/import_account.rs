@@ -13,22 +13,22 @@
 // limitations under the License.
 
 use std::fs;
-use std::path::Path;
 
 use clap::Parser;
 
-use anyhow::bail;
-use anyhow::Context;
-use anyhow::Result;
-
 use crate::{
-    config::{kms_eth::KmsEth, kms_sm::KmsSm},
-    constant::{ACCOUNT_DIR, CHAIN_CONFIG_FILE, KEY_ID, KMS_DB, KMS_ETH, KMS_SM},
-    traits::Kms,
+    constant::{
+        ACCOUNT_DIR, CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, NODE_ADDRESS, PRIVATE_KEY,
+        VALIDATOR_ADDRESS,
+    },
+    error::Error,
     util::{find_micro_service, read_chain_config, write_file},
 };
 
-/// A subcommand for import account, only kms_sm is supported
+use ophelia::{PublicKey, ToBlsPublicKey};
+use ophelia_blst::BlsPrivateKey;
+
+/// A subcommand for import account
 #[derive(Parser, Debug, Clone)]
 pub struct ImportAccountOpts {
     /// set chain name
@@ -37,63 +37,62 @@ pub struct ImportAccountOpts {
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
     pub(crate) config_dir: String,
-    /// kms db password
-    #[clap(long = "kms-password", default_value = "123456")]
-    pub(crate) kms_password: String,
     /// hex encoded private key
     #[clap(long = "privkey")]
     pub(crate) privkey: String,
 }
 
-// return key_id and address of the account
-fn import_account<K: Kms, P: AsRef<Path>>(
-    base_dir: P,
-    kms_password: &str,
-    privkey: &str,
-) -> Result<(u64, Vec<u8>)> {
-    let privkey = {
-        let s = crate::util::remove_0x(privkey);
-        hex::decode(s).context("invalid `node_key`")?
-    };
-
-    let account_dir = {
-        let addr = hex::encode(K::sk2address(&privkey));
-        base_dir.as_ref().join(&addr)
-    };
-    fs::create_dir_all(&account_dir).context("cannot create account dir")?;
-
-    let db_path = account_dir.join(KMS_DB).to_string_lossy().into();
-    let kms = K::create_kms_db(db_path, kms_password.into());
-    let (key_id, addr) = kms.import_privkey(&privkey);
-
-    let key_id_path = account_dir.join(KEY_ID);
-    write_file(key_id.to_string().as_bytes(), key_id_path);
-
-    Ok((key_id, addr))
-}
-
-pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(u64, String)> {
+pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String), Error> {
     // load chain_config
     let file_name = format!(
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
     );
-    let chain_config = read_chain_config(&file_name).unwrap();
+    let chain_config = read_chain_config(file_name).unwrap();
 
-    let base_dir = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
-    let (key_id, addr) = {
-        let import_account = if find_micro_service(&chain_config, KMS_ETH) {
-            import_account::<KmsEth, _>
-        } else if find_micro_service(&chain_config, KMS_SM) {
-            import_account::<KmsSm, _>
-        } else {
-            bail!("unknown kms type");
-        };
-        import_account(base_dir, &opts.kms_password, &opts.privkey)
-            .context("cannot import account")?
+    let private_key = {
+        let s = crate::util::remove_0x(&opts.privkey);
+        hex::decode(s).expect("invalid `node_key`")
     };
 
-    let addr = hex::encode(addr);
-    println!("key_id:{}, address:{}", key_id, addr);
-    Ok((key_id, addr))
+    // generate node_address
+    #[cfg(feature = "sm")]
+    let address = crypto_sm::sm::sk2address(&private_key[..]);
+    #[cfg(feature = "eth")]
+    let address = crypto_eth::eth::sk2address(&private_key[..]);
+
+    let address = hex::encode(address);
+
+    // gen a folder to store account info
+    let base_path = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
+    let path = format!("{}/{}", &base_path, &address);
+    fs::create_dir_all(path).unwrap();
+
+    // store private_key
+    let path = format!("{}/{}/{}", &base_path, address, PRIVATE_KEY);
+    write_file(hex::encode(&private_key).as_bytes(), path);
+
+    let is_overlord = find_micro_service(&chain_config, CONSENSUS_OVERLORD);
+    let validator_address = if is_overlord {
+        let private_key = BlsPrivateKey::try_from(&private_key[..]).unwrap();
+        let common_ref = "".to_string();
+        let pub_key = private_key.pub_key(&common_ref);
+        let bls_address = pub_key.to_bytes().to_vec();
+        hex::encode(bls_address)
+    } else {
+        address.clone()
+    };
+
+    // store validator_address
+    let path = format!("{}/{}/{}", &base_path, address, VALIDATOR_ADDRESS);
+    write_file(validator_address.as_bytes(), path);
+
+    // store node_address
+    let path = format!("{}/{}/{}", &base_path, address, NODE_ADDRESS);
+    write_file(address.as_bytes(), path);
+
+    // output node_address and validator_address
+    println!("node_address: {address} validator_address: {validator_address}");
+
+    Ok((address, validator_address))
 }

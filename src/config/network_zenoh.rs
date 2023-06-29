@@ -12,69 +12,63 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{NETWORK, NETWORK_TLS};
+use crate::constant::{NETWORK, NETWORK_ZENOH};
 use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
-fn default_reconnect_timeout() -> Option<u64> {
-    Some(5)
-}
+
+use super::log_config::LogConfig;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PeerConfig {
-    pub host: String,
+    pub protocol: String,
     pub port: u16,
-
-    // TODO: is this name suitable?
     pub domain: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModuleConfig {
+    pub module_name: String,
+    pub hostname: String,
+    pub port: u16,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NetworkConfig {
-    pub grpc_port: Option<u16>,
-    pub listen_port: Option<u16>,
+pub struct ZenohConfig {
+    pub grpc_port: u16,
+    pub domain: String,
+    pub protocol: String,
+    pub port: u16,
 
-    #[serde(default = "default_reconnect_timeout")]
-    pub reconnect_timeout: Option<u64>, // in seconds
+    pub ca_cert: String,
 
-    pub ca_cert: Option<String>,
+    pub cert: String,
 
-    pub cert: Option<String>,
-    // TODO: better security
-    pub priv_key: Option<String>,
+    pub priv_key: String,
 
     #[serde(default)]
     // https://github.com/alexcrichton/toml-rs/issues/258
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub peers: Vec<PeerConfig>,
-}
-impl NetworkConfig {
-    pub fn new(
-        listen_port: u16,
-        grpc_port: u16,
-        ca_cert: String,
-        cert: String,
-        priv_key: String,
-        peers: Vec<PeerConfig>,
-    ) -> Self {
-        Self {
-            listen_port: Some(listen_port),
-            grpc_port: Some(grpc_port),
-            reconnect_timeout: default_reconnect_timeout(),
-            ca_cert: Some(ca_cert),
-            cert: Some(cert),
-            priv_key: Some(priv_key),
-            peers,
-        }
-    }
+
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub modules: Vec<ModuleConfig>,
+
+    pub node_address: String,
+    pub validator_address: String,
+    pub chain_id: String,
+    pub metrics_port: u16,
+    pub enable_metrics: bool,
+    pub log_config: LogConfig,
 }
 
-impl TomlWriter for NetworkConfig {
+impl TomlWriter for ZenohConfig {
     fn section(&self) -> String {
-        NETWORK_TLS.to_string()
+        NETWORK_ZENOH.to_string()
     }
 }
 
-impl YmlWriter for NetworkConfig {
+impl YmlWriter for ZenohConfig {
     fn service(&self) -> String {
         NETWORK.to_string()
     }

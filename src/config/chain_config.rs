@@ -23,6 +23,8 @@ pub struct NodeNetworkAddress {
     pub host: String,
     pub port: u16,
     pub domain: String,
+    pub cluster: String,
+    pub svc_port: u16,
 }
 
 impl PartialEq for NodeNetworkAddress {
@@ -43,17 +45,23 @@ pub struct NodeNetworkAddressBuilder {
     pub host: String,
     pub port: u16,
     pub domain: String,
+    pub cluster: String,
+    pub svc_port: u16,
 }
 
-impl NodeNetworkAddressBuilder {
-    pub fn new() -> NodeNetworkAddressBuilder {
-        NodeNetworkAddressBuilder {
+impl Default for NodeNetworkAddressBuilder {
+    fn default() -> Self {
+        Self {
             host: "localhost".to_string(),
             port: 0,
             domain: "".to_string(),
+            cluster: "".to_string(),
+            svc_port: 40000,
         }
     }
+}
 
+impl NodeNetworkAddressBuilder {
     pub fn host(&mut self, host: String) -> &mut NodeNetworkAddressBuilder {
         self.host = host;
         self
@@ -69,11 +77,24 @@ impl NodeNetworkAddressBuilder {
         self
     }
 
+    pub fn cluster(&mut self, cluster: String) -> &mut NodeNetworkAddressBuilder {
+        self.cluster = cluster;
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn svc_port(&mut self, svc_port: u16) -> &mut NodeNetworkAddressBuilder {
+        self.svc_port = svc_port;
+        self
+    }
+
     pub fn build(&self) -> NodeNetworkAddress {
         NodeNetworkAddress {
             host: self.host.clone(),
             port: self.port,
             domain: self.domain.clone(),
+            cluster: self.cluster.clone(),
+            svc_port: self.svc_port,
         }
     }
 }
@@ -89,14 +110,16 @@ pub struct MicroServiceBuilder {
     pub tag: String,
 }
 
-impl MicroServiceBuilder {
-    pub fn new() -> MicroServiceBuilder {
+impl Default for MicroServiceBuilder {
+    fn default() -> Self {
         MicroServiceBuilder {
             image: "".to_string(),
             tag: "latest".to_string(),
         }
     }
+}
 
+impl MicroServiceBuilder {
     pub fn image(&mut self, image: String) -> &mut MicroServiceBuilder {
         self.image = image;
         self
@@ -115,12 +138,20 @@ impl MicroServiceBuilder {
     }
 }
 
+#[derive(Debug, Serialize, Clone, Deserialize, Eq, PartialEq)]
+pub enum ConfigStage {
+    Init,
+    Public,
+    Finalize,
+}
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ChainConfig {
     pub system_config: SystemConfigFile,
     pub genesis_block: GenesisBlock,
     pub node_network_address_list: Vec<NodeNetworkAddress>,
     pub micro_service_list: Vec<MicroService>,
+    pub stage: ConfigStage,
 }
 
 impl ChainConfig {
@@ -135,6 +166,10 @@ impl ChainConfig {
     pub fn set_node_network_address_list(&mut self, node_list: Vec<NodeNetworkAddress>) {
         self.node_network_address_list = node_list;
     }
+
+    pub fn set_stage(&mut self, stage: ConfigStage) {
+        self.stage = stage;
+    }
 }
 
 pub struct ChainConfigBuilder {
@@ -142,17 +177,22 @@ pub struct ChainConfigBuilder {
     pub genesis_block: GenesisBlock,
     pub node_network_address_list: Vec<NodeNetworkAddress>,
     pub micro_service_list: Vec<MicroService>,
+    pub stage: ConfigStage,
+}
+
+impl Default for ChainConfigBuilder {
+    fn default() -> Self {
+        Self {
+            system_config: SystemConfigBuilder::default().build(),
+            genesis_block: GenesisBlockBuilder::default().build(),
+            node_network_address_list: Vec::new(),
+            micro_service_list: Vec::new(),
+            stage: ConfigStage::Init,
+        }
+    }
 }
 
 impl ChainConfigBuilder {
-    pub fn new() -> Self {
-        Self {
-            system_config: SystemConfigBuilder::new().build(),
-            genesis_block: GenesisBlockBuilder::new().build(),
-            node_network_address_list: Vec::new(),
-            micro_service_list: Vec::new(),
-        }
-    }
     pub fn system_config(&mut self, system_config: SystemConfigFile) -> &mut ChainConfigBuilder {
         self.system_config = system_config;
         self
@@ -186,6 +226,7 @@ impl ChainConfigBuilder {
             genesis_block: self.genesis_block.clone(),
             node_network_address_list: self.node_network_address_list.clone(),
             micro_service_list: self.micro_service_list.clone(),
+            stage: self.stage.clone(),
         }
     }
 }
