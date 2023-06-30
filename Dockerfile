@@ -7,7 +7,7 @@ RUN rustup component add rustfmt && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 COPY . /build/
-RUN cargo build --release
+RUN RUSTFLAGS="-C target-cpu=sandybridge" cargo build --release
 
 FROM debian:buster-slim
 RUN apt-get update && \
