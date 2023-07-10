@@ -23,7 +23,7 @@ use crate::util::{
 use clap::Parser;
 use k8s_openapi::{
     api::{
-        apps::v1::{StatefulSet, StatefulSetSpec},
+        apps::v1::{StatefulSet, StatefulSetSpec, StatefulSetUpdateStrategy},
         core::v1::{
             Affinity, ConfigMap, ConfigMapVolumeSource, Container, ContainerPort, ExecAction,
             HostAlias, HostPathVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
@@ -282,6 +282,11 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
         spec.selector = selector;
 
         spec.replicas = Some(1);
+
+        spec.update_strategy = Some(StatefulSetUpdateStrategy {
+            type_: Some("OnDelete".to_string()),
+            ..Default::default()
+        });
 
         let mut volume_claim_templates = Vec::new();
 
