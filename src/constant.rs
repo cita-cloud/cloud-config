@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub const CONTROLLER: &str = "controller";
+pub const CONTROLLER_HSM: &str = "controller_hsm";
 #[allow(dead_code)]
 pub const CONSENSUS: &str = "consensus";
 pub const CONSENSUS_RAFT: &str = "consensus_raft";

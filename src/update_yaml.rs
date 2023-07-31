@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM, NETWORK_ZENOH,
-    NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CONTROLLER_HSM,
+    EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -771,7 +771,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
         for micro_service in &chain_config.micro_service_list {
             if micro_service.image.starts_with("controller") {
-                if micro_service.image == CONTROLLER {
+                if micro_service.image == CONTROLLER || micro_service.image == CONTROLLER_HSM {
                     controller_container.image = Some(format!(
                         "{}/{}/{}:{}",
                         &opts.docker_registry,

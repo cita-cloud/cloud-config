@@ -21,9 +21,9 @@ use crate::config::network_zenoh::{ModuleConfig, PeerConfig as ZenohPeerConfig, 
 use crate::config::storage_opendal::StorageOpendalConfig;
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, CONSENSUS,
-    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR, EXECUTOR_EVM, KEY_PEM, NETWORK,
-    NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE, STORAGE_OPENDAL,
-    VALIDATOR_ADDRESS,
+    CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CONTROLLER_HSM, EXECUTOR, EXECUTOR_EVM,
+    KEY_PEM, NETWORK, NETWORK_ZENOH, NODE_ADDRESS, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE,
+    STORAGE_OPENDAL, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::traits::TomlWriter;
@@ -267,7 +267,9 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     }
 
     // controller config file
-    if find_micro_service(&chain_config, CONTROLLER) {
+    if find_micro_service(&chain_config, CONTROLLER)
+        || find_micro_service(&chain_config, CONTROLLER_HSM)
+    {
         chain_config.genesis_block.write(&config_file_name);
         chain_config.system_config.write(&config_file_name);
         let controller_config = ControllerConfig {
