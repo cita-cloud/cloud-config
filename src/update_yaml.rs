@@ -26,7 +26,7 @@ use k8s_openapi::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
             Affinity, ConfigMap, ConfigMapVolumeSource, Container, ContainerPort, ExecAction,
-            HostAlias, HostPathVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            HostPathVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
             PodAffinityTerm, PodAntiAffinity, PodSecurityContext, PodSpec, PodTemplateSpec, Probe,
             ResourceRequirements, Service, ServicePort, ServiceSpec, Volume, VolumeMount,
             WeightedPodAffinityTerm,
@@ -43,7 +43,6 @@ use k8s_openapi::{
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
-use std::net::Ipv4Addr;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone, Deserialize, Serialize)]
@@ -325,38 +324,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
         metadata.labels = Some(labels);
         template.metadata = Some(metadata);
 
-        let mut node_cluster = String::default();
-        for node_net_info in &chain_config.node_network_address_list {
-            let real_domain = format!("{}-{}", &opts.chain_name, node_net_info.domain);
-            if real_domain.eq(&node_name) {
-                node_cluster = node_net_info.cluster.clone();
-                break;
-            }
-        }
-
-        let mut host_aliases: Vec<HostAlias> = vec![HostAlias {
-            hostnames: Some(vec![node_name.clone()]),
-            ip: Some("0.0.0.0".to_string()),
-        }];
-
-        for node_net_info in chain_config.node_network_address_list {
-            if !node_cluster.eq(&node_net_info.cluster) {
-                node_net_info
-                    .host
-                    .parse::<Ipv4Addr>()
-                    .unwrap_or_else(|err| panic!("must be valid IP address: [{err}]"));
-                host_aliases.push(HostAlias {
-                    hostnames: Some(vec![format!(
-                        "{}-{}",
-                        &opts.chain_name, node_net_info.domain
-                    )]),
-                    ip: Some(node_net_info.host),
-                })
-            }
-        }
-
         let mut template_spec = PodSpec {
-            host_aliases: Some(host_aliases),
             security_context: Some(PodSecurityContext {
                 run_as_user: Some(1000),
                 run_as_group: Some(1000),
