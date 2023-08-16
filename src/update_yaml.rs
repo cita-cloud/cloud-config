@@ -445,7 +445,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50000".to_string(),
                         ]),
                     }),
@@ -521,7 +521,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50001".to_string(),
                         ]),
                     }),
@@ -609,7 +609,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50002".to_string(),
                         ]),
                     }),
@@ -680,7 +680,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50003".to_string(),
                         ]),
                     }),
@@ -756,7 +756,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50004".to_string(),
                         ]),
                     }),
