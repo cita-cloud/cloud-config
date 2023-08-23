@@ -475,7 +475,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn network service!");
+                    panic!("Unknown network service!");
                 }
             }
         }
@@ -568,7 +568,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/mnt/private_key".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn consensus service!");
+                    panic!("Unknown consensus service!");
                 }
             }
         }
@@ -639,7 +639,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn executor service!");
+                    panic!("Unknown executor service!");
                 }
             }
         }
@@ -710,7 +710,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn storage service!");
+                    panic!("Unknown storage service!");
                 }
             }
         }
@@ -788,7 +788,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/mnt/private_key".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn controller service!");
+                    panic!("Unknown controller service!");
                 }
             }
         }

@@ -466,7 +466,7 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
     .unwrap();
 
     // update old nodes
-    // chain_config load befor append node, so it only contains old nodes
+    // chain_config load before append node, so it only contains old nodes
     for node in chain_config.node_network_address_list {
         let domain = node.domain.clone();
 
