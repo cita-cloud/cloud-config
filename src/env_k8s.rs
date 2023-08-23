@@ -93,7 +93,7 @@ pub struct CreateK8sOpts {
     #[clap(long = "storage_tag", default_value = "latest")]
     pub storage_tag: String,
     /// set controller micro service image name (controller)
-    #[clap(long = "controller_image", default_value = "controller")]
+    #[clap(long = "controller_image", default_value = "controller_hsm")]
     pub controller_image: String,
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
@@ -169,7 +169,7 @@ impl Default for CreateK8sOpts {
             executor_tag: "latest".to_string(),
             storage_image: "storage_opendal".to_string(),
             storage_tag: "latest".to_string(),
-            controller_image: "controller".to_string(),
+            controller_image: "controller_hsm".to_string(),
             controller_tag: "latest".to_string(),
             admin: Default::default(),
             node_list: Default::default(),
@@ -622,7 +622,7 @@ mod k8s_test {
             executor_tag: "latest".to_string(),
             storage_image: "storage_opendal".to_string(),
             storage_tag: "latest".to_string(),
-            controller_image: "controller".to_string(),
+            controller_image: "controller_hsm".to_string(),
             controller_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
@@ -660,7 +660,7 @@ mod k8s_test {
             executor_tag: "latest".to_string(),
             storage_image: "storage_opendal".to_string(),
             storage_tag: "latest".to_string(),
-            controller_image: "controller".to_string(),
+            controller_image: "controller_hsm".to_string(),
             controller_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
             node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
