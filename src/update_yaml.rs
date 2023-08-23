@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM, NETWORK_ZENOH,
-    NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CONTROLLER_HSM,
+    EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -475,7 +475,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn network service!");
+                    panic!("Unknown network service!");
                 }
             }
         }
@@ -568,7 +568,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/mnt/private_key".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn consensus service!");
+                    panic!("Unknown consensus service!");
                 }
             }
         }
@@ -639,7 +639,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn executor service!");
+                    panic!("Unknown executor service!");
                 }
             }
         }
@@ -710,7 +710,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn storage service!");
+                    panic!("Unknown storage service!");
                 }
             }
         }
@@ -771,7 +771,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
         for micro_service in &chain_config.micro_service_list {
             if micro_service.image.starts_with("controller") {
-                if micro_service.image == CONTROLLER {
+                if micro_service.image == CONTROLLER || micro_service.image == CONTROLLER_HSM {
                     controller_container.image = Some(format!(
                         "{}/{}/{}:{}",
                         &opts.docker_registry,
@@ -788,7 +788,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/mnt/private_key".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn controller service!");
+                    panic!("Unknown controller service!");
                 }
             }
         }
