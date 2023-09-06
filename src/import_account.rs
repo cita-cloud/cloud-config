@@ -56,11 +56,13 @@ pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String
     };
 
     // generate node_address
-    #[cfg(feature = "sm")]
-    let address = crypto_sm::sm::sk2address(&private_key[..]);
-    #[cfg(feature = "eth")]
-    let address = crypto_eth::eth::sk2address(&private_key[..]);
-
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "sm")] {
+            let address = crypto_sm::sm::sk2address(&private_key[..]);
+        } else if #[cfg(feature = "eth")] {
+            let address = crypto_eth::eth::sk2address(&private_key[..]);
+        }
+    }
     let address = hex::encode(address);
 
     // gen a folder to store account info

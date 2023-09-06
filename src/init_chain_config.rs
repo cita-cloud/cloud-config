@@ -79,7 +79,7 @@ pub struct InitChainConfigOpts {
     #[clap(long = "storage_tag", default_value = "latest")]
     pub(crate) storage_tag: String,
     /// set controller micro service image name (controller)
-    #[clap(long = "controller_image", default_value = "controller")]
+    #[clap(long = "controller_image", default_value = "controller_hsm")]
     pub(crate) controller_image: String,
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use crate::constant::{
-    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, EXECUTOR_EVM, NETWORK_ZENOH,
-    NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
+    CHAIN_CONFIG_FILE, CONSENSUS_OVERLORD, CONSENSUS_RAFT, CONTROLLER, CONTROLLER_HSM,
+    EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
 use crate::util::{
@@ -39,11 +39,8 @@ use k8s_openapi::{
     },
     ByteString,
 };
-
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::fs;
-use std::net::Ipv4Addr;
+use std::{collections::BTreeMap, fs, net::Ipv4Addr};
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone, Deserialize, Serialize)]
@@ -73,6 +70,9 @@ pub struct UpdateYamlOpts {
     /// storage class
     #[clap(long = "storage-class")]
     pub storage_class: String,
+    /// pvc access mode: ReadWriteOnce/ReadWriteMany
+    #[clap(long = "access-mode", default_value = "ReadWriteMany")]
+    pub(crate) access_mode: String,
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
     pub storage_capacity: String,
@@ -110,6 +110,7 @@ impl Default for UpdateYamlOpts {
             docker_registry: "docker.io".to_string(),
             docker_repo: "citacloud".to_string(),
             storage_class: Default::default(),
+            access_mode: "ReadWriteMany".to_string(),
             storage_capacity: "10Gi".to_string(),
             requests_cpu: "10m".to_string(),
             requests_memory: "32Mi".to_string(),
@@ -290,7 +291,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             ..Default::default()
         };
         let mut pvc_spec = PersistentVolumeClaimSpec {
-            access_modes: Some(vec!["ReadWriteOnce".to_string()]),
+            access_modes: Some(vec![opts.access_mode.clone()]),
             ..Default::default()
         };
         let mut resources = ResourceRequirements::default();
@@ -330,17 +331,12 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             }
         }
 
-        let mut host_aliases: Vec<HostAlias> = vec![HostAlias {
-            hostnames: Some(vec![node_name.clone()]),
-            ip: Some("0.0.0.0".to_string()),
-        }];
+        let mut host_aliases: Vec<HostAlias> = vec![];
 
         for node_net_info in chain_config.node_network_address_list {
-            if !node_cluster.eq(&node_net_info.cluster) {
-                node_net_info
-                    .host
-                    .parse::<Ipv4Addr>()
-                    .unwrap_or_else(|err| panic!("must be valid IP address: [{err}]"));
+            if !node_cluster.eq(&node_net_info.cluster)
+                && node_net_info.host.parse::<Ipv4Addr>().is_ok()
+            {
                 host_aliases.push(HostAlias {
                     hostnames: Some(vec![format!(
                         "{}-{}",
@@ -351,8 +347,14 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             }
         }
 
+        let host_aliases = if host_aliases.is_empty() {
+            None
+        } else {
+            Some(host_aliases)
+        };
+
         let mut template_spec = PodSpec {
-            host_aliases: Some(host_aliases),
+            host_aliases,
             security_context: Some(PodSecurityContext {
                 run_as_user: Some(1000),
                 run_as_group: Some(1000),
@@ -443,7 +445,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50000".to_string(),
                         ]),
                     }),
@@ -473,7 +475,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn network service!");
+                    panic!("Unknown network service!");
                 }
             }
         }
@@ -519,7 +521,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50001".to_string(),
                         ]),
                     }),
@@ -566,7 +568,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/mnt/private_key".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn consensus service!");
+                    panic!("Unknown consensus service!");
                 }
             }
         }
@@ -607,7 +609,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50002".to_string(),
                         ]),
                     }),
@@ -637,7 +639,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn executor service!");
+                    panic!("Unknown executor service!");
                 }
             }
         }
@@ -678,7 +680,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50003".to_string(),
                         ]),
                     }),
@@ -708,7 +710,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/etc/cita-cloud/config/config.toml".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn storage service!");
+                    panic!("Unknown storage service!");
                 }
             }
         }
@@ -754,7 +756,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 Some(Probe {
                     exec: Some(ExecAction {
                         command: Some(vec![
-                            "grpc_health_probe".to_string(),
+                            "grpc-health-probe".to_string(),
                             "-addr=127.0.0.1:50004".to_string(),
                         ]),
                     }),
@@ -769,7 +771,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
         for micro_service in &chain_config.micro_service_list {
             if micro_service.image.starts_with("controller") {
-                if micro_service.image == CONTROLLER {
+                if micro_service.image == CONTROLLER || micro_service.image == CONTROLLER_HSM {
                     controller_container.image = Some(format!(
                         "{}/{}/{}:{}",
                         &opts.docker_registry,
@@ -786,7 +788,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                         "/mnt/private_key".to_string(),
                     ]);
                 } else {
-                    panic!("Unkonwn controller service!");
+                    panic!("Unknown controller service!");
                 }
             }
         }

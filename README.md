@@ -886,6 +886,8 @@ test-chain-node1
           docker repo [default: citacloud]
       --storage-class <STORAGE_CLASS>
           storage class
+      --access-mode <ACCESS_MODE>
+          pvc access mode: ReadWriteOnce/ReadWriteMany [default: ReadWriteMany]
       --storage-capacity <STORAGE_CAPACITY>
           storage capacity [default: 10Gi]
       --requests-cpu <REQUESTS_CPU>
