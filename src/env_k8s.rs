@@ -123,6 +123,9 @@ pub struct CreateK8sOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     pub is_danger: bool,
+    /// enable tx persistence
+    #[clap(long = "enable-tx-persistence")]
+    pub(crate) enable_tx_persistence: bool,
 
     /// disable metrics
     #[clap(long = "disable-metrics")]
@@ -146,6 +149,9 @@ pub struct CreateK8sOpts {
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
     pub(crate) s3_root: String,
+    /// cloud_storage.region
+    #[clap(long = "s3-region", default_value = "")]
+    pub(crate) s3_region: String,
 }
 
 impl Default for CreateK8sOpts {
@@ -177,6 +183,7 @@ impl Default for CreateK8sOpts {
             log_file_path: Default::default(),
             jaeger_agent_endpoint: Default::default(),
             is_danger: Default::default(),
+            enable_tx_persistence: Default::default(),
             disable_metrics: Default::default(),
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -184,6 +191,7 @@ impl Default for CreateK8sOpts {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         }
     }
 }
@@ -343,12 +351,14 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             controller_metrics_port: network_metrics_port + 4,
             disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
+            enable_tx_persistence: opts.enable_tx_persistence,
             access_key_id: opts.access_key_id.clone(),
             secret_access_key: opts.secret_access_key.clone(),
             s3_endpoint: opts.s3_endpoint.clone(),
             s3_bucket: opts.s3_bucket.clone(),
             service_type: opts.service_type.clone(),
             s3_root: opts.s3_root.clone(),
+            s3_region: opts.s3_region.clone(),
         })
         .unwrap();
 
@@ -389,6 +399,9 @@ pub struct AppendK8sOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
+    /// enable tx persistence
+    #[clap(long = "enable-tx-persistence")]
+    pub(crate) enable_tx_persistence: bool,
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
@@ -410,6 +423,9 @@ pub struct AppendK8sOpts {
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
     pub(crate) s3_root: String,
+    /// cloud_storage.region
+    #[clap(long = "s3-region", default_value = "")]
+    pub(crate) s3_region: String,
 }
 
 /// append a new node into chain
@@ -516,12 +532,14 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         controller_metrics_port: network_metrics_port + 4,
         disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
+        enable_tx_persistence: opts.enable_tx_persistence,
         access_key_id: opts.access_key_id.clone(),
         secret_access_key: opts.secret_access_key.clone(),
         s3_endpoint: opts.s3_endpoint.clone(),
         s3_bucket: opts.s3_bucket.clone(),
         service_type: opts.service_type.clone(),
         s3_root: opts.s3_root.clone(),
+        s3_region: opts.s3_region.clone(),
     })
     .unwrap();
 
@@ -631,6 +649,7 @@ mod k8s_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            enable_tx_persistence: false,
             disable_metrics: false,
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -638,6 +657,7 @@ mod k8s_test {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         })
         .unwrap();
 
@@ -669,6 +689,7 @@ mod k8s_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            enable_tx_persistence: false,
             disable_metrics: false,
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -676,6 +697,7 @@ mod k8s_test {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         })
         .unwrap();
 
@@ -687,6 +709,7 @@ mod k8s_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            enable_tx_persistence: false,
             disable_metrics: false,
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -694,6 +717,7 @@ mod k8s_test {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         })
         .unwrap();
 

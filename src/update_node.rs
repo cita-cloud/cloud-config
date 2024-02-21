@@ -299,6 +299,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 filter: node_config.log_level.clone(),
             },
             is_danger: node_config.is_danger,
+            tx_persistence: node_config.enable_tx_persistence,
         };
         controller_config.write(&config_file_name);
     } else {

@@ -58,6 +58,9 @@ pub struct CreateDevOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
+    /// enable tx persistence
+    #[clap(long = "enable-tx-persistence")]
+    pub(crate) enable_tx_persistence: bool,
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
@@ -79,6 +82,9 @@ pub struct CreateDevOpts {
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
     pub(crate) s3_root: String,
+    /// cloud_storage.region
+    #[clap(long = "s3-region", default_value = "")]
+    pub(crate) s3_region: String,
 }
 
 /// node network ip is 127.0.0.1
@@ -207,12 +213,14 @@ pub fn execute_create_dev(opts: CreateDevOpts) -> Result<(), Error> {
             controller_metrics_port: network_metrics_port + 4,
             disable_metrics: opts.disable_metrics,
             is_danger: opts.is_danger,
+            enable_tx_persistence: opts.enable_tx_persistence,
             access_key_id: opts.access_key_id.clone(),
             secret_access_key: opts.secret_access_key.clone(),
             s3_endpoint: opts.s3_endpoint.clone(),
             s3_bucket: opts.s3_bucket.clone(),
             service_type: opts.service_type.clone(),
             s3_root: opts.s3_root.clone(),
+            s3_region: opts.s3_region.clone(),
         })
         .unwrap();
 
@@ -249,6 +257,9 @@ pub struct AppendDevOpts {
     /// is chain in danger mode
     #[clap(long = "is-danger")]
     is_danger: bool,
+    /// enable tx persistence
+    #[clap(long = "enable-tx-persistence")]
+    pub(crate) enable_tx_persistence: bool,
     /// disable metrics
     #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
@@ -270,6 +281,9 @@ pub struct AppendDevOpts {
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
     pub(crate) s3_root: String,
+    /// cloud_storage.region
+    #[clap(long = "s3-region", default_value = "")]
+    pub(crate) s3_region: String,
 }
 
 /// append a new node into chain
@@ -363,12 +377,14 @@ pub fn execute_append_dev(opts: AppendDevOpts) -> Result<(), Error> {
         controller_metrics_port: network_metrics_port + 4,
         disable_metrics: opts.disable_metrics,
         is_danger: opts.is_danger,
+        enable_tx_persistence: opts.enable_tx_persistence,
         access_key_id: opts.access_key_id.clone(),
         secret_access_key: opts.secret_access_key.clone(),
         s3_endpoint: opts.s3_endpoint.clone(),
         s3_bucket: opts.s3_bucket.clone(),
         service_type: opts.service_type.clone(),
         s3_root: opts.s3_root.clone(),
+        s3_region: opts.s3_region.clone(),
     })
     .unwrap();
 
@@ -457,6 +473,7 @@ mod dev_test {
             jaeger_agent_endpoint: None,
             is_raft: false,
             is_danger: false,
+            enable_tx_persistence: false,
             disable_metrics: false,
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -464,6 +481,7 @@ mod dev_test {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         })
         .unwrap();
 
@@ -476,6 +494,7 @@ mod dev_test {
             jaeger_agent_endpoint: None,
             is_raft: true,
             is_danger: false,
+            enable_tx_persistence: false,
             disable_metrics: false,
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -483,6 +502,7 @@ mod dev_test {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         })
         .unwrap();
 
@@ -493,6 +513,7 @@ mod dev_test {
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
+            enable_tx_persistence: false,
             disable_metrics: false,
             access_key_id: "".to_string(),
             secret_access_key: "".to_string(),
@@ -500,6 +521,7 @@ mod dev_test {
             s3_bucket: "".to_string(),
             service_type: "".to_string(),
             s3_root: "".to_string(),
+            s3_region: "".to_string(),
         })
         .unwrap();
 

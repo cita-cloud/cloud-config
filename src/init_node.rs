@@ -19,7 +19,7 @@ use crate::config::node_config::{
 use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
 use crate::error::Error;
 use crate::util::{copy_dir_all, read_chain_config, write_toml};
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use std::fs;
 use std::path::Path;
 
@@ -81,11 +81,14 @@ pub struct InitNodeOpts {
     #[clap(long = "controller-metrics-port", default_value = "60004")]
     pub(crate) controller_metrics_port: u16,
     /// disable metrics
-    #[clap(long = "disable-metrics", action = ArgAction::SetTrue)]
+    #[clap(long = "disable-metrics")]
     pub(crate) disable_metrics: bool,
     /// is chain in danger mode
-    #[clap(long = "is-danger", action = ArgAction::SetTrue)]
+    #[clap(long = "is-danger")]
     pub(crate) is_danger: bool,
+    /// enable tx persistence
+    #[clap(long = "enable-tx-persistence")]
+    pub(crate) enable_tx_persistence: bool,
     /// cloud_storage.access_key_id
     #[clap(long = "access-key-id", default_value = "")]
     pub(crate) access_key_id: String,
@@ -104,6 +107,9 @@ pub struct InitNodeOpts {
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
     pub(crate) s3_root: String,
+    /// cloud_storage.region
+    #[clap(long = "s3-region", default_value = "")]
+    pub(crate) s3_region: String,
 }
 
 /// execute init node
@@ -144,6 +150,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .bucket(opts.s3_bucket.clone())
         .service_type(opts.service_type.clone())
         .root(opts.s3_root.clone())
+        .region(opts.s3_region.clone())
         .build();
     let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)
@@ -155,6 +162,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .account(opts.account)
         .enable_metrics(!opts.disable_metrics)
         .is_danger(opts.is_danger)
+        .enable_tx_persistence(opts.enable_tx_persistence)
         .cloud_storage(cloud_storage)
         .build();
 
