@@ -47,6 +47,8 @@ pub struct ControllerConfig {
     pub log_config: LogConfig,
 
     pub is_danger: bool,
+
+    pub tx_persistence: bool,
 }
 
 impl TomlWriter for ControllerConfig {
@@ -231,6 +233,7 @@ mod controller_test {
             enable_metrics: true,
             log_config: LogConfig::default(),
             is_danger: false,
+            tx_persistence: false,
         };
 
         config.write("example");

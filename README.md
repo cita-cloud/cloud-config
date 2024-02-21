@@ -113,6 +113,7 @@ mindmap
         id[account]
         id[enable_metrics]
         id[is_danger]
+        id[enable_tx_persistence]
         id(cloud_storage)
             id[access_key_id]
             id[secret_access_key]
@@ -120,6 +121,7 @@ mindmap
             id[bucket]
             id[service_type]
             id[root]
+            id[region]
     id(杂项)
         id[config-dir]
         id[chain_name]
@@ -756,6 +758,8 @@ test-chain
           disable metrics
       --is-danger
           is chain in danger mode
+      --enable-tx-persistence
+          enable tx persistence
       --access-key-id <ACCESS_KEY_ID>
           cloud_storage.access_key_id [default: ]
       --secret-access-key <SECRET_ACCESS_KEY>
@@ -768,6 +772,8 @@ test-chain
           cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
+      --s3-region <S3_REGION>
+          cloud_storage.region [default: ]
 ```
 
 说明：
@@ -799,6 +805,7 @@ $ cat test-chain-node0/node_config.toml
 account = "5bf591636c7efc27cd855c2282a1652bfa14a1bc"
 enable_metrics = true
 is_danger = false
+enable_tx_persistence = false
 log_level = "info"
 network_listen_port = 40000
 
@@ -807,6 +814,7 @@ access_key_id = ""
 bucket = ""
 endpoint = ""
 root = ""
+region = ""
 secret_access_key = ""
 service_type = ""
 
@@ -970,6 +978,8 @@ Options:
           is consensus raft
       --is-danger
           is chain in danger mode
+      --enable-tx-persistence
+          enable tx persistence
       --disable-metrics
           disable metrics
       --access-key-id <ACCESS_KEY_ID>
@@ -984,6 +994,8 @@ Options:
           cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
+      --s3-region <S3_REGION>
+          cloud_storage.region [default: ]
   -h, --help
           Print help
 ```
@@ -1035,6 +1047,8 @@ Options:
           jaeger agent endpoint
       --is-danger
           is chain in danger mode
+      --enable-tx-persistence
+          enable tx persistence
       --disable-metrics
           disable metrics
       --access-key-id <ACCESS_KEY_ID>
@@ -1049,6 +1063,8 @@ Options:
           cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
+      --s3-region <S3_REGION>
+          cloud_storage.region [default: ]
   -h, --help
           Print help
 ```
@@ -1174,6 +1190,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           jaeger agent endpoint
       --is-danger
           is chain in danger mode
+      --enable-tx-persistence
+          enable tx persistence
       --disable-metrics
           disable metrics
       --access-key-id <ACCESS_KEY_ID>
@@ -1188,6 +1206,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
+      --s3-region <S3_REGION>
+          cloud_storage.region [default: ]
 ```
 
 说明:
@@ -1225,6 +1245,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
       --is-danger
           is chain in danger mode
+      --enable-tx-persistence
+          enable tx persistence
       --disable-metrics
           disable metrics
       --access-key-id <ACCESS_KEY_ID>
@@ -1239,6 +1261,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
       --s3-root <S3_ROOT>
           cloud_storage.root [default: ]
+      --s3-region <S3_REGION>
+          cloud_storage.region [default: ]
 ```
 
 说明：

@@ -164,6 +164,7 @@ pub struct CloudStorage {
     pub bucket: String,
     pub service_type: String,
     pub root: String,
+    pub region: String,
 }
 
 pub struct CloudStorageBuilder {
@@ -173,6 +174,7 @@ pub struct CloudStorageBuilder {
     pub bucket: String,
     pub service_type: String,
     pub root: String,
+    pub region: String,
 }
 
 impl Default for CloudStorageBuilder {
@@ -184,6 +186,7 @@ impl Default for CloudStorageBuilder {
             bucket: "".to_string(),
             service_type: "".to_string(),
             root: "".to_string(),
+            region: "".to_string(),
         }
     }
 }
@@ -219,6 +222,11 @@ impl CloudStorageBuilder {
         self
     }
 
+    pub fn region(&mut self, region: String) -> &mut CloudStorageBuilder {
+        self.region = region;
+        self
+    }
+
     pub fn build(&self) -> CloudStorage {
         CloudStorage {
             access_key_id: self.access_key_id.clone(),
@@ -227,6 +235,7 @@ impl CloudStorageBuilder {
             bucket: self.bucket.clone(),
             service_type: self.service_type.clone(),
             root: self.root.clone(),
+            region: self.region.clone(),
         }
     }
 }
@@ -242,6 +251,7 @@ pub struct NodeConfig {
     pub account: String,
     pub enable_metrics: bool,
     pub is_danger: bool,
+    pub enable_tx_persistence: bool,
     pub cloud_storage: CloudStorage,
 }
 
@@ -255,6 +265,7 @@ pub struct NodeConfigBuilder {
     pub account: String,
     pub enable_metrics: bool,
     pub is_danger: bool,
+    pub enable_tx_persistence: bool,
     pub cloud_storage: CloudStorage,
 }
 
@@ -270,6 +281,7 @@ impl Default for NodeConfigBuilder {
             account: "".to_string(),
             enable_metrics: true,
             is_danger: false,
+            enable_tx_persistence: false,
             cloud_storage: CloudStorageBuilder::default().build(),
         }
     }
@@ -324,6 +336,11 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn enable_tx_persistence(&mut self, enable_tx_persistence: bool) -> &mut NodeConfigBuilder {
+        self.enable_tx_persistence = enable_tx_persistence;
+        self
+    }
+
     pub fn cloud_storage(&mut self, cloud_storage: CloudStorage) -> &mut NodeConfigBuilder {
         self.cloud_storage = cloud_storage;
         self
@@ -340,6 +357,7 @@ impl NodeConfigBuilder {
             account: self.account.clone(),
             enable_metrics: self.enable_metrics,
             is_danger: self.is_danger,
+            enable_tx_persistence: self.enable_tx_persistence,
             cloud_storage: self.cloud_storage.clone(),
         }
     }
