@@ -844,7 +844,6 @@ storage_metrics_port = 60003
         --config-name <CONFIG_NAME>    set config file name [default: config.toml]
         --domain <DOMAIN>              domain of node
         --is-dev                       is for dev env
-        --no-stdout                    disable output to stdout
 ```
 
 说明：
