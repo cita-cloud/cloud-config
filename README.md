@@ -16,7 +16,7 @@ cargo install --path .
 
 ```
 $ cloud-config -h
-cloud-config 6.7.0
+cloud-config 6.7.3
 Rivtower Technologies <contact@rivtower.com>
 
 Usage: cloud-config <COMMAND>
@@ -38,12 +38,9 @@ Commands:
   create-ca          create CA
   create-csr         create csr
   sign-csr           sign csr
-  create-dev         create config in env dev
-  append-dev         append node in env dev
-  delete-dev         delete node in env dev
-  create-k8s         create config in env k8s
-  append-k8s         append node in env k8s
-  delete-k8s         delete node in env k8s
+  create             create config in one cmd
+  append             append node in one cmd
+  delete             delete node in one cmd
   set-stage          set stage
   import-ca          import ca
   import-cert        import node cert
@@ -94,7 +91,7 @@ mindmap
             id[port]
             id[domain]
             id[cluster]
-            id[svc_port]
+            id[name_space]
         id(micro_service_list)
             id[image]
             id[tag]
@@ -106,7 +103,6 @@ mindmap
             id[port]
         id(metrics_ports)
             id[port]
-        id[network_listen_port]
         id[log_level]
         id[log_file_path]
         id[jaeger_agent_endpoint]
@@ -168,11 +164,9 @@ mindmap
 
 比如增加单个共识节点的`append-validator`，删除单个共识节点的`delete-validator`；增加单个网络节点的`append-node`，删除单个网络节点的`delete-node`。
 
-在前述流程的基础上，封装了更高级更方便使用的子命令。
+在前述流程的基础上，封装了更高级更方便使用的命令。
 
-比如针对开发环境，有`create-dev`，`append-dev`和`delete-dev`，使用开发环境约定好的默认值，无需执行这么多子命令，也无需传递大量参数就可以生成和操作一条链的配置。
-
-针对演示或者生产阶段的`k8s`环境，有`create-k8s`，`append-k8s`和`delete-k8s`。
+有`create`，`append`和`delete`，无需执行很多子命令，也无需传递大量参数就可以生成和操作一条链的配置。
 
 
 ### 使用示例
@@ -240,7 +234,7 @@ test-chain/
       --storage_tag <STORAGE_TAG>
           set storage micro service image tag [default: latest]
       --controller_image <CONTROLLER_IMAGE>
-          set controller micro service image name (controller) [default: controller]
+          set controller micro service image name (controller_hsm) [default: controller_hsm]
       --controller_tag <CONTROLLER_TAG>
           set controller micro service image tag [default: latest]
 ```
@@ -261,37 +255,37 @@ test-chain/
 
 $ cat test-chain/chain_config.toml
 node_network_address_list = []
-stage = 'Init'
+stage = "Init"
 
 [[micro_service_list]]
-image = 'network_zenoh'
-tag = 'latest'
+image = "network_zenoh"
+tag = "latest"
 
 [[micro_service_list]]
-image = 'consensus_overlord'
-tag = 'latest'
+image = "consensus_overlord"
+tag = "latest"
 
 [[micro_service_list]]
-image = 'executor_evm'
-tag = 'latest'
+image = "executor_evm"
+tag = "latest"
 
 [[micro_service_list]]
-image = 'storage_opendal'
-tag = 'latest'
+image = "storage_opendal"
+tag = "latest"
 
 [[micro_service_list]]
-image = 'controller'
-tag = 'latest'
+image = "controller_hsm"
+tag = "latest"
 
 [genesis_block]
-prevhash = '0x0000000000000000000000000000000000000000000000000000000000000000'
-timestamp = 1649418157966
+prevhash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+timestamp = 1709695109593
 
 [system_config]
-admin = ''
+admin = ""
 block_interval = 3
 block_limit = 100
-chain_id = '63586a3c0255f337c77a777ff54f0040b8c388da04f23ecee6bfd4953a6512b4'
+chain_id = "63586a3c0255f337c77a777ff54f0040b8c388da04f23ecee6bfd4953a6512b4"
 quota_limit = 1073741824
 validators = []
 version = 0
@@ -490,73 +484,79 @@ stage = 'Finalize'
 参数：
 
 ```
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-        --nodelist <NODE_LIST>       node list looks like
-                                     localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
-                                     last slice is optional, none means not k8s env
+      --chain-name <CHAIN_NAME>  set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>  set config file directory, default means current directory [default: .]
+      --nodelist <NODE_LIST>     node list looks like localhost:40000:node0:k8s_cluster_name_1:namespace_1,localhost:40001:node1:k8s_cluster_name_2:namespace_2 for each node network address: k8s_cluster_name is optional, none means not k8s env. namespace is optional, none means default namespace
 ```
 
 说明：
 
-1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
-3. `domain`为任意字符串，只需要确保节点之间不重复即可。
+1. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`host`,`port`，`domain`，`cluster name`，`namespace`，之间用冒号分隔。
+2. `cluster name`是节点所在的`k8s`集群的标识。如果节点部署在非`k8s`环境则该项省略。
+3. `namespace`是节点在`k8s`集群中部署的命名空间。该项为可选项，默认为`default`命令空间，如果部署在非`default`命令空间，请填写真实的命令空间。
+4. `domain`为任意字符串，只需要确保节点之间不重复即可。
 
 ```
-$ cloud-config set-nodelist --nodelist localhost:40000:node0,localhost:40001:node1 
+$ cloud-config set-nodelist --nodelist 8.8.8.8:40000:node0:k8s,8.8.8.8:40001:node1:k8s,8.8.8.8:40002:node2:k8s:cita,rivtower.com:40003:node3,9.9.9.9:40004:node4
 
 $ cat test-chain/chain_config.toml | grep -A5 node_network
 [[node_network_address_list]]
-cluster = 'aaIOppLx'
-domain = 'node0'
-host = 'localhost'
+cluster = "k8s"
+domain = "node0"
+host = "8.8.8.8"
+name_space = "default"
 port = 40000
-svc_port = 40000
 --
 [[node_network_address_list]]
-cluster = 'xwIaqkcX'
-domain = 'node1'
-host = 'localhost'
+cluster = "k8s"
+domain = "node1"
+host = "8.8.8.8"
+name_space = "default"
 port = 40001
-svc_port = 40000
+--
+[[node_network_address_list]]
+cluster = "k8s"
+domain = "node2"
+host = "8.8.8.8"
+name_space = "cita"
+port = 40002
+--
+[[node_network_address_list]]
+cluster = ""
+domain = "node3"
+host = "rivtower.com"
+name_space = "default"
+port = 40003
+--
+[[node_network_address_list]]
+cluster = ""
+domain = "node4"
+host = "9.9.9.9"
+name_space = "default"
+port = 40004
 ```
 
-```
-$ cloud-config set-nodelist --nodelist localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
-$ cat test-chain/chain_config.toml | grep -A5 node_network
-[[node_network_address_list]]
-cluster = 'k8s_cluster1'
-domain = 'node0'
-host = 'localhost'
-port = 40000
-svc_port = 40000
---
-[[node_network_address_list]]
-cluster = 'k8s_cluster2'
-domain = 'node1'
-host = 'localhost'
-port = 40001
-svc_port = 40000
-```
+该实例设置了5个节点：
+
+1. 其中node0和node1位于同一个`k8s`集群的同一个命名空间(默认default)中
+2. node2和前两个节点位于同一个`k8s`集群，但是不同的命名空间（cita）中
+3. node3没有部署在`k8s`集群中，使用域名加端口的方式连接
+4. node4也没有部署在`k8s`集群中，使用`ip`加端口的方式连接
 
 #### append-node
 
 参数：
 
 ```
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-        --node <NODE>                node network address looks like
-                                     localhost:40002:node2:k8s_cluster1 last slice is optional, none
-                                     means not k8s env
+      --chain-name <CHAIN_NAME>  set chain name [default: test-chain]
+      --config-dir <CONFIG_DIR>  set config file directory, default means current directory [default: .]
+      --node <NODE>              node network address looks like localhost:40002:node2:k8s_cluster_name:namespace k8s_cluster_name is optional, none means not k8s env. namespace is optional, none means default namespace
 ```
 
-1. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
-3. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
+1. `node`为必选参数。值为节点的网络地址,包含`host`,`port`，`domain`，`cluster name`，`namespace`，之间用冒号分隔。
+2. `cluster name`是节点所在的`k8s`集群的标识。如果节点部署在非`k8s`环境则该项省略。
+3. `namespace`是节点在`k8s`集群中部署的命名空间。该项为可选项，默认为`default`命令空间，如果部署在非`default`命令空间，请填写真实的命令空间。
+4. 功能与`set-nodelist`相似，只不过是每次添加一个节点。
 
 #### delete-node
 
@@ -722,58 +722,56 @@ test-chain
           set chain name [default: test-chain]
       --config-dir <CONFIG_DIR>
           set config file directory, default means current directory [default: .]
-      --domain <DOMAIN>
-          domain of node
-      --network-port <NETWORK_PORT>
-          grpc network_port of node [default: 50000]
-      --consensus-port <CONSENSUS_PORT>
-          grpc consensus_port of node [default: 50001]
-      --executor-port <EXECUTOR_PORT>
-          grpc executor_port of node [default: 50002]
-      --storage-port <STORAGE_PORT>
-          grpc storage_port of node [default: 50003]
-      --controller-port <CONTROLLER_PORT>
-          grpc controller_port of node [default: 50004]
-      --network-listen-port <NETWORK_LISTEN_PORT>
-          network listen port of node [default: 40000]
-      --log-level <LOG_LEVEL>
-          log level [default: info]
-      --log-file-path <LOG_FILE_PATH>
-          log file path
-      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
-          jaeger agent endpoint
-      --account <ACCOUNT>
-          account of node
-      --network-metrics-port <NETWORK_METRICS_PORT>
-          network metrics port of node [default: 60000]
-      --consensus-metrics-port <CONSENSUS_METRICS_PORT>
-          consensus metrics port of node [default: 60001]
-      --executor-metrics-port <EXECUTOR_METRICS_PORT>
-          executor metrics port of node [default: 60002]
-      --storage-metrics-port <STORAGE_METRICS_PORT>
-          storage metrics port of node [default: 60003]
-      --controller-metrics-port <CONTROLLER_METRICS_PORT>
-          controller metrics port of node [default: 60004]
-      --disable-metrics
-          disable metrics
-      --is-danger
-          is chain in danger mode
-      --enable-tx-persistence
-          enable tx persistence
-      --access-key-id <ACCESS_KEY_ID>
-          cloud_storage.access_key_id [default: ]
-      --secret-access-key <SECRET_ACCESS_KEY>
-          cloud_storage.secret_access_key [default: ]
-      --s3-endpoint <S3_ENDPOINT>
-          cloud_storage.endpoint [default: ]
-      --s3-bucket <S3_BUCKET>
-          cloud_storage.bucket [default: ]
-      --service-type <SERVICE_TYPE>
-          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
-      --s3-root <S3_ROOT>
-          cloud_storage.root [default: ]
-      --s3-region <S3_REGION>
-          cloud_storage.region [default: ]
+      --domain <DOMAIN>                                                                                                                                                                                    
+          domain of node                                                                             
+      --network-port <NETWORK_PORT>               
+          grpc network_port of node [default: 50000]                                                 
+      --consensus-port <CONSENSUS_PORT>           
+          grpc consensus_port of node [default: 50001]                                               
+      --executor-port <EXECUTOR_PORT>             
+          grpc executor_port of node [default: 50002]                                                
+      --storage-port <STORAGE_PORT>               
+          grpc storage_port of node [default: 50003]                                                 
+      --controller-port <CONTROLLER_PORT>                                                            
+          grpc controller_port of node [default: 50004]                                              
+      --log-level <LOG_LEVEL>                     
+          log level [default: info]               
+      --log-file-path <LOG_FILE_PATH>             
+          log file path                           
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>                                                
+          jaeger agent endpoint                   
+      --account <ACCOUNT>                         
+          account of node                         
+      --network-metrics-port <NETWORK_METRICS_PORT>                                                  
+          network metrics port of node [default: 60000]                                              
+      --consensus-metrics-port <CONSENSUS_METRICS_PORT>                                              
+          consensus metrics port of node [default: 60001]                                            
+      --executor-metrics-port <EXECUTOR_METRICS_PORT>                                                
+          executor metrics port of node [default: 60002]                                             
+      --storage-metrics-port <STORAGE_METRICS_PORT>                                                  
+          storage metrics port of node [default: 60003]                                              
+      --controller-metrics-port <CONTROLLER_METRICS_PORT>                                            
+          controller metrics port of node [default: 60004]                                           
+      --disable-metrics                           
+          disable metrics                         
+      --is-danger                                 
+          is chain in danger mode                 
+      --enable-tx-persistence                     
+          enable tx persistence                   
+      --access-key-id <ACCESS_KEY_ID>             
+          cloud_storage.access_key_id [default: ]                                                    
+      --secret-access-key <SECRET_ACCESS_KEY>                                                        
+          cloud_storage.secret_access_key [default: ]                                                
+      --s3-endpoint <S3_ENDPOINT>                 
+          cloud_storage.endpoint [default: ]                                                         
+      --s3-bucket <S3_BUCKET>                     
+          cloud_storage.bucket [default: ]                                                           
+      --service-type <SERVICE_TYPE>               
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]                                                                                                    
+      --s3-root <S3_ROOT>                         
+          cloud_storage.root [default: ]                                                             
+      --s3-region <S3_REGION>                     
+          cloud_storage.region [default: ]                                                           
 ```
 
 说明：
@@ -806,15 +804,15 @@ account = "5bf591636c7efc27cd855c2282a1652bfa14a1bc"
 enable_metrics = true
 is_danger = false
 enable_tx_persistence = false
+is_danger = false
 log_level = "info"
-network_listen_port = 40000
 
 [cloud_storage]
 access_key_id = ""
 bucket = ""
 endpoint = ""
-root = ""
 region = ""
+root = ""
 secret_access_key = ""
 service_type = ""
 
@@ -843,12 +841,10 @@ storage_metrics_port = 60003
                                        [default: .]
         --config-name <CONFIG_NAME>    set config file name [default: config.toml]
         --domain <DOMAIN>              domain of node
-        --is-dev                       is for dev env
 ```
 
 说明：
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
-2. `is-dev`用于区别是`dev`环境，亦或`k8s`环境。
 
 ```
 $ cloud-config update-node --domain node0
@@ -914,6 +910,7 @@ test-chain-node1
 ```
 
 说明：
+
 1. `domain`为必选参数，作为节点的标识，表示要操作的节点。
 2. `storage-class`为必选参数，指定节点在`k8s`集群中的持久化存储使用的存储类。
 3. `limits-cpu`,`limits-memory`,`requests-cpu`,`requests-memory`用于设定微服务的硬件资源需求。请根据实际运行环境的硬件配置进行调整，以获得最佳性能体验。
@@ -922,8 +919,59 @@ test-chain-node1
 ```
 $ cloud-config update-yaml --domain node0 --storage-class nfs-client
 $ ls test-chain-node0/yamls
-cm-account.yaml  cm-config.yaml  cm-log.yaml  node-svc.yaml  statefulset.yaml
+cm-account.yaml  cm-config.yaml  node-svc.yaml  node2-external-svc.yaml  node3-external-svc.yaml  node4-external-endpointslice.yaml  node4-external-svc.yaml  statefulset.yaml
+
+$ cat test-chain-node0/yamls/node2-external-svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-chain-node2
+spec:
+  externalName: test-chain-node2.cita.svc.cluster.local
+  type: ExternalName
+
+$ cat test-chain-node0/yamls/node3-external-svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-chain-node3
+spec:
+  externalName: rivtower.com
+  type: ExternalName
+
+$ cat test-chain-node0/yamls/node4-external-svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-chain-node4
+spec:
+  ports:
+  - name: network
+    port: 40000
+    protocol: UDP
+    targetPort: 40004
+$ cat test-chain-node0/yamls/node4-external-endpointslice.yaml 
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+addressType: IPv4
+endpoints:
+- addresses:
+  - 9.9.9.9
+metadata:
+  labels:
+    kubernetes.io/service-name: test-chain-node4
+  name: test-chain-node4-1
+ports:
+- port: 40004
+  protocol: UDP
 ```
+
+说明：
+
+1. `cm-account.yaml`,`cm-config.yaml`,`node-svc.yaml`,`statefulset.yaml`四个文件为节点基础的资源文件。
+2. 针对同一个`k8s`集群，不同命名空间下的节点（比如这里的node2），会为其生成`external`类型的`Service`。
+3. 对于外部节点，如果是域名方式访问（比如这里的node3），会为其生成`external`类型的`Service`，但是不支持端口映射。
+4. 对于外部节点，如果是`ip`方式访问（比如这里的node4），会为其生成`external`类型的`Service`和对应的`EndpointSlice`，支持端口映射。
 
 #### delete-chain
 
@@ -938,203 +986,16 @@ cm-account.yaml  cm-config.yaml  cm-log.yaml  node-svc.yaml  statefulset.yaml
 说明：
 1. 该命令会删除所有跟指定链相关的文件夹及文件，`使用时要慎重`。
 
-### 开发环境
 
-约定：
-1. 节点的`ip`都为`localhost`。
-2. 节点的网络端口从`40000`开始往后顺延。
-3. 节点的`domain`使用节点的序号。
-4. 节点各个微服务的`gRPC`端口从`50000 + i*1000`开始往后顺延。其中`i`为节点的序号。
-4. 节点各个微服务的`metrics exporter`端口从`60000 + i*100`开始往后顺延。其中`i`为节点的序号。
-5. 增加节点只能在最大的节点序号往后增加。
-6. 删除节点也只能从最大的节点序号开始往前删除。
-
-适用于开发阶段，在单机非容器环境直接跑链进行测试。
-
-#### create-dev
-
-参数：
-```
-$ cloud-config create-dev -h
-create config in env dev
-
-Usage: cloud-config create-dev [OPTIONS]
-
-Options:
-      --chain-name <CHAIN_NAME>
-          set chain name [default: test-chain]
-      --config-dir <CONFIG_DIR>
-          set config file directory, default means current directory [default: .]
-      --peers-count <PEERS_COUNT>
-          set initial node number [default: 4]
-      --log-level <LOG_LEVEL>
-          log level [default: info]
-      --log-file-path <LOG_FILE_PATH>
-          log file path [default: ./logs]
-      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
-          jaeger agent endpoint
-      --is-raft
-          is consensus raft
-      --is-danger
-          is chain in danger mode
-      --enable-tx-persistence
-          enable tx persistence
-      --disable-metrics
-          disable metrics
-      --access-key-id <ACCESS_KEY_ID>
-          cloud_storage.access_key_id [default: ]
-      --secret-access-key <SECRET_ACCESS_KEY>
-          cloud_storage.secret_access_key [default: ]
-      --s3-endpoint <S3_ENDPOINT>
-          cloud_storage.endpoint [default: ]
-      --s3-bucket <S3_BUCKET>
-          cloud_storage.bucket [default: ]
-      --service-type <SERVICE_TYPE>
-          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
-      --s3-root <S3_ROOT>
-          cloud_storage.root [default: ]
-      --s3-region <S3_REGION>
-          cloud_storage.region [default: ]
-  -h, --help
-          Print help
-```
+### 高级命令
 
 说明：
-1. `--is-raft`标识`consensus`微服务是否选择了`consensus_raft`。
+1. 封装了`create`，`append`，`delete`三个高级命令。
+2. `create`包含了`updata-yaml`之外所有的步骤，除`admin`账户需要用户创建并设置，节点的账号和证书均自动创建并设置。
+2. `append`包含了新增节点`updata-yaml`之外所有的步骤，还会自动更新原有节点的配置。
+3. `delete`删除指定的节点，还会自动更新剩余节点的配置。
 
-```
-$ cloud-config create-dev
-node_address: bde21c1bcc73817c8af033e37bf3177bff7be1e1 validator_address: a9714aa3f9ac195602fac77baf6b4a42a7d8508fe8db722633e652216fd4c3af2eda15a5eceb85a4c0046e64cda40060
-node_address: 3c3965e120b0399bda0be0b68f9569520f13ef26 validator_address: 8804bca2e919d9e487d05d88e447c488fa51f74ad1171a5dcba5cdcdf7e72c0a605d97697f3189a23ba11a0f83af560e
-node_address: 3dbd135e3fedb84db5fa95e256d5d650196bed91 validator_address: b418e9dc46731dca35bad2296ac15e788c5eee84ce3c0fcb108158cd78e0bc9cca75e00c7a0e76dca8ea7c5d0240c6bc
-node_address: 9be90a72f73f9ab6d03278545fe6fa26244c8e90 validator_address: adb23083ce21e1c86d864bfa708689c13495e26484d1a9ba6b0462808dd1c689251767d81ef9e4b28091290baafd81e1
-node_address: bc822df3270b5bc22453f7b43aad01cd55dc12f4 validator_address: a3871975a50261f803f362515ffbb1324538cd6ea6fa53c8bb3ae6627d78bdefe39d5e06ab9985b7d237713cfdcb756c
-
-$ ls test-chain-*
-test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-```
-
-#### append-dev
-
-参数：
-```
-$ cloud-config append-dev -h
-append node in env dev
-
-Usage: cloud-config append-dev [OPTIONS]
-
-Options:
-      --chain-name <CHAIN_NAME>
-          set chain name [default: test-chain]
-      --config-dir <CONFIG_DIR>
-          set config file directory, default means current directory [default: .]
-      --log-level <LOG_LEVEL>
-          log level [default: info]
-      --log-file-path <LOG_FILE_PATH>
-          log file path
-      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
-          jaeger agent endpoint
-      --is-danger
-          is chain in danger mode
-      --enable-tx-persistence
-          enable tx persistence
-      --disable-metrics
-          disable metrics
-      --access-key-id <ACCESS_KEY_ID>
-          cloud_storage.access_key_id [default: ]
-      --secret-access-key <SECRET_ACCESS_KEY>
-          cloud_storage.secret_access_key [default: ]
-      --s3-endpoint <S3_ENDPOINT>
-          cloud_storage.endpoint [default: ]
-      --s3-bucket <S3_BUCKET>
-          cloud_storage.bucket [default: ]
-      --service-type <SERVICE_TYPE>
-          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
-      --s3-root <S3_ROOT>
-          cloud_storage.root [default: ]
-      --s3-region <S3_REGION>
-          cloud_storage.region [default: ]
-  -h, --help
-          Print help
-```
-
-```
-$ cloud-config append-dev
-node_address: 021dcd4e8f1607840337eaf51d345d88366b4693 validator_address: a2607ccc77e15ec4629a0875cfac42dc1465dc10808d0d840ede9ee93c75dc65897cdda5d3bb899ad351945016b68662
-
-$ ls test-chain-*
-test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-4:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-```
-
-#### delete-dev
-
-参数：
-```
-$ cloud-config delete-dev -h
-cloud-config-delete-dev
-delete node in env dev
-
-USAGE:
-    cloud-config delete-dev [OPTIONS]
-
-OPTIONS:
-        --chain-name <CHAIN_NAME>    set chain name [default: test-chain]
-        --config-dir <CONFIG_DIR>    set config file directory, default means current directory
-                                     [default: .]
-    -h, --help                       Print help information
-```
-
-```
-$ cloud-config delete-dev
-$ ls test-chain-*
-test-chain-0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-2:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-3:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-```
-
-
-### k8s环境
-
-约定：
-1. 超级管理员账户由用户自行创建并通过参数传入。
-2. 节点各个微服务的`gRPC`端口固定从`50000`开始依次分配给各微服务。
-2. 节点各个微服务的`metrics exporter`端口固定从`60000`依次分配给各微服务。
-3. 节点的网络监听端口固定为`40000`。
-
-适用于演示或者生产阶段，在k8s环境部署链。
-
-#### create-k8s
+#### create
 
 参数：
 
@@ -1157,76 +1018,78 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           set system config block_limit [default: 100]
       --quota-limit <QUOTA_LIMIT>
           set one block contains quota limit, default 1073741824 [default: 1073741824]
-      --network_image <NETWORK_IMAGE>
-          set network micro service image name (network_zenoh) [default: network_zenoh]
-      --network_tag <NETWORK_TAG>
-          set network micro service image tag [default: latest]
-      --consensus_image <CONSENSUS_IMAGE>
-          set consensus micro service image name (consensus_raft/consensus_overlord) [default: consensus_overlord]
-      --consensus_tag <CONSENSUS_TAG>
-          set consensus micro service image tag [default: latest]
-      --executor_image <EXECUTOR_IMAGE>
-          set executor micro service image name (executor_evm) [default: executor_evm]
-      --executor_tag <EXECUTOR_TAG>
-          set executor micro service image tag [default: latest]
-      --storage_image <STORAGE_IMAGE>
-          set storage micro service image name (storage_opendal) [default: storage_opendal]
-      --storage_tag <STORAGE_TAG>
-          set storage micro service image tag [default: latest]
-      --controller_image <CONTROLLER_IMAGE>
-          set controller micro service image name (controller) [default: controller]
-      --controller_tag <CONTROLLER_TAG>
-          set controller micro service image tag [default: latest]
-      --admin <ADMIN>
-          set admin
-      --nodelist <NODE_LIST>
-          node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2 last slice is optional, none means not k8s env
-      --log-level <LOG_LEVEL>
-          log level [default: info]
-      --log-file-path <LOG_FILE_PATH>
-          log file path
-      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
-          jaeger agent endpoint
-      --is-danger
-          is chain in danger mode
-      --enable-tx-persistence
-          enable tx persistence
-      --disable-metrics
-          disable metrics
-      --access-key-id <ACCESS_KEY_ID>
-          cloud_storage.access_key_id [default: ]
-      --secret-access-key <SECRET_ACCESS_KEY>
-          cloud_storage.secret_access_key [default: ]
-      --s3-endpoint <S3_ENDPOINT>
-          cloud_storage.endpoint [default: ]
-      --s3-bucket <S3_BUCKET>
-          cloud_storage.bucket [default: ]
-      --service-type <SERVICE_TYPE>
-          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]
-      --s3-root <S3_ROOT>
-          cloud_storage.root [default: ]
-      --s3-region <S3_REGION>
+      --network_image <NETWORK_IMAGE>             
+          set network micro service image name (network_zenoh) [default: network_zenoh]                                                                                                                    
+      --network_tag <NETWORK_TAG>                                                                    
+          set network micro service image tag [default: latest]                                      
+      --consensus_image <CONSENSUS_IMAGE>                                                            
+          set consensus micro service image name (consensus_raft/consensus_overlord) [default: consensus_overlord]                                                                                         
+      --consensus_tag <CONSENSUS_TAG>             
+          set consensus micro service image tag [default: latest]                                    
+      --executor_image <EXECUTOR_IMAGE>           
+          set executor micro service image name (executor_evm) [default: executor_evm]                                                                                                                     
+      --executor_tag <EXECUTOR_TAG>               
+          set executor micro service image tag [default: latest]                                     
+      --storage_image <STORAGE_IMAGE>             
+          set storage micro service image name (storage_opendal) [default: storage_opendal]                                                                                                                
+      --storage_tag <STORAGE_TAG>                 
+          set storage micro service image tag [default: latest]                                      
+      --controller_image <CONTROLLER_IMAGE>                                                          
+          set controller micro service image name (controller_hsm) [default: controller_hsm]                                                                                                                   
+      --controller_tag <CONTROLLER_TAG>           
+          set controller micro service image tag [default: latest]                                   
+      --admin <ADMIN>                             
+          set admin                               
+      --nodelist <NODE_LIST>                      
+          node list looks like localhost:40000:node0:k8s_cluster_name_1:namespace_1,localhost:40001:node1:k8s_cluster_name_2:namespace_2 for each node network address: k8s_cluster_name is optional, none 
+means not k8s env. namespace is optional, none means default namespace                               
+      --log-level <LOG_LEVEL>                     
+          log level [default: info]               
+      --log-file-path <LOG_FILE_PATH>             
+          log file path                           
+      --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>                                                
+          jaeger agent endpoint                   
+      --is-danger                                 
+          is chain in danger mode                 
+      --enable-tx-persistence                     
+          enable tx persistence                   
+      --disable-metrics                           
+          disable metrics                         
+      --access-key-id <ACCESS_KEY_ID>             
+          cloud_storage.access_key_id [default: ]                                                    
+      --secret-access-key <SECRET_ACCESS_KEY>                                                        
+          cloud_storage.secret_access_key [default: ]                                                
+      --s3-endpoint <S3_ENDPOINT>                 
+          cloud_storage.endpoint [default: ]                                                         
+      --s3-bucket <S3_BUCKET>                     
+          cloud_storage.bucket [default: ]                                                           
+      --service-type <SERVICE_TYPE>               
+          cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure) [default: ]                                                                                                    
+      --s3-root <S3_ROOT>                         
+          cloud_storage.root [default: ]                                                             
+      --s3-region <S3_REGION>                     
           cloud_storage.region [default: ]
 ```
 
 说明:
 1. `admin`为必选参数。使用用户事先创建好的超级管理员账户地址。
-2. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`ip`,`port`，`domain`，`cluster name`，之间用分号分隔。`cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略，会自动生成一个随机的集群名称。
+2. `nodelist`为必选参数。值为多个节点的网络地址,用逗号分隔。每个节点的网络地址包含`host`,`port`，`domain`，`cluster name`，`namespace`，之间用冒号分隔。
+2. `cluster name`是节点所在的`k8s`集群的标识。如果节点部署在非`k8s`环境则该项省略。
+3. `namespace`是节点在`k8s`集群中部署的命名空间。该项为可选项，默认为`default`命令空间，如果部署在非`default`命令空间，请填写真实的命令空间。
 
 ```
-$ cloud-config create-k8s --admin 0xff8456931c10a9b02ec4a657ee05e724ecad9372 --nodelist localhost:40000:node0:k8s,localhost:40001:node1:k8s
-node_address: 7585747d549aeb4717504275e71daa23b540bf3d validator_address: a338859941e202548af9200ab82697f3d78f22924c640eb3f6b207718f0a99abfda21c65a0ffa8bcac055ac38358469a
-node_address: 517cf02e4735135331d211c84bf2114c8607299c validator_address: 95ef7dabc79069b485a8ae478cc791674325f9f8bbbd15bfa8e6087d5eb2e2cdabbef4e92a24d6b62696dd111e2afded
+$ cloud-config create --admin 0xff8456931c10a9b02ec4a657ee05e724ecad9372 --nodelist 8.8.8.8:40000:node0:k8s,8.8.8.8:40001:node1:k8s,8.8.8.8:40002:node2:k8s:cita,rivtower.com:40003:node3,9.9.9.9:40004:node4
+node_address: c98975e0d4600af066c7c272a8573fef2347078c validator_address: 935bf75ab552629c201c67a9de01603ece5eaae970dd1fa39a65c13b31ba94d55c1f3ed3897dd7ce777e5850c4cded8e
+node_address: d341294627c9f197f891cb4d88550a8bc3134b40 validator_address: a7f2102b16a6f4d5f3066ed54267b49408dc6e6e675bfd74c9c32900d11b0c453e19a1d6e1867cbd07de9dabb041de39
+node_address: fea61c7a3c4dd9926d5f66317cf364cca91578c6 validator_address: 8e071ac04ab08aea0f1c4f5a7b0240337d36ec41caff5dd8b7169d17e4355cc44432a61e09607e95b356187a13570d4f
+node_address: 700ad3bc022e230d77c29896ef6eaddee1e98816 validator_address: 8a47a817dd1f7a8bc52a78324ea1e83e804309dbffb49aca24149c5e88f2b53d7ffe34ada0a3792cb9b8095842ce5af9
+node_address: 8aee0414c5a4b3943b288d8fca1505f180a76363 validator_address: 94996cb20c48cc759878d3699470bf77d3bd17da8ea8fdc7901860d7cef8c5e6b2fe713e1584c89974154a2189a701c8
 
-$ ls test-chain-node*
-test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-node1:
+$ ls test-chain-node0
 accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
-#### append-k8s
+#### append
 
 参数：
 ```
@@ -1241,7 +1104,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
       --jaeger-agent-endpoint <JAEGER_AGENT_ENDPOINT>
           jaeger agent endpoint
       --node <NODE>
-          node network address looks like localhost:40002:node2:k8s_cluster1 last slice is optional, none means not k8s env
+          node network address looks like localhost:40002:node2:k8s_cluster_name:namespace k8s_cluster_name is optional, none means not k8s env. namespace is optional, none means default namespace
       --is-danger
           is chain in danger mode
       --enable-tx-persistence
@@ -1265,25 +1128,19 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 ```
 
 说明：
-1. `node`为必选参数。值为节点的网络地址,包含`ip`,`port`，`domain`，`cluster name`。
-2. `cluster name`是节点所在的`k8s`集群的名称。出于兼容性考虑，非`k8s`环境该项可以省略。
+1. `node`为必选参数。值为节点的网络地址,包含`host`,`port`，`domain`，`cluster name`，`namespace`，之间用，冒号分隔。
+2. `cluster name`是节点所在的`k8s`集群的标识。如果节点部署在非`k8s`环境则该项省略。
+3. `namespace`是节点在`k8s`集群中部署的命名空间。该项为可选项，默认为`default`命令空间，如果部署在非`default`命令空间，请填写真实的命令空间。
 
 
 ```
-$ cloud-config append-k8s --node localhost:40002:node2:k8s
-node_address: b6f2210e63331458f00a0aee58b83ddee1c36e83 validator_address: 9860b8a49b7f2016e1cfe3fe9dc053915cab92a8d58c9ab3082049fce949bb3c586ec2cf5c1590ab2c91884a0446cb69
-$ ls test-chain-node*
-test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-node2:
+$ cloud-config append --node 7.7.7.7:40005:node5:other_k8s
+node_address: 1f759003513564058bd5ea7a4755761e60072169 validator_address: a367cd540d16b8b75bafd2fd16ef97e333f82b427e6f7e3ceb53a425a27c91fb1995b5ed8c42ea0561e8d571aaa4ee83
+$ ls test-chain-node5
 accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
 ```
 
-#### delete-k8s
+#### delete
 
 参数：
 ```
@@ -1297,11 +1154,7 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
 1. `domain`为必选参数。值为要删除节点的标识，与创建链和增加节点时的`domain`保持一致。
 
 ```
-$ cloud-config delete-k8s --domain node2
-$ ls test-chain-node*
-test-chain-node0:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
-
-test-chain-node1:
-accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_config.toml  private_key  validator_address
+$ cloud-config delete --domain node5
+$ ls
+test-chain  test-chain-node0  test-chain-node1  test-chain-node2  test-chain-node3  test-chain-node4
 ```

@@ -17,20 +17,19 @@ use crate::constant::{
     EXECUTOR_EVM, NETWORK_ZENOH, NODE_CONFIG_FILE, PRIVATE_KEY, STORAGE_OPENDAL, VALIDATOR_ADDRESS,
 };
 use crate::error::Error;
-use crate::util::{
-    find_micro_service, read_chain_config, read_file, read_node_config, svc_name, write_file,
-};
+use crate::util::{read_chain_config, read_file, read_node_config, svc_name, write_file};
 use clap::Parser;
 use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
             Affinity, ConfigMap, ConfigMapVolumeSource, Container, ContainerPort, ExecAction,
-            HostAlias, HostPathVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            HostPathVolumeSource, PersistentVolumeClaim, PersistentVolumeClaimSpec,
             PodAffinityTerm, PodAntiAffinity, PodSecurityContext, PodSpec, PodTemplateSpec, Probe,
             ResourceRequirements, Service, ServicePort, ServiceSpec, Volume, VolumeMount,
             WeightedPodAffinityTerm,
         },
+        discovery::v1::{Endpoint, EndpointPort, EndpointSlice},
     },
     apimachinery::pkg::{
         api::resource::Quantity,
@@ -72,7 +71,7 @@ pub struct UpdateYamlOpts {
     pub storage_class: String,
     /// pvc access mode: ReadWriteOnce/ReadWriteMany
     #[clap(long = "access-mode", default_value = "ReadWriteMany")]
-    pub(crate) access_mode: String,
+    pub access_mode: String,
     /// storage capacity
     #[clap(long = "storage-capacity", default_value = "10Gi")]
     pub storage_capacity: String,
@@ -129,6 +128,8 @@ pub struct NodeK8sConfig {
     pub cm_account: ConfigMap,
     pub statefulset: StatefulSet,
     pub node_svc: Service,
+    pub external_svc: Vec<Service>,
+    pub external_endpoints: Vec<EndpointSlice>,
 }
 
 /// generate k8s yaml by chain_config and node_config
@@ -146,17 +147,34 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
     let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
     let chain_config = read_chain_config(file_name).unwrap();
 
+    // check current node is k8s or not
+    let mut my_cluster_name = "";
+    let mut my_external_port = 0;
+    let mut my_name_space = "";
+    for node_network_address in &chain_config.node_network_address_list {
+        if node_network_address.domain == opts.domain {
+            my_cluster_name = &node_network_address.cluster;
+            my_external_port = node_network_address.port;
+            my_name_space = &node_network_address.name_space;
+        }
+    }
+
+    if my_external_port == 0 {
+        panic!("can't find domain in chain_config.node_network_address_list");
+    }
+
+    let is_k8s = !my_cluster_name.is_empty();
+    if !is_k8s {
+        panic!("current node is not k8s node");
+    }
+
     let config_file_name = format!("{}/{}", &node_dir, opts.config_name);
 
     let yamls_path = format!("{}/yamls", &node_dir);
     fs::create_dir_all(&yamls_path).unwrap();
 
-    // protocol
-    let network_protocol = if find_micro_service(&chain_config, NETWORK_ZENOH) {
-        "UDP"
-    } else {
-        "TCP"
-    };
+    // protocol now only support netowrk_zenoh which use quic
+    let network_protocol = "UDP";
 
     // update yaml
     // node svc
@@ -322,39 +340,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
         metadata.labels = Some(labels);
         template.metadata = Some(metadata);
 
-        let mut node_cluster = String::default();
-        for node_net_info in &chain_config.node_network_address_list {
-            let real_domain = format!("{}-{}", &opts.chain_name, node_net_info.domain);
-            if real_domain.eq(&node_name) {
-                node_cluster = node_net_info.cluster.clone();
-                break;
-            }
-        }
-
-        let mut host_aliases: Vec<HostAlias> = vec![];
-
-        for node_net_info in chain_config.node_network_address_list {
-            if !node_cluster.eq(&node_net_info.cluster)
-                && node_net_info.host.parse::<Ipv4Addr>().is_ok()
-            {
-                host_aliases.push(HostAlias {
-                    hostnames: Some(vec![format!(
-                        "{}-{}",
-                        &opts.chain_name, node_net_info.domain
-                    )]),
-                    ip: Some(node_net_info.host),
-                })
-            }
-        }
-
-        let host_aliases = if host_aliases.is_empty() {
-            None
-        } else {
-            Some(host_aliases)
-        };
-
         let mut template_spec = PodSpec {
-            host_aliases,
             security_context: Some(PodSecurityContext {
                 run_as_user: Some(1000),
                 run_as_group: Some(1000),
@@ -904,7 +890,10 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
         };
 
         let mut match_labels = BTreeMap::new();
-        match_labels.insert("app.kubernetes.io/chain-name".to_string(), opts.chain_name);
+        match_labels.insert(
+            "app.kubernetes.io/chain-name".to_string(),
+            opts.chain_name.clone(),
+        );
         match_labels.insert(
             "app.kubernetes.io/chain-node".to_string(),
             node_name.clone(),
@@ -943,6 +932,149 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             yaml_file_name,
         );
         node_k8s_config.node_svc = node_svc;
+    }
+
+    {
+        // create external svc and endpoints for peers
+        // ignore if same cluster and same namespace
+        // if same cluster and different namespace, create external svc with peer svc cluster FQDN
+        // if diffrent cluster and peer host is FQDN, create external svc with peer host
+        // if diffrent cluster and peer host is ip, create external svc map port to 40000 and create external endpoints
+        for node_network_address in &chain_config.node_network_address_list {
+            if node_network_address.domain != opts.domain {
+                let peer_cluster_name = &node_network_address.cluster;
+                let peer_name_space = &node_network_address.name_space;
+                let peer_domain = &node_network_address.domain;
+                let peer_host = &node_network_address.host;
+                let is_peer_host_ip = peer_host.parse::<Ipv4Addr>().is_ok();
+                let peer_port = node_network_address.port;
+                let peer_svc_name =
+                    format!("{}-{}", &opts.chain_name, &node_network_address.domain);
+
+                let same_cluster = peer_cluster_name == my_cluster_name;
+                let same_name_space = peer_name_space == my_name_space;
+                match (same_cluster, same_name_space, is_peer_host_ip) {
+                    (true, true, _) => {}
+                    (true, false, _) => {
+                        let mut external_svc = Service::default();
+
+                        let metadata = ObjectMeta {
+                            name: Some(peer_svc_name.clone()),
+                            ..Default::default()
+                        };
+                        external_svc.metadata = metadata;
+
+                        let svc_spec = ServiceSpec {
+                            type_: Some("ExternalName".to_string()),
+                            external_name: Some(format!(
+                                "{}.{}.svc.cluster.local",
+                                &peer_svc_name, &peer_name_space
+                            )),
+                            ..Default::default()
+                        };
+                        external_svc.spec = Some(svc_spec);
+
+                        let yaml_file_name =
+                            format!("{}/{}-external-svc.yaml", &yamls_path, &peer_domain);
+                        write_file(
+                            serde_yaml::to_string(&external_svc).unwrap().as_bytes(),
+                            yaml_file_name,
+                        );
+                        node_k8s_config.external_svc.push(external_svc);
+                    }
+                    (false, _, false) => {
+                        let mut external_svc = Service::default();
+
+                        let metadata = ObjectMeta {
+                            name: Some(peer_svc_name.clone()),
+                            ..Default::default()
+                        };
+                        external_svc.metadata = metadata;
+
+                        let svc_spec = ServiceSpec {
+                            type_: Some("ExternalName".to_string()),
+                            external_name: Some(peer_host.clone()),
+                            ..Default::default()
+                        };
+                        external_svc.spec = Some(svc_spec);
+
+                        let yaml_file_name =
+                            format!("{}/{}-external-svc.yaml", &yamls_path, &peer_domain);
+                        write_file(
+                            serde_yaml::to_string(&external_svc).unwrap().as_bytes(),
+                            yaml_file_name,
+                        );
+                        node_k8s_config.external_svc.push(external_svc);
+                    }
+                    (false, _, true) => {
+                        let mut external_svc = Service::default();
+                        let metadata = ObjectMeta {
+                            name: Some(peer_svc_name.clone()),
+                            ..Default::default()
+                        };
+                        external_svc.metadata = metadata;
+
+                        let svc_spec = ServiceSpec {
+                            ports: Some(vec![ServicePort {
+                                name: Some("network".to_string()),
+                                port: 40000,
+                                target_port: Some(IntOrString::Int(peer_port as i32)),
+                                protocol: Some(network_protocol.to_string()),
+                                ..Default::default()
+                            }]),
+                            ..Default::default()
+                        };
+                        external_svc.spec = Some(svc_spec);
+
+                        let mut endpoint_slice = EndpointSlice::default();
+                        let mut metadata = ObjectMeta {
+                            name: Some(format!("{}-1", peer_svc_name)),
+                            ..Default::default()
+                        };
+
+                        let mut labels = BTreeMap::new();
+                        labels.insert(
+                            "kubernetes.io/service-name".to_string(),
+                            peer_svc_name.clone(),
+                        );
+                        metadata.labels = Some(labels);
+
+                        endpoint_slice.metadata = metadata;
+
+                        endpoint_slice.address_type = "IPv4".to_string();
+                        endpoint_slice.ports = Some(vec![EndpointPort {
+                            port: Some(peer_port as i32),
+                            protocol: Some(network_protocol.to_string()),
+                            ..Default::default()
+                        }]);
+
+                        endpoint_slice.endpoints = vec![Endpoint {
+                            addresses: vec![peer_host.clone()],
+                            ..Default::default()
+                        }];
+
+                        let yaml_file_name =
+                            format!("{}/{}-external-svc.yaml", &yamls_path, &peer_domain);
+                        write_file(
+                            serde_yaml::to_string(&external_svc).unwrap().as_bytes(),
+                            yaml_file_name,
+                        );
+
+                        let yaml_file_name = format!(
+                            "{}/{}-external-endpointslice.yaml",
+                            &yamls_path, &peer_domain
+                        );
+                        write_file(
+                            serde_yaml::to_string(&endpoint_slice).unwrap().as_bytes(),
+                            yaml_file_name,
+                        );
+
+                        node_k8s_config.external_svc.push(external_svc);
+                        node_k8s_config.external_endpoints.push(endpoint_slice);
+                    }
+                }
+            }
+        }
     }
 
     if opts.enable_kustomize {

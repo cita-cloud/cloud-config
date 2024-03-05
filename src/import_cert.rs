@@ -24,19 +24,19 @@ use std::path::Path;
 pub struct ImportCertOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// domain of node
     #[clap(long = "domain")]
-    pub(crate) domain: String,
+    pub domain: String,
     /// set path of cert file(pem)
     #[clap(long = "cert")]
-    pub(crate) cert_path: String,
+    pub cert_path: String,
     /// set path of key file(pem)
     #[clap(long = "key")]
-    pub(crate) key_path: String,
+    pub key_path: String,
 }
 
 /// execute import cert

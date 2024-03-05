@@ -24,16 +24,16 @@ use std::path::Path;
 pub struct ImportCAOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set path of ca cert file(pem)
     #[clap(long = "ca-cert")]
-    pub(crate) ca_cert_path: String,
+    pub ca_cert_path: String,
     /// set path of ca key file(pem)
     #[clap(long = "ca-key")]
-    pub(crate) ca_key_path: String,
+    pub ca_key_path: String,
 }
 
 /// execute import ca

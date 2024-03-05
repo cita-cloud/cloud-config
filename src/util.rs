@@ -14,8 +14,6 @@
 
 use crate::config::chain_config::ChainConfig;
 use crate::config::node_config::NodeConfig;
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
 use rcgen::{
     BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, DistinguishedName,
     DnType, DnValue, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
@@ -200,14 +198,6 @@ pub fn copy_dir_all(src: impl AsRef<path::Path>, dst: impl AsRef<path::Path>) ->
         }
     }
     Ok(())
-}
-
-pub fn rand_string() -> String {
-    thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(8)
-        .map(char::from)
-        .collect()
 }
 
 pub fn svc_name(chain_name: &str, domain: &str) -> String {

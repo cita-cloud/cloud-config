@@ -16,19 +16,14 @@ use clap::Parser;
 
 use crate::append_node::{execute_append_node, AppendNodeOpts};
 use crate::append_validator::{execute_append_validator, AppendValidatorOpts};
+use crate::cmd::{
+    execute_append, execute_create, execute_delete, AppendOpts, CreateOpts, DeleteOpts,
+};
 use crate::create_ca::{execute_create_ca, CreateCAOpts};
 use crate::create_csr::{execute_create_csr, CreateCSROpts};
 use crate::delete_chain::{execute_delete_chain, DeleteChainOpts};
 use crate::delete_node::{execute_delete_node, DeleteNodeOpts};
 use crate::delete_validator::{execute_delete_validator, DeleteValidatorOpts};
-use crate::env_dev::{
-    execute_append_dev, execute_create_dev, execute_delete_dev, AppendDevOpts, CreateDevOpts,
-    DeleteDevOpts,
-};
-use crate::env_k8s::{
-    execute_append_k8s, execute_create_k8s, execute_delete_k8s, AppendK8sOpts, CreateK8sOpts,
-    DeleteK8sOpts,
-};
 use crate::import_account::{execute_import_account, ImportAccountOpts};
 use crate::import_ca::{execute_import_ca, ImportCAOpts};
 use crate::import_cert::{execute_import_cert, ImportCertOpts};
@@ -47,6 +42,7 @@ use crate::util::clap_about;
 
 mod append_node;
 mod append_validator;
+mod cmd;
 mod config;
 mod constant;
 mod create_ca;
@@ -54,8 +50,6 @@ mod create_csr;
 mod delete_chain;
 mod delete_node;
 mod delete_validator;
-mod env_dev;
-mod env_k8s;
 mod error;
 mod import_account;
 mod import_ca;
@@ -132,24 +126,15 @@ enum SubCommand {
     /// sign csr
     #[clap(name = "sign-csr")]
     SignCSR(SignCSROpts),
-    /// create config in env dev
-    #[clap(name = "create-dev")]
-    CreateDev(CreateDevOpts),
-    /// append node in env dev
-    #[clap(name = "append-dev")]
-    AppendDev(AppendDevOpts),
-    /// delete node in env dev
-    #[clap(name = "delete-dev")]
-    DeleteDev(DeleteDevOpts),
-    /// create config in env k8s
-    #[clap(name = "create-k8s")]
-    CreateK8s(CreateK8sOpts),
-    /// append node in env k8s
-    #[clap(name = "append-k8s")]
-    AppendK8s(AppendK8sOpts),
-    /// delete node in env k8s
-    #[clap(name = "delete-k8s")]
-    DeleteK8s(DeleteK8sOpts),
+    /// create config in one cmd
+    #[clap(name = "create")]
+    Create(CreateOpts),
+    /// append node in one cmd
+    #[clap(name = "append")]
+    Append(AppendOpts),
+    /// delete node in one cmd
+    #[clap(name = "delete")]
+    Delete(DeleteOpts),
     /// set stage
     #[clap(name = "set-stage")]
     SetStage(SetStageOpts),
@@ -189,12 +174,9 @@ fn main() {
         SubCommand::CreateCA(opts) => execute_create_ca(opts).map(|_| ()).unwrap(),
         SubCommand::CreateCSR(opts) => execute_create_csr(opts).map(|_| ()).unwrap(),
         SubCommand::SignCSR(opts) => execute_sign_csr(opts).map(|_| ()).unwrap(),
-        SubCommand::CreateDev(opts) => execute_create_dev(opts).unwrap(),
-        SubCommand::AppendDev(opts) => execute_append_dev(opts).unwrap(),
-        SubCommand::DeleteDev(opts) => execute_delete_dev(opts).unwrap(),
-        SubCommand::CreateK8s(opts) => execute_create_k8s(opts).unwrap(),
-        SubCommand::AppendK8s(opts) => execute_append_k8s(opts).unwrap(),
-        SubCommand::DeleteK8s(opts) => execute_delete_k8s(opts).unwrap(),
+        SubCommand::Create(opts) => execute_create(opts).unwrap(),
+        SubCommand::Append(opts) => execute_append(opts).unwrap(),
+        SubCommand::Delete(opts) => execute_delete(opts).unwrap(),
         SubCommand::SetStage(opts) => execute_set_stage(opts).unwrap(),
         SubCommand::ImportCA(opts) => execute_import_ca(opts).map(|_| ()).unwrap(),
         SubCommand::ImportCert(opts) => execute_import_cert(opts).map(|_| ()).unwrap(),

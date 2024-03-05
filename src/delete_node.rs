@@ -24,16 +24,16 @@ use std::fs;
 pub struct DeleteNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set config file name
     #[clap(long = "config-name", default_value = "config.toml")]
-    pub(crate) config_name: String,
+    pub config_name: String,
     /// domain of node that want to delete
     #[clap(long = "domain")]
-    pub(crate) domain: String,
+    pub domain: String,
 }
 
 pub fn execute_delete_node(opts: DeleteNodeOpts) -> Result<(), Error> {

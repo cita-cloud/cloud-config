@@ -29,7 +29,7 @@ use crate::set_nodelist::{execute_set_nodelist, SetNodeListOpts};
 use crate::set_stage::{execute_set_stage, SetStageOpts};
 use crate::sign_csr::{execute_sign_csr, SignCSROpts};
 use crate::update_node::{execute_update_node, UpdateNodeOpts};
-use crate::util::{rand_string, read_chain_config};
+use crate::util::read_chain_config;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -37,7 +37,7 @@ use std::fs;
 /// A subcommand for run
 #[derive(Parser, Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
-pub struct CreateK8sOpts {
+pub struct CreateOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
     pub chain_name: String,
@@ -92,7 +92,7 @@ pub struct CreateK8sOpts {
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
     pub storage_tag: String,
-    /// set controller micro service image name (controller)
+    /// set controller micro service image name (controller_hsm)
     #[clap(long = "controller_image", default_value = "controller_hsm")]
     pub controller_image: String,
     /// set controller micro service image tag
@@ -103,8 +103,10 @@ pub struct CreateK8sOpts {
     #[clap(long = "admin")]
     pub admin: String,
 
-    /// node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
-    /// last slice is optional, none means not k8s env.
+    /// node list looks like localhost:40000:node0:k8s_cluster_name_1:namespace_1,localhost:40001:node1:k8s_cluster_name_2:namespace_2
+    /// for each node network address:
+    /// k8s_cluster_name is optional, none means not k8s env.
+    /// namespace is optional, none means default namespace.
     #[clap(long = "nodelist")]
     pub node_list: String,
 
@@ -125,36 +127,36 @@ pub struct CreateK8sOpts {
     pub is_danger: bool,
     /// enable tx persistence
     #[clap(long = "enable-tx-persistence")]
-    pub(crate) enable_tx_persistence: bool,
+    pub enable_tx_persistence: bool,
 
     /// disable metrics
     #[clap(long = "disable-metrics")]
-    pub(crate) disable_metrics: bool,
+    pub disable_metrics: bool,
 
     /// cloud_storage.access_key_id
     #[clap(long = "access-key-id", default_value = "")]
-    pub(crate) access_key_id: String,
+    pub access_key_id: String,
     /// cloud_storage.secret_access_key
     #[clap(long = "secret-access-key", default_value = "")]
-    pub(crate) secret_access_key: String,
+    pub secret_access_key: String,
     /// cloud_storage.endpoint
     #[clap(long = "s3-endpoint", default_value = "")]
-    pub(crate) s3_endpoint: String,
+    pub s3_endpoint: String,
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
-    pub(crate) s3_bucket: String,
+    pub s3_bucket: String,
     /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
     #[clap(long = "service-type", default_value = "")]
-    pub(crate) service_type: String,
+    pub service_type: String,
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
-    pub(crate) s3_root: String,
+    pub s3_root: String,
     /// cloud_storage.region
     #[clap(long = "s3-region", default_value = "")]
-    pub(crate) s3_region: String,
+    pub s3_region: String,
 }
 
-impl Default for CreateK8sOpts {
+impl Default for CreateOpts {
     fn default() -> Self {
         Self {
             chain_name: "test-chain".to_string(),
@@ -200,7 +202,7 @@ impl Default for CreateK8sOpts {
 /// grpc ports start from 50000
 /// node network listen port is 40000
 /// is stdout is true
-pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
+pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
     // init chain
     execute_init_chain(InitChainOpts {
         chain_name: opts.chain_name.clone(),
@@ -246,17 +248,30 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
-            let cluster = if node_network_info.len() == 3 {
-                rand_string()
+            if node_network_info.len() == 3 {
+                NodeNetworkAddressBuilder::default()
+                    .host(node_network_info[0].to_string())
+                    .port(node_network_info[1].parse::<u16>().unwrap())
+                    .domain(node_network_info[2].to_string())
+                    .build()
+            } else if node_network_info.len() == 4 {
+                NodeNetworkAddressBuilder::default()
+                    .host(node_network_info[0].to_string())
+                    .port(node_network_info[1].parse::<u16>().unwrap())
+                    .domain(node_network_info[2].to_string())
+                    .cluster(node_network_info[3].to_string())
+                    .build()
+            } else if node_network_info.len() == 5 {
+                NodeNetworkAddressBuilder::default()
+                    .host(node_network_info[0].to_string())
+                    .port(node_network_info[1].parse::<u16>().unwrap())
+                    .domain(node_network_info[2].to_string())
+                    .cluster(node_network_info[3].to_string())
+                    .name_space(node_network_info[4].to_string())
+                    .build()
             } else {
-                node_network_info[3].to_string()
-            };
-            NodeNetworkAddressBuilder::default()
-                .host(node_network_info[0].to_string())
-                .port(node_network_info[1].parse::<u16>().unwrap())
-                .domain(node_network_info[2].to_string())
-                .cluster(cluster)
-                .build()
+                panic!("invalid node network address format!")
+            }
         })
         .collect();
 
@@ -324,10 +339,16 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
 
     // init node and update node
     for (i, node) in chain_config.node_network_address_list.iter().enumerate() {
-        let network_port = 50000;
-        let network_metrics_port = 60000;
+        // for k8s node offset is 0
+        // for none k8s node offset used to avoid port conflict
+        let offset = if node.cluster.is_empty() {
+            (node.port - 40000) * 100
+        } else {
+            0
+        };
+        let network_port = 50000 + offset;
+        let network_metrics_port = 60000 + offset;
         let domain = node.domain.to_string();
-        let network_listen_port = 40000;
         let node_account = node_accounts[i].clone();
 
         execute_init_node(InitNodeOpts {
@@ -339,7 +360,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             executor_port: network_port + 2,
             storage_port: network_port + 3,
             controller_port: network_port + 4,
-            network_listen_port,
             log_level: opts.log_level.clone(),
             log_file_path: opts.log_file_path.clone(),
             jaeger_agent_endpoint: opts.jaeger_agent_endpoint.clone(),
@@ -367,7 +387,6 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
             config_name: "config.toml".to_string(),
-            is_dev: false,
         })
         .unwrap();
     }
@@ -376,60 +395,61 @@ pub fn execute_create_k8s(opts: CreateK8sOpts) -> Result<(), Error> {
 }
 
 #[derive(Parser, Debug, Clone)]
-pub struct AppendK8sOpts {
+pub struct AppendOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub config_dir: String,
     /// log level
     #[clap(long = "log-level", default_value = "info")]
-    log_level: String,
+    pub log_level: String,
     /// log file path
     #[clap(long = "log-file-path")]
-    log_file_path: Option<String>,
+    pub log_file_path: Option<String>,
     /// jaeger agent endpoint
     #[clap(long = "jaeger-agent-endpoint")]
-    jaeger_agent_endpoint: Option<String>,
-    /// node network address looks like localhost:40002:node2:k8s_cluster1
-    /// last slice is optional, none means not k8s env.
+    pub jaeger_agent_endpoint: Option<String>,
+    /// node network address looks like localhost:40002:node2:k8s_cluster_name:namespace
+    /// k8s_cluster_name is optional, none means not k8s env.
+    /// namespace is optional, none means default namespace.
     #[clap(long = "node")]
-    node: String,
+    pub node: String,
     /// is chain in danger mode
     #[clap(long = "is-danger")]
-    is_danger: bool,
+    pub is_danger: bool,
     /// enable tx persistence
     #[clap(long = "enable-tx-persistence")]
-    pub(crate) enable_tx_persistence: bool,
+    pub enable_tx_persistence: bool,
     /// disable metrics
     #[clap(long = "disable-metrics")]
-    pub(crate) disable_metrics: bool,
+    pub disable_metrics: bool,
     /// cloud_storage.access_key_id
     #[clap(long = "access-key-id", default_value = "")]
-    pub(crate) access_key_id: String,
+    pub access_key_id: String,
     /// cloud_storage.secret_access_key
     #[clap(long = "secret-access-key", default_value = "")]
-    pub(crate) secret_access_key: String,
+    pub secret_access_key: String,
     /// cloud_storage.endpoint
     #[clap(long = "s3-endpoint", default_value = "")]
-    pub(crate) s3_endpoint: String,
+    pub s3_endpoint: String,
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
-    pub(crate) s3_bucket: String,
+    pub s3_bucket: String,
     /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
     #[clap(long = "service-type", default_value = "")]
-    pub(crate) service_type: String,
+    pub service_type: String,
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
-    pub(crate) s3_root: String,
+    pub s3_root: String,
     /// cloud_storage.region
     #[clap(long = "s3-region", default_value = "")]
-    pub(crate) s3_region: String,
+    pub s3_region: String,
 }
 
 /// append a new node into chain
-pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
+pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
     let file_name = format!(
         "{}/{}/{}",
         &opts.config_dir, &opts.chain_name, CHAIN_CONFIG_FILE
@@ -445,18 +465,30 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
 
     // parse node network info
     let node_network_info: Vec<&str> = opts.node.split(':').collect();
-    let cluster = if node_network_info.len() == 3 {
-        rand_string()
+    let new_node = if node_network_info.len() == 3 {
+        NodeNetworkAddressBuilder::default()
+            .host(node_network_info[0].to_string())
+            .port(node_network_info[1].parse::<u16>().unwrap())
+            .domain(node_network_info[2].to_string())
+            .build()
+    } else if node_network_info.len() == 4 {
+        NodeNetworkAddressBuilder::default()
+            .host(node_network_info[0].to_string())
+            .port(node_network_info[1].parse::<u16>().unwrap())
+            .domain(node_network_info[2].to_string())
+            .cluster(node_network_info[3].to_string())
+            .build()
+    } else if node_network_info.len() == 5 {
+        NodeNetworkAddressBuilder::default()
+            .host(node_network_info[0].to_string())
+            .port(node_network_info[1].parse::<u16>().unwrap())
+            .domain(node_network_info[2].to_string())
+            .cluster(node_network_info[3].to_string())
+            .name_space(node_network_info[4].to_string())
+            .build()
     } else {
-        node_network_info[3].to_string()
+        panic!("invalid node network address format!")
     };
-
-    let new_node = NodeNetworkAddressBuilder::default()
-        .host(node_network_info[0].to_string())
-        .port(node_network_info[1].parse::<u16>().unwrap())
-        .domain(node_network_info[2].to_string())
-        .cluster(cluster)
-        .build();
 
     // append node
     execute_append_node(AppendNodeOpts {
@@ -500,15 +532,20 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
             config_name: "config.toml".to_string(),
-            is_dev: false,
         })
         .unwrap();
     }
 
     // new node need init and update
-    let network_port = 50000;
-    let network_metrics_port = 60000;
-    let network_listen_port = 40000;
+    // for k8s node offset is 0
+    // for none k8s node offset used to avoid port conflict
+    let offset = if new_node.cluster.is_empty() {
+        (new_node.port - 40000) * 100
+    } else {
+        0
+    };
+    let network_port = 50000 + offset;
+    let network_metrics_port = 60000 + offset;
     let domain = new_node.domain;
 
     execute_init_node(InitNodeOpts {
@@ -520,7 +557,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         executor_port: network_port + 2,
         storage_port: network_port + 3,
         controller_port: network_port + 4,
-        network_listen_port,
         log_level: opts.log_level,
         log_file_path: opts.log_file_path,
         jaeger_agent_endpoint: opts.jaeger_agent_endpoint,
@@ -548,7 +584,6 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
         config_dir: opts.config_dir.clone(),
         domain,
         config_name: "config.toml".to_string(),
-        is_dev: false,
     })
     .unwrap();
 
@@ -556,19 +591,19 @@ pub fn execute_append_k8s(opts: AppendK8sOpts) -> Result<(), Error> {
 }
 
 #[derive(Parser, Debug, Clone)]
-pub struct DeleteK8sOpts {
+pub struct DeleteOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    config_dir: String,
+    pub config_dir: String,
     /// domain of node that want to delete
     #[clap(long = "domain")]
-    pub(crate) domain: String,
+    pub domain: String,
 }
 
-pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
+pub fn execute_delete(opts: DeleteOpts) -> Result<(), Error> {
     // delete node before load chain config
     execute_delete_node(DeleteNodeOpts {
         chain_name: opts.chain_name.clone(),
@@ -604,7 +639,6 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
             config_dir: opts.config_dir.clone(),
             domain: domain.clone(),
             config_name: "config.toml".to_string(),
-            is_dev: false,
         })
         .unwrap();
     }
@@ -613,15 +647,15 @@ pub fn execute_delete_k8s(opts: DeleteK8sOpts) -> Result<(), Error> {
 }
 
 #[cfg(test)]
-mod k8s_test {
+mod cmd_test {
     use super::*;
-    use crate::util::rand_string;
+    use crate::delete_chain::{execute_delete_chain, DeleteChainOpts};
 
     #[test]
-    fn k8s_test() {
-        let name = rand_string();
-        let name1 = rand_string();
-        execute_create_k8s(CreateK8sOpts {
+    fn cmd_test() {
+        let name = "test-chain".to_string();
+        let name1 = "test-chain-1".to_string();
+        execute_create(CreateOpts {
             chain_name: name.clone(),
             config_dir: "/tmp".to_string(),
             timestamp: 0,
@@ -643,7 +677,8 @@ mod k8s_test {
             controller_image: "controller_hsm".to_string(),
             controller_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
-            node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
+            node_list: "localhost:40000:node0:k8s,localh
+            ost:40001:node1:k8s,localhost:40002:node2:k8s:cita,rivtower.com:40003:node3,192.168.160.20:40004:node4"
                 .to_string(),
             log_level: "info".to_string(),
             log_file_path: None,
@@ -661,8 +696,8 @@ mod k8s_test {
         })
         .unwrap();
 
-        execute_create_k8s(CreateK8sOpts {
-            chain_name: name1,
+        execute_create(CreateOpts {
+            chain_name: name1.clone(),
             config_dir: "/tmp".to_string(),
             timestamp: 0,
             prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
@@ -683,8 +718,7 @@ mod k8s_test {
             controller_image: "controller_hsm".to_string(),
             controller_tag: "latest".to_string(),
             admin: "a81a6d5ebf5bb612dd52b37f743d2eb7a90807f7".to_string(),
-            node_list: "localhost:40000:node0:k8s:40000,localhost:40001:node1:k8s:40000"
-                .to_string(),
+            node_list: "localhost:40000:node0:k8s,localhost:40001:node1:k8s".to_string(),
             log_level: "info".to_string(),
             log_file_path: None,
             jaeger_agent_endpoint: None,
@@ -701,11 +735,11 @@ mod k8s_test {
         })
         .unwrap();
 
-        execute_append_k8s(AppendK8sOpts {
-            chain_name: name.clone(),
+        execute_append(AppendOpts {
+            chain_name: name1.clone(),
             config_dir: "/tmp".to_string(),
             log_level: "info".to_string(),
-            node: "localhost:40002:node2:k8s:40000".to_string(),
+            node: "localhost:40002:node2:k8s".to_string(),
             log_file_path: None,
             jaeger_agent_endpoint: None,
             is_danger: false,
@@ -721,11 +755,21 @@ mod k8s_test {
         })
         .unwrap();
 
-        execute_delete_k8s(DeleteK8sOpts {
-            chain_name: name,
+        execute_delete(DeleteOpts {
+            chain_name: name1.clone(),
             config_dir: "/tmp".to_string(),
             domain: "node2".to_string(),
         })
         .unwrap();
+
+        // clean
+        let _ = execute_delete_chain(DeleteChainOpts {
+            chain_name: name.clone(),
+            config_dir: "/tmp".to_string(),
+        });
+        let _ = execute_delete_chain(DeleteChainOpts {
+            chain_name: name1.clone(),
+            config_dir: "/tmp".to_string(),
+        });
     }
 }
