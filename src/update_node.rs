@@ -30,6 +30,7 @@ use crate::traits::TomlWriter;
 use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
 use clap::Parser;
 use std::fs;
+use std::net::Ipv4Addr;
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -46,15 +47,10 @@ pub struct UpdateNodeOpts {
     /// domain of node
     #[clap(long = "domain")]
     pub domain: String,
-    /// is for dev env
-    #[clap(long = "is-dev")]
-    pub is_dev: bool,
 }
 
 /// generate node config files by chain_config and node_config
 pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
-    let is_k8s = !opts.is_dev;
-
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
 
     // load node_config
@@ -65,12 +61,22 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let file_name = format!("{}/{}", &node_dir, CHAIN_CONFIG_FILE);
     let chain_config = read_chain_config(file_name).unwrap();
 
-    let mut local_cluster = "";
+    let mut my_cluster_name = "";
+    let mut my_external_port = 0;
+    let mut my_name_space = "";
     for node_network_address in &chain_config.node_network_address_list {
         if node_network_address.domain == opts.domain {
-            local_cluster = &node_network_address.cluster;
+            my_cluster_name = &node_network_address.cluster;
+            my_external_port = node_network_address.port;
+            my_name_space = &node_network_address.name_space;
         }
     }
+
+    if my_external_port == 0 {
+        panic!("can't find domain in chain_config.node_network_address_list");
+    }
+
+    let is_k8s = !my_cluster_name.is_empty();
 
     // because this file write by one and one section
     // so write mode must be append
@@ -105,22 +111,60 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
     let real_domain = format!("{}-{}", &opts.chain_name, &opts.domain);
 
     // network config file
+    // config peers
+    // if current node in k8s
+    // -- if same cluster and same namespace port is 40000, domain is svc name
+    // -- if same cluster and different namespace, port is 40000, domain is svc name
+    // -- if diffrent cluster and peer host is FQDN, port is peer port, domain is svc name
+    // -- if diffrent cluster and peer host is ip, port is 40000, domain is svc name
+    // if current node not in k8s, port is peer port, domain is peer host
     if find_micro_service(&chain_config, NETWORK_ZENOH) {
         let mut zenoh_peers: Vec<ZenohPeerConfig> = Vec::new();
         for node_network_address in &chain_config.node_network_address_list {
             if node_network_address.domain != opts.domain {
-                let real_domain = format!("{}-{}", &opts.chain_name, &node_network_address.domain);
-                let node_cluster = &node_network_address.cluster;
-                let port = if local_cluster == node_cluster {
-                    node_network_address.svc_port
+                if is_k8s {
+                    let peer_cluster_name = &node_network_address.cluster;
+                    let peer_name_space = &node_network_address.name_space;
+                    let peer_host = &node_network_address.host;
+                    let is_peer_host_ip = peer_host.parse::<Ipv4Addr>().is_ok();
+                    let peer_port = node_network_address.port;
+                    let peer_svc_name =
+                        format!("{}-{}", &opts.chain_name, &node_network_address.domain);
+
+                    let same_cluster = peer_cluster_name == my_cluster_name;
+                    let same_name_space = peer_name_space == my_name_space;
+
+                    let peer_config = match (same_cluster, same_name_space, is_peer_host_ip) {
+                        (true, true, _) => ZenohPeerConfig {
+                            port: 40000,
+                            domain: peer_svc_name,
+                            protocol: "quic".to_string(),
+                        },
+                        (true, false, _) => ZenohPeerConfig {
+                            port: 40000,
+                            domain: peer_svc_name,
+                            protocol: "quic".to_string(),
+                        },
+                        (false, _, false) => ZenohPeerConfig {
+                            port: peer_port,
+                            domain: peer_svc_name,
+                            protocol: "quic".to_string(),
+                        },
+                        (false, _, true) => ZenohPeerConfig {
+                            port: 40000,
+                            domain: peer_svc_name,
+                            protocol: "quic".to_string(),
+                        },
+                    };
+
+                    zenoh_peers.push(peer_config);
                 } else {
-                    node_network_address.port
-                };
-                zenoh_peers.push(ZenohPeerConfig {
-                    port,
-                    domain: real_domain,
-                    protocol: "quic".to_string(),
-                });
+                    zenoh_peers.push(ZenohPeerConfig {
+                        port: node_network_address.port,
+                        domain: node_network_address.host.clone(),
+                        protocol: "quic".to_string(),
+                    });
+                }
             }
         }
         // load cert
@@ -151,7 +195,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         ];
 
         let network_config = ZenohConfig {
-            port: node_config.network_listen_port,
+            port: if is_k8s { 40000 } else { my_external_port },
             grpc_port: node_config.grpc_ports.network_port,
             ca_cert,
             cert,

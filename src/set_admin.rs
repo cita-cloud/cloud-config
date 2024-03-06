@@ -23,13 +23,13 @@ use clap::Parser;
 pub struct SetAdminOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set admin
     #[clap(long = "admin")]
-    pub(crate) admin: String,
+    pub admin: String,
 }
 
 /// execute set admin

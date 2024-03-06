@@ -16,7 +16,7 @@ use crate::config::chain_config::ConfigStage;
 use crate::config::chain_config::NodeNetworkAddressBuilder;
 use crate::constant::CHAIN_CONFIG_FILE;
 use crate::error::Error;
-use crate::util::{rand_string, read_chain_config, write_toml};
+use crate::util::{read_chain_config, write_toml};
 use clap::Parser;
 
 /// A subcommand for run
@@ -24,14 +24,16 @@ use clap::Parser;
 pub struct SetNodeListOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
-    /// node list looks like localhost:40000:node0:k8s_cluster1,localhost:40001:node1:k8s_cluster2
-    /// last slice is optional, none means not k8s env.
+    pub config_dir: String,
+    /// node list looks like localhost:40000:node0:k8s_cluster_name_1:namespace_1,localhost:40001:node1:k8s_cluster_name_2:namespace_2
+    /// for each node network address:
+    /// k8s_cluster_name is optional, none means not k8s env.
+    /// namespace is optional, none means default namespace.
     #[clap(long = "nodelist")]
-    pub(crate) node_list: String,
+    pub node_list: String,
 }
 
 /// execute set node list
@@ -53,18 +55,30 @@ pub fn execute_set_nodelist(opts: SetNodeListOpts) -> Result<(), Error> {
         .iter()
         .map(|node| {
             let node_network_info: Vec<&str> = node.split(':').collect();
-            let cluster = if node_network_info.len() == 3 {
-                rand_string()
+            if node_network_info.len() == 3 {
+                NodeNetworkAddressBuilder::default()
+                    .host(node_network_info[0].to_string())
+                    .port(node_network_info[1].parse::<u16>().unwrap())
+                    .domain(node_network_info[2].to_string())
+                    .build()
+            } else if node_network_info.len() == 4 {
+                NodeNetworkAddressBuilder::default()
+                    .host(node_network_info[0].to_string())
+                    .port(node_network_info[1].parse::<u16>().unwrap())
+                    .domain(node_network_info[2].to_string())
+                    .cluster(node_network_info[3].to_string())
+                    .build()
+            } else if node_network_info.len() == 5 {
+                NodeNetworkAddressBuilder::default()
+                    .host(node_network_info[0].to_string())
+                    .port(node_network_info[1].parse::<u16>().unwrap())
+                    .domain(node_network_info[2].to_string())
+                    .cluster(node_network_info[3].to_string())
+                    .name_space(node_network_info[4].to_string())
+                    .build()
             } else {
-                node_network_info[3].to_string()
-            };
-
-            NodeNetworkAddressBuilder::default()
-                .host(node_network_info[0].to_string())
-                .port(node_network_info[1].parse::<u16>().unwrap())
-                .domain(node_network_info[2].to_string())
-                .cluster(cluster)
-                .build()
+                panic!("invalid node network address format!")
+            }
         })
         .collect();
 

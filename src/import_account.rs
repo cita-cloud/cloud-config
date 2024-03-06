@@ -33,13 +33,13 @@ use ophelia_blst::BlsPrivateKey;
 pub struct ImportAccountOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// hex encoded private key
     #[clap(long = "privkey")]
-    pub(crate) privkey: String,
+    pub privkey: String,
 }
 
 pub fn execute_import_account(opts: ImportAccountOpts) -> Result<(String, String), Error> {

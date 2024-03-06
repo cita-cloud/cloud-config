@@ -14,6 +14,7 @@
 
 pub mod append_node;
 pub mod append_validator;
+pub mod cmd;
 pub mod config;
 pub mod constant;
 pub mod create_ca;
@@ -21,8 +22,6 @@ pub mod create_csr;
 pub mod delete_chain;
 pub mod delete_node;
 pub mod delete_validator;
-pub mod env_dev;
-pub mod env_k8s;
 pub mod error;
 pub mod import_account;
 pub mod import_ca;

@@ -28,88 +28,85 @@ use std::path::Path;
 pub struct InitNodeOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// domain of node
     #[clap(long = "domain")]
-    pub(crate) domain: String,
+    pub domain: String,
     /// grpc network_port of node
     #[clap(long = "network-port", default_value = "50000")]
-    pub(crate) network_port: u16,
+    pub network_port: u16,
     /// grpc consensus_port of node
     #[clap(long = "consensus-port", default_value = "50001")]
-    pub(crate) consensus_port: u16,
+    pub consensus_port: u16,
     /// grpc executor_port of node
     #[clap(long = "executor-port", default_value = "50002")]
-    pub(crate) executor_port: u16,
+    pub executor_port: u16,
     /// grpc storage_port of node
     #[clap(long = "storage-port", default_value = "50003")]
-    pub(crate) storage_port: u16,
+    pub storage_port: u16,
     /// grpc controller_port of node
     #[clap(long = "controller-port", default_value = "50004")]
-    pub(crate) controller_port: u16,
-    /// network listen port of node
-    #[clap(long = "network-listen-port", default_value = "40000")]
-    pub(crate) network_listen_port: u16,
+    pub controller_port: u16,
     /// log level
     #[clap(long = "log-level", default_value = "info")]
-    pub(crate) log_level: String,
+    pub log_level: String,
     /// log file path
     #[clap(long = "log-file-path")]
-    pub(crate) log_file_path: Option<String>,
+    pub log_file_path: Option<String>,
     /// jaeger agent endpoint
     #[clap(long = "jaeger-agent-endpoint")]
-    pub(crate) jaeger_agent_endpoint: Option<String>,
+    pub jaeger_agent_endpoint: Option<String>,
     /// account of node
     #[clap(long = "account")]
-    pub(crate) account: String,
+    pub account: String,
     /// network metrics port of node
     #[clap(long = "network-metrics-port", default_value = "60000")]
-    pub(crate) network_metrics_port: u16,
+    pub network_metrics_port: u16,
     /// consensus metrics port of node
     #[clap(long = "consensus-metrics-port", default_value = "60001")]
-    pub(crate) consensus_metrics_port: u16,
+    pub consensus_metrics_port: u16,
     /// executor metrics port of node
     #[clap(long = "executor-metrics-port", default_value = "60002")]
-    pub(crate) executor_metrics_port: u16,
+    pub executor_metrics_port: u16,
     /// storage metrics port of node
     #[clap(long = "storage-metrics-port", default_value = "60003")]
-    pub(crate) storage_metrics_port: u16,
+    pub storage_metrics_port: u16,
     /// controller metrics port of node
     #[clap(long = "controller-metrics-port", default_value = "60004")]
-    pub(crate) controller_metrics_port: u16,
+    pub controller_metrics_port: u16,
     /// disable metrics
     #[clap(long = "disable-metrics")]
-    pub(crate) disable_metrics: bool,
+    pub disable_metrics: bool,
     /// is chain in danger mode
     #[clap(long = "is-danger")]
-    pub(crate) is_danger: bool,
+    pub is_danger: bool,
     /// enable tx persistence
     #[clap(long = "enable-tx-persistence")]
-    pub(crate) enable_tx_persistence: bool,
+    pub enable_tx_persistence: bool,
     /// cloud_storage.access_key_id
     #[clap(long = "access-key-id", default_value = "")]
-    pub(crate) access_key_id: String,
+    pub access_key_id: String,
     /// cloud_storage.secret_access_key
     #[clap(long = "secret-access-key", default_value = "")]
-    pub(crate) secret_access_key: String,
+    pub secret_access_key: String,
     /// cloud_storage.endpoint
     #[clap(long = "s3-endpoint", default_value = "")]
-    pub(crate) s3_endpoint: String,
+    pub s3_endpoint: String,
     /// cloud_storage.bucket
     #[clap(long = "s3-bucket", default_value = "")]
-    pub(crate) s3_bucket: String,
+    pub s3_bucket: String,
     /// cloud_storage.service_type: s3/oss(aliyun)/obs(huawei)/cos(tencent)/azblob(azure)
     #[clap(long = "service-type", default_value = "")]
-    pub(crate) service_type: String,
+    pub service_type: String,
     /// cloud_storage.root
     #[clap(long = "s3-root", default_value = "")]
-    pub(crate) s3_root: String,
+    pub s3_root: String,
     /// cloud_storage.region
     #[clap(long = "s3-region", default_value = "")]
-    pub(crate) s3_region: String,
+    pub s3_region: String,
 }
 
 /// execute init node
@@ -155,7 +152,6 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)
         .metrics_ports(metrics_ports)
-        .network_listen_port(opts.network_listen_port)
         .log_level(opts.log_level)
         .log_file_path(opts.log_file_path)
         .jaeger_agent_endpoint(opts.jaeger_agent_endpoint)

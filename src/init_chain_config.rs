@@ -26,64 +26,64 @@ use std::path::Path;
 pub struct InitChainConfigOpts {
     /// set chain name
     #[clap(long = "chain-name", default_value = "test-chain")]
-    pub(crate) chain_name: String,
+    pub chain_name: String,
     /// set config file directory, default means current directory
     #[clap(long = "config-dir", default_value = ".")]
-    pub(crate) config_dir: String,
+    pub config_dir: String,
     /// set genesis timestamp
     #[clap(long = "timestamp", default_value = "0")]
-    pub(crate) timestamp: u64,
+    pub timestamp: u64,
     /// set genesis prevhash
     #[clap(
         long = "prevhash",
         default_value = "0x0000000000000000000000000000000000000000000000000000000000000000"
     )]
-    pub(crate) prevhash: String,
+    pub prevhash: String,
     /// set system config version
     #[clap(long = "version", default_value = "0")]
-    pub(crate) version: u32,
+    pub version: u32,
     /// set system config chain_id
     #[clap(long = "chain_id", default_value = "")]
-    pub(crate) chain_id: String,
+    pub chain_id: String,
     /// set system config block_interval
     #[clap(long = "block_interval", default_value = "3")]
-    pub(crate) block_interval: u32,
+    pub block_interval: u32,
     /// set system config block_limit
     #[clap(long = "block_limit", default_value = "100")]
-    pub(crate) block_limit: u64,
+    pub block_limit: u64,
     /// set one block contains quota limit, default 1073741824
     #[clap(long = "quota-limit", default_value = "1073741824")]
-    pub(crate) quota_limit: u64,
+    pub quota_limit: u64,
     /// set network micro service image name (network_zenoh)
     #[clap(long = "network_image", default_value = "network_zenoh")]
-    pub(crate) network_image: String,
+    pub network_image: String,
     /// set network micro service image tag
     #[clap(long = "network_tag", default_value = "latest")]
-    pub(crate) network_tag: String,
+    pub network_tag: String,
     /// set consensus micro service image name (consensus_raft/consensus_overlord)
     #[clap(long = "consensus_image", default_value = "consensus_overlord")]
-    pub(crate) consensus_image: String,
+    pub consensus_image: String,
     /// set consensus micro service image tag
     #[clap(long = "consensus_tag", default_value = "latest")]
-    pub(crate) consensus_tag: String,
+    pub consensus_tag: String,
     /// set executor micro service image name (executor_evm)
     #[clap(long = "executor_image", default_value = "executor_evm")]
-    pub(crate) executor_image: String,
+    pub executor_image: String,
     /// set executor micro service image tag
     #[clap(long = "executor_tag", default_value = "latest")]
-    pub(crate) executor_tag: String,
+    pub executor_tag: String,
     /// set storage micro service image name (storage_opendal)
     #[clap(long = "storage_image", default_value = "storage_opendal")]
-    pub(crate) storage_image: String,
+    pub storage_image: String,
     /// set storage micro service image tag
     #[clap(long = "storage_tag", default_value = "latest")]
-    pub(crate) storage_tag: String,
-    /// set controller micro service image name (controller)
+    pub storage_tag: String,
+    /// set controller micro service image name (controller_hsm)
     #[clap(long = "controller_image", default_value = "controller_hsm")]
-    pub(crate) controller_image: String,
+    pub controller_image: String,
     /// set controller micro service image tag
     #[clap(long = "controller_tag", default_value = "latest")]
-    pub(crate) controller_tag: String,
+    pub controller_tag: String,
 }
 
 /// init chain config
