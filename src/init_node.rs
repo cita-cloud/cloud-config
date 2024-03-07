@@ -16,9 +16,11 @@ use crate::config::chain_config::ConfigStage;
 use crate::config::node_config::{
     CloudStorageBuilder, GrpcPortsBuilder, MetricsPortsBuilder, NodeConfigBuilder,
 };
-use crate::constant::{ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE};
+use crate::constant::{
+    ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE,
+};
 use crate::error::Error;
-use crate::util::{copy_dir_all, read_chain_config, write_toml};
+use crate::util::{copy_dir_all, read_chain_config, remove_0x, write_toml};
 use clap::Parser;
 use std::fs;
 use std::path::Path;
@@ -126,6 +128,8 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         return Err(Error::InvalidStage);
     }
 
+    let account = remove_0x(opts.account.as_str());
+
     let grpc_ports = GrpcPortsBuilder::default()
         .network_port(opts.network_port)
         .consensus_port(opts.consensus_port)
@@ -155,7 +159,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .log_level(opts.log_level)
         .log_file_path(opts.log_file_path)
         .jaeger_agent_endpoint(opts.jaeger_agent_endpoint)
-        .account(opts.account)
+        .account(account.to_string())
         .enable_metrics(!opts.disable_metrics)
         .is_danger(opts.is_danger)
         .enable_tx_persistence(opts.enable_tx_persistence)
@@ -165,17 +169,27 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
     fs::create_dir_all(&node_dir).unwrap();
 
-    // copy  accounts  ca_cert  certs and  chain_config.toml
-    let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, ACCOUNT_DIR);
-    let to = format!("{}/{}", &node_dir, ACCOUNT_DIR);
+    // copy account/ca_cert/node cert and key/chain_config.toml
+    let from = format!(
+        "{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, ACCOUNT_DIR, account
+    );
+    let to = format!("{}/{}/{}", &node_dir, ACCOUNT_DIR, account);
     copy_dir_all(from, to).unwrap();
 
-    let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, CA_CERT_DIR);
-    let to = format!("{}/{}", &node_dir, CA_CERT_DIR);
-    copy_dir_all(from, to).unwrap();
+    let from = format!(
+        "{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CA_CERT_DIR, CERT_PEM
+    );
+    let _ = fs::create_dir_all(format!("{}/{}", &node_dir, CA_CERT_DIR));
+    let to = format!("{}/{}/{}", &node_dir, CA_CERT_DIR, CERT_PEM);
+    fs::copy(from, to).unwrap();
 
-    let from = format!("{}/{}/{}", &opts.config_dir, &opts.chain_name, CERTS_DIR);
-    let to = format!("{}/{}", &node_dir, CERTS_DIR);
+    let from = format!(
+        "{}/{}/{}/{}",
+        &opts.config_dir, &opts.chain_name, CERTS_DIR, &opts.domain
+    );
+    let to = format!("{}/{}/{}", &node_dir, CERTS_DIR, &opts.domain);
     copy_dir_all(from, to).unwrap();
 
     let from = format!(
