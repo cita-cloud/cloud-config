@@ -29,6 +29,8 @@ pub struct Consensus {
     pub metrics_port: u16,
 
     pub enable_metrics: bool,
+
+    pub log_level: String,
 }
 
 impl Consensus {
@@ -39,6 +41,7 @@ impl Consensus {
         grpc_listen_port: u16,
         metrics_port: u16,
         enable_metrics: bool,
+        log_level: String,
     ) -> Self {
         Self {
             network_port,
@@ -47,6 +50,7 @@ impl Consensus {
             grpc_listen_port,
             metrics_port,
             enable_metrics,
+            log_level,
         }
     }
 }

@@ -244,6 +244,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
             node_config.grpc_ports.consensus_port,
             node_config.metrics_ports.consensus_metrics_port,
             node_config.enable_metrics,
+            node_config.log_level.clone(),
         );
         consensus_config.write(&config_file_name);
     } else if find_micro_service(&chain_config, CONSENSUS_OVERLORD) {
