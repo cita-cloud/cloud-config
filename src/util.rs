@@ -79,6 +79,7 @@ pub fn write_file(content: &[u8], path: impl AsRef<path::Path>) {
 pub fn touch_file(path: impl AsRef<path::Path>) {
     fs::OpenOptions::new()
         .create(true)
+        .truncate(true)
         .write(true)
         .open(path.as_ref())
         .unwrap_or_else(|_| panic!("touch file({:?}) failed.", path.as_ref().to_str()));
