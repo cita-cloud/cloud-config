@@ -17,7 +17,7 @@ use crate::traits::{TomlWriter, YmlWriter};
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
-use super::node_config::CloudStorage;
+use super::node_config::{CloudStorage, ExportConfig};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageOpendalConfig {
@@ -28,6 +28,7 @@ pub struct StorageOpendalConfig {
     pub log_config: LogConfig,
     // cloud storage
     pub cloud_storage: CloudStorage,
+    pub exporter: ExportConfig,
 }
 
 impl StorageOpendalConfig {
@@ -38,6 +39,7 @@ impl StorageOpendalConfig {
         enable_metrics: bool,
         log_config: LogConfig,
         cloud_storage: CloudStorage,
+        exporter: ExportConfig,
     ) -> Self {
         Self {
             domain,
@@ -46,6 +48,7 @@ impl StorageOpendalConfig {
             enable_metrics,
             log_config,
             cloud_storage,
+            exporter,
         }
     }
 }

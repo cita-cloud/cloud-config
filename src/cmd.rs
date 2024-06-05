@@ -154,6 +154,9 @@ pub struct CreateOpts {
     /// cloud_storage.region
     #[clap(long = "s3-region", default_value = "")]
     pub s3_region: String,
+    /// exporter.base_path
+    #[clap(long = "exporter-path", default_value = "")]
+    pub exporter_path: String,
 }
 
 impl Default for CreateOpts {
@@ -194,6 +197,7 @@ impl Default for CreateOpts {
             service_type: "".to_string(),
             s3_root: "".to_string(),
             s3_region: "".to_string(),
+            exporter_path: "".to_string(),
         }
     }
 }
@@ -379,6 +383,7 @@ pub fn execute_create(opts: CreateOpts) -> Result<(), Error> {
             service_type: opts.service_type.clone(),
             s3_root: opts.s3_root.clone(),
             s3_region: opts.s3_region.clone(),
+            exporter_path: opts.exporter_path.clone(),
         })
         .unwrap();
 
@@ -446,6 +451,9 @@ pub struct AppendOpts {
     /// cloud_storage.region
     #[clap(long = "s3-region", default_value = "")]
     pub s3_region: String,
+    /// exporter.base_path
+    #[clap(long = "exporter-path", default_value = "")]
+    pub exporter_path: String,
 }
 
 /// append a new node into chain
@@ -576,6 +584,7 @@ pub fn execute_append(opts: AppendOpts) -> Result<(), Error> {
         service_type: opts.service_type.clone(),
         s3_root: opts.s3_root.clone(),
         s3_region: opts.s3_region.clone(),
+        exporter_path: opts.exporter_path.clone(),
     })
     .unwrap();
 
@@ -693,6 +702,7 @@ mod cmd_test {
             service_type: "".to_string(),
             s3_root: "".to_string(),
             s3_region: "".to_string(),
+            exporter_path: "".to_string(),
         })
         .unwrap();
 
@@ -732,6 +742,7 @@ mod cmd_test {
             service_type: "".to_string(),
             s3_root: "".to_string(),
             s3_region: "".to_string(),
+            exporter_path: "".to_string(),
         })
         .unwrap();
 
@@ -752,6 +763,7 @@ mod cmd_test {
             service_type: "".to_string(),
             s3_root: "".to_string(),
             s3_region: "".to_string(),
+            exporter_path: "".to_string(),
         })
         .unwrap();
 

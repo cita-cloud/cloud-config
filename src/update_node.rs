@@ -305,6 +305,7 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                 filter: node_config.log_level.clone(),
             },
             node_config.cloud_storage.clone(),
+            node_config.exporter.clone(),
         );
         storage_config.write(&config_file_name);
     } else {

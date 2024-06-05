@@ -118,6 +118,9 @@ mindmap
             id[service_type]
             id[root]
             id[region]
+        id(exporter)
+            id[base_path]
+            id[chain_name]
     id(杂项)
         id[config-dir]
         id[chain_name]
@@ -772,6 +775,8 @@ test-chain
           cloud_storage.root [default: ]                                                             
       --s3-region <S3_REGION>                     
           cloud_storage.region [default: ]                                                           
+      --exporter-path <EXPORTER_PATH>
+          exporter.base_path [default: ]
 ```
 
 说明：
@@ -1069,6 +1074,8 @@ means not k8s env. namespace is optional, none means default namespace
           cloud_storage.root [default: ]                                                             
       --s3-region <S3_REGION>                     
           cloud_storage.region [default: ]
+      --exporter-path <EXPORTER_PATH>
+          exporter.base_path [default: ]
 ```
 
 说明:
@@ -1125,6 +1132,8 @@ accounts  ca_cert  certs  chain_config.toml  config.toml  node_address  node_con
           cloud_storage.root [default: ]
       --s3-region <S3_REGION>
           cloud_storage.region [default: ]
+      --exporter-path <EXPORTER_PATH>
+          exporter.base_path [default: ]
 ```
 
 说明：

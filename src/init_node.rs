@@ -14,7 +14,7 @@
 
 use crate::config::chain_config::ConfigStage;
 use crate::config::node_config::{
-    CloudStorageBuilder, GrpcPortsBuilder, MetricsPortsBuilder, NodeConfigBuilder,
+    CloudStorageBuilder, ExportConfig, GrpcPortsBuilder, MetricsPortsBuilder, NodeConfigBuilder,
 };
 use crate::constant::{
     ACCOUNT_DIR, CA_CERT_DIR, CERTS_DIR, CERT_PEM, CHAIN_CONFIG_FILE, NODE_CONFIG_FILE,
@@ -109,6 +109,9 @@ pub struct InitNodeOpts {
     /// cloud_storage.region
     #[clap(long = "s3-region", default_value = "")]
     pub s3_region: String,
+    /// exporter.base_path
+    #[clap(long = "exporter-path", default_value = "")]
+    pub exporter_path: String,
 }
 
 /// execute init node
@@ -153,6 +156,10 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .root(opts.s3_root.clone())
         .region(opts.s3_region.clone())
         .build();
+    let exporter = ExportConfig {
+        base_path: opts.exporter_path.clone(),
+        chain_name: opts.chain_name.clone(),
+    };
     let node_config = NodeConfigBuilder::default()
         .grpc_ports(grpc_ports)
         .metrics_ports(metrics_ports)
@@ -164,6 +171,7 @@ pub fn execute_init_node(opts: InitNodeOpts) -> Result<(), Error> {
         .is_danger(opts.is_danger)
         .enable_tx_persistence(opts.enable_tx_persistence)
         .cloud_storage(cloud_storage)
+        .exporter(exporter)
         .build();
 
     let node_dir = format!("{}/{}-{}", &opts.config_dir, &opts.chain_name, &opts.domain);
