@@ -16,7 +16,7 @@ use crate::constant::{
     CONTROLLER, DEFAULT_BLOCK_INTERVAL, DEFAULT_BLOCK_LIMIT, DEFAULT_QUOTA_LIMIT, GENESIS_BLOCK,
     PRE_HASH, SYSTEM_CONFIG,
 };
-use crate::traits::{TomlWriter, YmlWriter};
+use crate::traits::TomlWriter;
 use crate::util::check_address;
 use serde::{Deserialize, Serialize};
 
@@ -53,12 +53,6 @@ pub struct ControllerConfig {
 
 impl TomlWriter for ControllerConfig {
     fn section(&self) -> String {
-        CONTROLLER.to_string()
-    }
-}
-
-impl YmlWriter for ControllerConfig {
-    fn service(&self) -> String {
         CONTROLLER.to_string()
     }
 }

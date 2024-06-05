@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{STORAGE, STORAGE_OPENDAL};
-use crate::traits::{TomlWriter, YmlWriter};
+use crate::constant::STORAGE_OPENDAL;
+use crate::traits::TomlWriter;
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
@@ -56,11 +56,5 @@ impl StorageOpendalConfig {
 impl TomlWriter for StorageOpendalConfig {
     fn section(&self) -> String {
         STORAGE_OPENDAL.to_string()
-    }
-}
-
-impl YmlWriter for StorageOpendalConfig {
-    fn service(&self) -> String {
-        STORAGE.to_string()
     }
 }
