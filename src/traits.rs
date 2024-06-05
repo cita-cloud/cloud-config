@@ -12,13 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::consensus_raft::Consensus;
-use crate::config::controller::{ControllerConfig, GenesisBlock, SystemConfigFile};
-use crate::config::executor_evm::ExecutorEvmConfig;
-use crate::config::network_zenoh::ZenohConfig;
-use crate::config::storage_opendal::StorageOpendalConfig;
 use crate::util;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::path;
 
 pub trait TomlWriter {
@@ -30,21 +25,4 @@ pub trait TomlWriter {
     }
 
     fn section(&self) -> String;
-}
-
-pub trait YmlWriter {
-    fn service(&self) -> String;
-}
-
-pub trait Writer: TomlWriter + YmlWriter {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AggregateConfig {
-    pub system_config: SystemConfigFile,
-    pub genesis_block: GenesisBlock,
-    pub network_zenoh: Option<ZenohConfig>,
-    pub controller: Option<ControllerConfig>,
-    pub storage_opendal: Option<StorageOpendalConfig>,
-    pub executor_evm: Option<ExecutorEvmConfig>,
-    pub consensus_raft: Option<Consensus>,
 }

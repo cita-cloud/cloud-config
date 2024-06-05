@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{EXECUTOR, EXECUTOR_EVM};
-use crate::traits::{TomlWriter, YmlWriter};
+use crate::constant::EXECUTOR_EVM;
+use crate::traits::TomlWriter;
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
@@ -48,12 +48,6 @@ impl ExecutorEvmConfig {
 impl TomlWriter for ExecutorEvmConfig {
     fn section(&self) -> String {
         EXECUTOR_EVM.to_string()
-    }
-}
-
-impl YmlWriter for ExecutorEvmConfig {
-    fn service(&self) -> String {
-        EXECUTOR.to_string()
     }
 }
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CONSENSUS, CONSENSUS_RAFT};
-use crate::traits::{TomlWriter, YmlWriter};
+use crate::constant::CONSENSUS_RAFT;
+use crate::traits::TomlWriter;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Clone, Deserialize)]
@@ -52,12 +52,6 @@ impl Consensus {
             enable_metrics,
             log_level,
         }
-    }
-}
-
-impl YmlWriter for Consensus {
-    fn service(&self) -> String {
-        CONSENSUS.to_string()
     }
 }
 

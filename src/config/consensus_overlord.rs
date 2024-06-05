@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{CONSENSUS, CONSENSUS_OVERLORD};
-use crate::traits::{TomlWriter, YmlWriter};
+use crate::constant::CONSENSUS_OVERLORD;
+use crate::traits::TomlWriter;
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
@@ -54,12 +54,6 @@ impl ConsensusOverlord {
             enable_metrics,
             log_config,
         }
-    }
-}
-
-impl YmlWriter for ConsensusOverlord {
-    fn service(&self) -> String {
-        CONSENSUS.to_string()
     }
 }
 

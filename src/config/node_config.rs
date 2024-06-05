@@ -240,6 +240,13 @@ impl CloudStorageBuilder {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct ExportConfig {
+    pub base_path: String,  // kafka bridge base path
+    pub chain_name: String, // use citacloud.{chain_name} as prefix of topic
+}
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct NodeConfig {
     pub grpc_ports: GrpcPorts,
@@ -252,6 +259,7 @@ pub struct NodeConfig {
     pub is_danger: bool,
     pub enable_tx_persistence: bool,
     pub cloud_storage: CloudStorage,
+    pub exporter: ExportConfig,
 }
 
 pub struct NodeConfigBuilder {
@@ -265,6 +273,7 @@ pub struct NodeConfigBuilder {
     pub is_danger: bool,
     pub enable_tx_persistence: bool,
     pub cloud_storage: CloudStorage,
+    pub exporter: ExportConfig,
 }
 
 impl Default for NodeConfigBuilder {
@@ -280,6 +289,7 @@ impl Default for NodeConfigBuilder {
             is_danger: false,
             enable_tx_persistence: false,
             cloud_storage: CloudStorageBuilder::default().build(),
+            exporter: ExportConfig::default(),
         }
     }
 }
@@ -338,6 +348,11 @@ impl NodeConfigBuilder {
         self
     }
 
+    pub fn exporter(&mut self, exporter: ExportConfig) -> &mut NodeConfigBuilder {
+        self.exporter = exporter;
+        self
+    }
+
     pub fn build(&self) -> NodeConfig {
         NodeConfig {
             grpc_ports: self.grpc_ports.clone(),
@@ -350,6 +365,7 @@ impl NodeConfigBuilder {
             is_danger: self.is_danger,
             enable_tx_persistence: self.enable_tx_persistence,
             cloud_storage: self.cloud_storage.clone(),
+            exporter: self.exporter.clone(),
         }
     }
 }

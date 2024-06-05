@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::constant::{NETWORK, NETWORK_ZENOH};
-use crate::traits::{TomlWriter, YmlWriter};
+use crate::constant::NETWORK_ZENOH;
+use crate::traits::TomlWriter;
 use serde::{Deserialize, Serialize};
 
 use super::log_config::LogConfig;
@@ -65,11 +65,5 @@ pub struct ZenohConfig {
 impl TomlWriter for ZenohConfig {
     fn section(&self) -> String {
         NETWORK_ZENOH.to_string()
-    }
-}
-
-impl YmlWriter for ZenohConfig {
-    fn service(&self) -> String {
-        NETWORK.to_string()
     }
 }
