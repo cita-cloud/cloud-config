@@ -1,6 +1,6 @@
 [package]
 name = "cloud-config"
-version = "6.7.3"
+version = "6.7.4"
 authors = ["Rivtower Technologies <contact@rivtower.com>"]
 license = "Apache-2.0"
 edition = "2021"
@@ -15,11 +15,11 @@ crypto_sm = { git = "https://github.com/cita-cloud/crypto_sm", package = "crypto
 crypto_eth = { git = "https://github.com/cita-cloud/crypto_eth", package = "crypto", optional = true }
 toml = "0.8"
 hex = "0.4"
-rcgen = { version = "0.12", features = ["pem", "x509-parser"] }
-x509-parser = "0.15"
+rcgen = { version = "0.13", features = ["pem", "x509-parser"] }
+x509-parser = "0.16"
 rand = "0.7" # match with ophelia
 libsm = "0.6"
-k8s-openapi = { version = "0.21", features = ["v1_25"] }
+k8s-openapi = { version = "0.22", features = ["v1_25"] }
 serde_yaml = "0.9"
 ophelia = "0.3"
 ophelia-blst = "0.3"

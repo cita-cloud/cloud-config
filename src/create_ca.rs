@@ -30,7 +30,7 @@ pub struct CreateCAOpts {
 
 /// execute create ca
 pub fn execute_create_ca(opts: CreateCAOpts) -> Result<(String, String), Error> {
-    let (_, ca_cert_pem, ca_key_pem) = ca_cert();
+    let (ca_cert_pem, ca_key_pem) = ca_cert();
 
     let path = format!(
         "{}/{}/{}/{}",
