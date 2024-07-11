@@ -15,8 +15,8 @@
 use crate::config::chain_config::ChainConfig;
 use crate::config::node_config::NodeConfig;
 use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, CertificateSigningRequest, DistinguishedName,
-    DnType, DnValue, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256,
+    BasicConstraints, CertificateParams, CertificateSigningRequestParams, DistinguishedName,
+    DnType, DnValue, IsCa, KeyPair,
 };
 use std::io::{Read, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -104,57 +104,60 @@ pub fn sm3_hash(input: &[u8]) -> [u8; HASH_BYTES_LEN] {
     libsm::sm3::hash::Sm3Hash::new(input).get_hash()
 }
 
-pub fn ca_cert() -> (Certificate, String, String) {
+pub fn ca_cert() -> (String, String) {
     let mut params = CertificateParams::default();
     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
 
-    let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
-    params.key_pair.replace(keypair);
+    let keypair = KeyPair::generate().unwrap();
 
     let mut dn = DistinguishedName::new();
     dn.push(DnType::OrganizationName, "CITAHub");
     dn.push(
         DnType::CommonName,
-        DnValue::PrintableString("CA".to_string()),
+        DnValue::PrintableString("CA".try_into().unwrap()),
     );
     params.distinguished_name = dn;
 
-    let cert = Certificate::from_params(params).unwrap();
-    let cert_pem = cert.serialize_pem_with_signer(&cert).unwrap();
-    let key_pem = cert.serialize_private_key_pem();
-    (cert, cert_pem, key_pem)
-}
-
-pub fn restore_ca_cert(ca_cert_pem: &str, ca_key_pem: &str) -> Certificate {
-    let ca_key_pair = KeyPair::from_pem(ca_key_pem).unwrap();
-    let ca_param = CertificateParams::from_ca_cert_pem(ca_cert_pem, ca_key_pair).unwrap();
-
-    Certificate::from_params(ca_param).unwrap()
+    let cert = params.self_signed(&keypair).unwrap();
+    let cert_pem = cert.pem();
+    let key_pem = keypair.serialize_pem();
+    (cert_pem, key_pem)
 }
 
 pub fn create_csr(domain: &str) -> (String, String) {
     let subject_alt_names = vec![domain.into()];
-    let mut params = CertificateParams::new(subject_alt_names);
+    let mut params = CertificateParams::new(subject_alt_names).unwrap();
 
     let mut dn = DistinguishedName::new();
     dn.push(DnType::OrganizationName, "CITAHub");
-    dn.push(DnType::CommonName, DnValue::PrintableString(domain.into()));
+    dn.push(
+        DnType::CommonName,
+        DnValue::PrintableString(domain.try_into().unwrap()),
+    );
     params.distinguished_name = dn;
 
-    let keypair = KeyPair::generate(&PKCS_ECDSA_P256_SHA256).unwrap();
-    params.key_pair.replace(keypair);
+    let keypair = KeyPair::generate().unwrap();
 
-    let cert = Certificate::from_params(params).unwrap();
+    let csr = params.serialize_request(&keypair).unwrap();
 
-    let csr_pem = cert.serialize_request_pem().unwrap();
-    let key_pem = cert.serialize_private_key_pem();
+    let csr_pem = csr.pem().unwrap();
+    let key_pem = keypair.serialize_pem();
 
     (csr_pem, key_pem)
 }
 
-pub fn sign_csr(csr_pem: &str, ca_cert: &Certificate) -> String {
-    let csr = CertificateSigningRequest::from_pem(csr_pem).unwrap();
-    csr.serialize_pem_with_signer(ca_cert).unwrap()
+pub fn sign_csr(csr_pem: &str, ca_cert_pem: &str, ca_key_pem: &str) -> String {
+    // read request
+    let csr = CertificateSigningRequestParams::from_pem(csr_pem).unwrap();
+
+    // restore ca
+    let ca_key_pair = KeyPair::from_pem(ca_key_pem).unwrap();
+    let ca_param = CertificateParams::from_ca_cert_pem(ca_cert_pem).unwrap();
+    let ca_cert = ca_param.self_signed(&ca_key_pair).unwrap();
+
+    // sign csr
+    let cert = csr.signed_by(&ca_cert, &ca_key_pair).unwrap();
+    cert.pem()
 }
 
 pub fn find_micro_service(chain_config: &ChainConfig, service_name: &str) -> bool {

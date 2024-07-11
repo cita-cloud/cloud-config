@@ -30,7 +30,7 @@ use crate::traits::TomlWriter;
 use crate::util::{find_micro_service, read_chain_config, read_file, read_node_config};
 use clap::Parser;
 use std::fs;
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, Ipv6Addr};
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone)]
@@ -126,7 +126,8 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
                     let peer_cluster_name = &node_network_address.cluster;
                     let peer_name_space = &node_network_address.name_space;
                     let peer_host = &node_network_address.host;
-                    let is_peer_host_ip = peer_host.parse::<Ipv4Addr>().is_ok();
+                    let is_peer_host_ip = peer_host.parse::<Ipv4Addr>().is_ok()
+                        || peer_host.parse::<Ipv6Addr>().is_ok();
                     let peer_port = node_network_address.port;
                     let peer_svc_name =
                         format!("{}-{}", &opts.chain_name, &node_network_address.domain);
@@ -184,12 +185,12 @@ pub fn execute_update_node(opts: UpdateNodeOpts) -> Result<(), Error> {
         let modules = vec![
             ModuleConfig {
                 module_name: "consensus".to_string(),
-                hostname: "127.0.0.1".to_string(),
+                hostname: "localhost".to_string(),
                 port: node_config.grpc_ports.consensus_port,
             },
             ModuleConfig {
                 module_name: "controller".to_string(),
-                hostname: "127.0.0.1".to_string(),
+                hostname: "localhost".to_string(),
                 port: node_config.grpc_ports.controller_port,
             },
         ];

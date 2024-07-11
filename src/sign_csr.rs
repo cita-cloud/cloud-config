@@ -14,7 +14,7 @@
 
 use crate::constant::{CA_CERT_DIR, CERTS_DIR, CERT_PEM, CSR_PEM, KEY_PEM};
 use crate::error::Error;
-use crate::util::{read_file, restore_ca_cert, sign_csr, write_file};
+use crate::util::{read_file, sign_csr, write_file};
 use clap::Parser;
 
 /// A subcommand for run
@@ -45,7 +45,6 @@ pub fn execute_sign_csr(opts: SignCSROpts) -> Result<String, Error> {
         &opts.config_dir, &opts.chain_name, CA_CERT_DIR, KEY_PEM
     );
     let ca_key_pem = read_file(ca_key_path).unwrap();
-    let ca = restore_ca_cert(&ca_cert_pem, &ca_key_pem);
 
     // load csr
     let csr_pem_path = format!(
@@ -55,7 +54,7 @@ pub fn execute_sign_csr(opts: SignCSROpts) -> Result<String, Error> {
     let csr_pem = read_file(csr_pem_path).unwrap();
 
     // sign csr
-    let cert_pem = sign_csr(&csr_pem, &ca);
+    let cert_pem = sign_csr(&csr_pem, &ca_cert_pem, &ca_key_pem);
 
     let cert_pem_path = format!(
         "{}/{}/{}/{}/{}",

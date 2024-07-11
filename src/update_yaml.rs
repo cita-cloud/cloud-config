@@ -39,7 +39,11 @@ use k8s_openapi::{
     ByteString,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, fs, net::Ipv4Addr};
+use std::{
+    collections::BTreeMap,
+    fs,
+    net::{Ipv4Addr, Ipv6Addr},
+};
 
 /// A subcommand for run
 #[derive(Parser, Debug, Clone, Deserialize, Serialize)]
@@ -432,7 +436,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     exec: Some(ExecAction {
                         command: Some(vec![
                             "grpc-health-probe".to_string(),
-                            "-addr=127.0.0.1:50000".to_string(),
+                            "-addr=localhost:50000".to_string(),
                         ]),
                     }),
                     initial_delay_seconds: Some(30),
@@ -508,7 +512,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     exec: Some(ExecAction {
                         command: Some(vec![
                             "grpc-health-probe".to_string(),
-                            "-addr=127.0.0.1:50001".to_string(),
+                            "-addr=localhost:50001".to_string(),
                         ]),
                     }),
                     initial_delay_seconds: Some(30),
@@ -596,7 +600,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     exec: Some(ExecAction {
                         command: Some(vec![
                             "grpc-health-probe".to_string(),
-                            "-addr=127.0.0.1:50002".to_string(),
+                            "-addr=localhost:50002".to_string(),
                         ]),
                     }),
                     initial_delay_seconds: Some(30),
@@ -667,7 +671,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     exec: Some(ExecAction {
                         command: Some(vec![
                             "grpc-health-probe".to_string(),
-                            "-addr=127.0.0.1:50003".to_string(),
+                            "-addr=localhost:50003".to_string(),
                         ]),
                     }),
                     initial_delay_seconds: Some(30),
@@ -743,7 +747,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                     exec: Some(ExecAction {
                         command: Some(vec![
                             "grpc-health-probe".to_string(),
-                            "-addr=127.0.0.1:50004".to_string(),
+                            "-addr=localhost:50004".to_string(),
                         ]),
                     }),
                     initial_delay_seconds: Some(60),
@@ -946,7 +950,8 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
                 let peer_name_space = &node_network_address.name_space;
                 let peer_domain = &node_network_address.domain;
                 let peer_host = &node_network_address.host;
-                let is_peer_host_ip = peer_host.parse::<Ipv4Addr>().is_ok();
+                let is_peer_host_ip =
+                    peer_host.parse::<Ipv4Addr>().is_ok() || peer_host.parse::<Ipv6Addr>().is_ok();
                 let peer_port = node_network_address.port;
                 let peer_svc_name =
                     format!("{}-{}", &opts.chain_name, &node_network_address.domain);
@@ -1041,7 +1046,12 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
                         endpoint_slice.metadata = metadata;
 
-                        endpoint_slice.address_type = "IPv4".to_string();
+                        if peer_host.parse::<Ipv4Addr>().is_ok() {
+                            endpoint_slice.address_type = "IPv4".to_string();
+                        } else {
+                            endpoint_slice.address_type = "IPv6".to_string();
+                        }
+
                         endpoint_slice.ports = Some(vec![EndpointPort {
                             port: Some(peer_port as i32),
                             protocol: Some(network_protocol.to_string()),

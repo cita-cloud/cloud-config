@@ -11,7 +11,7 @@ spec:
           exec:
             command:
             - grpc-health-probe
-            - -addr=127.0.0.1:50000
+            - -addr=localhost:50000
           initialDelaySeconds: 30
           periodSeconds: 10
       - name: consensus
@@ -19,7 +19,7 @@ spec:
           exec:
             command:
             - grpc-health-probe
-            - -addr=127.0.0.1:50001
+            - -addr=localhost:50001
           initialDelaySeconds: 30
           periodSeconds: 10
       - name: executor
@@ -27,7 +27,7 @@ spec:
           exec:
             command:
             - grpc-health-probe
-            - -addr=127.0.0.1:50002
+            - -addr=localhost:50002
           initialDelaySeconds: 30
           periodSeconds: 10
       - name: storage
@@ -35,7 +35,7 @@ spec:
           exec:
             command:
             - grpc-health-probe
-            - -addr=127.0.0.1:50003
+            - -addr=localhost:50003
           initialDelaySeconds: 30
           periodSeconds: 10
       - name: controller
@@ -43,6 +43,6 @@ spec:
           exec:
             command:
             - grpc-health-probe
-            - -addr=127.0.0.1:50004
+            - -addr=localhost:50004
           initialDelaySeconds: 60
           periodSeconds: 10
