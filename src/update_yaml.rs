@@ -29,7 +29,7 @@ use k8s_openapi::{
             ResourceRequirements, Service, ServicePort, ServiceSpec, Volume, VolumeMount,
             WeightedPodAffinityTerm,
         },
-        discovery::v1::{Endpoint, EndpointPort, EndpointSlice},
+        discovery::v1::{Endpoint, EndpointConditions, EndpointPort, EndpointSlice},
     },
     apimachinery::pkg::{
         api::resource::Quantity,
@@ -1060,6 +1060,10 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
 
                         endpoint_slice.endpoints = vec![Endpoint {
                             addresses: vec![peer_host.clone()],
+                            conditions: Some(EndpointConditions {
+                                ready: Some(true),
+                                ..Default::default()
+                            }),
                             ..Default::default()
                         }];
 
