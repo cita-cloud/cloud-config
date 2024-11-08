@@ -832,7 +832,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             Volume {
                 name: "node-account".to_string(),
                 config_map: Some(ConfigMapVolumeSource {
-                    name: Some(format!("{}-account", &node_name)),
+                    name: format!("{}-account", &node_name),
                     ..Default::default()
                 }),
                 ..Default::default()
@@ -840,7 +840,7 @@ pub fn execute_update_yaml(opts: UpdateYamlOpts) -> Result<NodeK8sConfig, Error>
             Volume {
                 name: "node-config".to_string(),
                 config_map: Some(ConfigMapVolumeSource {
-                    name: Some(format!("{}-config", &node_name)),
+                    name: format!("{}-config", &node_name),
                     ..Default::default()
                 }),
                 ..Default::default()
